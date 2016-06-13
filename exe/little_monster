@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'bundler/setup'
+require 'little_monster'
 require 'little_monster/generators'
 
 job_name = ARGV.shift

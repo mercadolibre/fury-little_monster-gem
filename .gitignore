@@ -1,0 +1,9 @@
+.bundle/
+*.swn
+*.swo
+*.swp
+.byebug_history
+
+**/*.log
+**/coverage/
+**/vendor

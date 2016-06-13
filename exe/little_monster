@@ -1,0 +1,13 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'little_monster/generators'
+
+job_name = ARGV.shift
+tasks_names = ARGV
+
+job = LittleMonster::Generators::Jobs.new(job_name, *tasks_names)
+job.generate
+
+tasks = LittleMonster::Generators::Tasks.new(job_name, *tasks_names)
+tasks.generate

@@ -1,0 +1,6 @@
+require_relative '../../spec_helper.rb'
+describe <%= "#{@job_name.camelize}::#{@current_task_name.camelize}" %> do
+  describe '.run' do
+    it 'tell me how to run!' 
+  end
+end

@@ -1,7 +1,8 @@
 module LittleMonster
   class Config
-    attr_accessor :little_monster_api_url
+    attr_accessor :api_url
     attr_accessor :api_request_retries
+    attr_accessor :default_formatter
 
     def initialize(params = {})
       params.to_hash.each do |key, value|

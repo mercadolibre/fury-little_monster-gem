@@ -43,22 +43,59 @@ describe LittleMonster::Core::Loggable do
     describe 'initialize_logger' do
       context 'given a filename and a formatter' do
         let(:file) { '/dev/null' }
-        let(:formatter) do
-          proc do
-            'mock_formatter'
-          end
-        end
-
-        before :each do
-          mock_class.initialize_logger file, formatter
-        end
 
         it 'builds a new logger with filename' do
+          mock_class.initialize_logger file
           expect(mock_class.logger.instance_variable_get(:'@logdev').filename).to eq(file)
         end
 
-        it 'builds a new logger with formatter' do
-          expect(mock_class.logger.formatter).to eq(formatter)
+        context 'given a formatter' do
+          let(:formatter) { double }
+          it 'builds a new logger with formatter' do
+            mock_class.initialize_logger file, formatter
+            expect(mock_class.logger.formatter).to eq(formatter)
+          end
+        end
+
+        context 'when a formatter is not given' do
+          let(:default_formatter) { double }
+
+          before :each do
+            allow(mock_class).to receive(:default_formatter).and_return(default_formatter)
+          end
+
+          it 'builds logger with default formatter' do
+            mock_class.initialize_logger file
+            expect(mock_class.logger.formatter).to eq(default_formatter)
+          end
+        end
+
+      end
+    end
+
+    describe '#default_formatter' do
+      context 'if default_formatter is set in config' do
+        let(:formatter) { double }
+        before :each do
+          LittleMonster.configure do |config|
+            config.default_formatter = formatter
+          end
+        end
+
+        after :each do
+          LittleMonster.configure do |config|
+            config.default_formatter = nil
+          end
+        end
+
+        it 'returns config default formatter' do
+          expect(mock_class.default_formatter).to eq(formatter)
+        end
+      end
+
+      context 'if default_formatter is not set in config' do
+        it 'returns a proc' do
+          expect(mock_class.default_formatter.class).to eq(Proc)
         end
       end
     end
@@ -75,7 +112,12 @@ describe LittleMonster::Core::Loggable do
 
     describe 'logger ineritance' do
       let(:file) { '/tmp/a.log' }
+      let(:default_formatter) { double }
       let(:formatter) { double }
+
+      before :each do
+        allow(mock_class).to receive(:default_formatter).and_return(default_formatter)
+      end
 
       context 'when subclass calls its logger' do
         before :each do
@@ -83,9 +125,9 @@ describe LittleMonster::Core::Loggable do
         end
 
         context 'when subclass logger is not defined' do
-          it 'returns a logger with parent logger formatter and filename' do
+          it 'returns a logger with parent filename and default_formatter' do
             subclass_logger = mock_subclass.logger
-            expect(subclass_logger.formatter).to eq(formatter)
+            expect(subclass_logger.formatter).to eq(default_formatter)
             expect(subclass_logger.instance_variable_get(:'@logdev').filename).to eq(file)
           end
         end
@@ -114,7 +156,7 @@ describe LittleMonster::Core::Loggable do
           it 'builds a default logger' do
             allow(mock_class).to receive(:initialize_logger)
             mock_class.logger
-            expect(mock_class).to have_received(:initialize_logger).with(STDOUT, Proc).once
+            expect(mock_class).to have_received(:initialize_logger).with(STDOUT).once
           end
         end
       end

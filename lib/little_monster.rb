@@ -18,7 +18,7 @@ module LittleMonster
 
   def default_config_values
     {
-      little_monster_api_url: 'http://little_monster_api_url.com/',
+      api_url: 'http://little_monster_api_url.com/',
       api_request_retries: 4
     }
   end

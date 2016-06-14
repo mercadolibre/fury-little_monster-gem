@@ -5,7 +5,6 @@ PATH
       activesupport
       multi_json
       rainbows
-      require_all
       tilt
       typhoeus
 
@@ -96,6 +95,7 @@ DEPENDENCIES
   oj
   pry
   rake
+  require_all
   rspec
   rubocop
   simplecov

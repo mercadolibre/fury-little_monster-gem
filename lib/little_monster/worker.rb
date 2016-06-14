@@ -7,11 +7,11 @@ module LittleMonster
 
     attr_reader :params
 
-    def self.queue(queue)
+    def self.worker_queue(queue)
       toiler_options queue: queue
     end
 
-    def self.concurrency(concurrency)
+    def self.worker_concurrency(concurrency)
       toiler_options concurrency: concurrency
     end
 

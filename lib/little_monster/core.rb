@@ -6,6 +6,5 @@ require 'little_monster/core/errors/job_not_found_error'
 
 require 'little_monster/core/loggable' # must be required first to satisfy job and task dependencies
 require 'little_monster/core/api'
-require 'little_monster/core/runner'
 require 'little_monster/core/job'
 require 'little_monster/core/task'

@@ -7,12 +7,18 @@ module LittleMonster
 
     attr_reader :params
 
-    toiler_options queue: LittleMonster.queue,
-                   concurrency: LittleMonster.worker_concurrency,
-                   auto_visibility_timeout: true,
+    def self.queue(queue)
+      toiler_options queue: queue
+    end
+
+    def self.concurrency(concurrency)
+      toiler_options concurrency: concurrency
+    end
+
+    toiler_options auto_visibility_timeout: true,
                    auto_delete: true
 
-    toiler_options parser: LittleMonster.parser
+    toiler_options parser: MultiJson
 
     def initialize
     end

@@ -20,9 +20,6 @@ module LittleMonster
     {
       api_url: 'http://little_monster_api_url.com/',
       api_request_retries: 4,
-      parser: ::MultiJson,
-      queue: 'little_monster_default_queue',
-      worker_concurrency: 5
     }
   end
 

@@ -20,6 +20,11 @@ module LittleMonster
 
     toiler_options parser: MultiJson
 
+    toiler_options on_visibility_extend: (proc do |_, body|
+      params = MultiJson.load body['Message'], symbolize_keys: true
+      LittleMonster::Job.send_api_heartbeat params[:job_id]
+    end)
+
     def initialize
     end
 
@@ -27,16 +32,12 @@ module LittleMonster
     end
 
     def perform(_sqs_msg, body)
-      @params = MultiJson.load(body['Message'], symbolize_keys: true)
+      params = MultiJson.load body['Message'], symbolize_keys: true
 
       on_message
 
-      job_class = job_name.to_s.camelcase.constantize
+      job_class = params[:job][:name].to_s.camelcase.constantize
       @job = job_class.new(params)
-
-      self.class.toiler_options on_visibility_extend: proc do
-        @job.send_api_heartbeat unless @job.nil?
-      end
 
       @job.run
     end

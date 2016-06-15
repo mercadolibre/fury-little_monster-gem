@@ -21,6 +21,7 @@ module LittleMonster
     toiler_options parser: MultiJson
 
     toiler_options on_visibility_extend: (proc do |_, body|
+      logger.debug 'sending heartbeat'
       params = MultiJson.load body['Message'], symbolize_keys: true
       LittleMonster::Job.send_api_heartbeat params[:job_id]
     end)

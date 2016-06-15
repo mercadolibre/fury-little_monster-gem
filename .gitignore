@@ -7,3 +7,5 @@
 **/*.log
 **/coverage/
 **/vendor
+
+pkg/

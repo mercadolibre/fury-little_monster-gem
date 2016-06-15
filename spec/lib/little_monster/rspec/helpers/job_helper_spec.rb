@@ -22,13 +22,22 @@ describe LittleMonster::RSpec::JobHelper do
         result
         expect(job).to have_received(:run)
       end
+
+      context 'if job run raises a retry error' do
+        it 'sets retried to true' do
+          allow(job).to receive(:run).and_raise(LittleMonster::JobRetryError)
+          expect(result.instance_variable_get('@retried')).to be true
+        end
+      end
     end
 
-    specify { result.instance == job }
-    specify { result.status == job.status }
-    specify { result.retries == job.instance_variable_get('@retries') }
-    specify { result.output == job.output }
+    specify { expect(result.instance).to eq(job) }
+    specify { expect(result.retried?).to eq(result.instance_variable_get('@retried')) }
+    specify { expect(result.status).to eq(job.status) }
+    specify { expect(result.retries).to eq(job.instance_variable_get('@retries')) }
+    specify { expect(result.output).to eq(job.output) }
   end
+
 
   describe '::run_job' do
     context 'given a job name and hash' do
@@ -75,7 +84,7 @@ describe LittleMonster::RSpec::JobHelper do
         end
 
         context 'given fail key in options' do
-          it 'makes each job fail' do
+          it 'makes each task fail' do
             options[:fails] = [{ task: :task_a }]
             expect(job.instance_variable_get('@runned_tasks').keys).to eq([])
           end

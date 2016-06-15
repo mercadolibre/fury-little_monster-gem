@@ -19,6 +19,15 @@ describe LittleMonster::Core::Job do
         expect(job_class.tasks).to eq(tasks)
       end
     end
+
+    describe '::retries' do
+      let(:retries) { 3 }
+
+      it 'sets the max_retries class level instance variable' do
+        job_class.retries(retries)
+        expect(job_class.max_retries).to eq(retries)
+      end
+    end
   end
 
   describe '#initialize' do
@@ -40,98 +49,116 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#run' do
-    before :each do
-      allow(MockJob::TaskA).to receive(:new).and_call_original
-      allow(MockJob::TaskB).to receive(:new).and_call_original
+    context 'on start' do
+      it 'notifies status as running' do
+        allow(job).to receive(:notify_status)
+        job.run
+        expect(job).to have_received(:notify_status).with(:running).once
+      end
     end
 
-    it 'sets status as running' do
-      allow(job).to receive(:status=).and_call_original
-      job.run
-      expect(job).to have_received(:status=).with(:running).once.ordered
-    end
-
-    it 'exits if cancelled' do
-      allow(job).to receive(:is_cancelled?).and_return(true)
-      job.run
-      expect(job.status).to eq(:cancelled)
-    end
-
-    it 'raises CancelError if is_cancelled' do
-      allow_any_instance_of(MockJob::TaskA).to receive(:perform).and_call_original
-      allow_any_instance_of(MockJob::TaskA).to receive(:run).and_call_original
-      allow_any_instance_of(MockJob::TaskA).to receive(:is_cancelled!).and_raise(LittleMonster::CancelError)
-      allow(job).to receive(:cancel)
-      job.run
-      expect(job).to have_received(:cancel).with(LittleMonster::CancelError).once
-    end
-
-    it 'sets status as finished' do
-      allow(job).to receive(:status=).and_call_original
-      job.run
-      expect(job).to have_received(:status=).with(:finished).once
-    end
-
-    it 'build the task class based on class parent module and symbol' do
-      MockJob.task_list :task_a
-      run_job(MockJob)
-      expect(MockJob::TaskA).to have_received(:new)
-    end
-
-    it 'calls the first task with empty outputs' do
-      job.run
-      expect(MockJob::TaskA).to have_received(:new).with(params, {})
-    end
-
-    it 'calls the later task with chained outputs' do
-      allow_any_instance_of(MockJob::TaskA).to receive(:run)
-      allow_any_instance_of(MockJob::TaskA).to receive(:perform).and_return(mock_task_a: 1)
-      job.run
-      expect(MockJob::TaskB).to have_received(:new).with(params, mock_task_a: 1)
-    end
-
-    it 'returns the hash containing all outputs' do
-      expect(job.run).to eq(mock_task_a: 'task_a_finished', mock_task_b: 'task_b_finished')
-    end
-
-    it 'sets status as error if task_name does not exist' do
-      MockJob.task_list :not_existing_task
-      f = MockJob.new params
-      f.run
-      expect(f.status).to eq(:error)
-    end
-
-    context 'when a task fails' do
+    context 'on run' do
       before :each do
-        allow(job).to receive(:error).and_call_original
-        allow(job).to receive(:abort_job)
+        allow(MockJob::TaskA).to receive(:new).and_call_original
+        allow(MockJob::TaskB).to receive(:new).and_call_original
       end
 
-      it 'calls job.error on TaskError' do
-        allow_any_instance_of(MockJob::TaskA).to receive(:run).and_raise(LittleMonster::TaskError)
-        job.run
-        expect(job).to have_received(:error).with(LittleMonster::TaskError)
+      it 'build the task class based on class parent module and symbol' do
+        MockJob.task_list :task_a
+        run_job(MockJob)
+        expect(MockJob::TaskA).to have_received(:new)
       end
 
-      it 'calls job.error on StandardError' do
-        allow_any_instance_of(MockJob::TaskB).to receive(:run).and_raise(StandardError)
+      it 'calls the first task with empty outputs' do
         job.run
-        expect(job).to have_received(:error).with(StandardError).once
+        expect(MockJob::TaskA).to have_received(:new).with(params, {})
       end
 
-      it 'calls job.abort on FatalTaskError' do
-        allow_any_instance_of(MockJob::TaskB).to receive(:run).and_raise(LittleMonster::FatalTaskError)
+      it 'calls the later task with chained outputs' do
+        allow_any_instance_of(MockJob::TaskA).to receive(:run)
+        allow_any_instance_of(MockJob::TaskA).to receive(:perform).and_return(mock_task_a: 1)
         job.run
-        expect(job).to have_received(:abort_job).with(LittleMonster::FatalTaskError)
+        expect(MockJob::TaskB).to have_received(:new).with(params, mock_task_a: 1)
       end
 
-      it 'calls Task.error on TaskError' do
-        mock_task = MockJob::TaskA.new(nil, nil)
-        allow(MockJob::TaskA).to receive(:new).and_return(mock_task)
-        allow_any_instance_of(MockJob::TaskA).to receive(:run).and_raise(LittleMonster::TaskError)
-        allow(mock_task).to receive(:error)
+      it 'returns the hash containing all outputs' do
+        expect(job.run).to eq(mock_task_a: 'task_a_finished', mock_task_b: 'task_b_finished')
+      end
+
+      it 'sets status as error if task_name does not exist' do
+        MockJob.task_list :not_existing_task
+        f = MockJob.new params
+        f.run
+        expect(f.status).to eq(:error)
+      end
+
+      context 'when a task fails' do
+        before :each do
+          allow(job).to receive(:error).and_call_original
+          allow(job).to receive(:abort_job)
+        end
+
+        context 'and job is not on retry limit' do
+          it 'raises a job JobRetryError' do
+            allow_any_instance_of(MockJob::TaskB).to receive(:run).and_raise(StandardError)
+            expect{ job.run }.to raise_error(LittleMonster::JobRetryError)
+          end
+        end
+
+        it 'calls job.error on an error' do
+          allow_any_instance_of(MockJob::TaskB).to receive(:run).and_raise(StandardError)
+          job.run rescue
+          expect(job).to have_received(:error).with(StandardError).once
+        end
+
+        it 'calls job.abort on FatalTaskError' do
+          allow_any_instance_of(MockJob::TaskB).to receive(:run).and_raise(LittleMonster::FatalTaskError)
+          job.run rescue
+          expect(job).to have_received(:abort_job).with(LittleMonster::FatalTaskError)
+        end
+
+        it 'calls Task.error on TaskError' do
+          mock_task = MockJob::TaskA.new(nil, nil)
+          allow(MockJob::TaskA).to receive(:new).and_return(mock_task)
+          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_raise(LittleMonster::TaskError)
+          allow(mock_task).to receive(:error)
+          job.run rescue
+          expect(mock_task).to have_received(:error).with(LittleMonster::TaskError)
+        end
+      end
+    end
+
+    context 'when cancelled' do
+      it 'sets status as cancelled' do
+        allow(job).to receive(:is_cancelled?).and_return(true)
         job.run
-        expect(mock_task).to have_received(:error).with(LittleMonster::TaskError)
+        expect(job.status).to eq(:cancelled)
+      end
+
+      it 'notifies status as cancelled' do
+        allow(job).to receive(:is_cancelled?).and_return(true)
+        allow(job).to receive(:notify_status)
+        job.run
+        expect(job).to have_received(:notify_status).with(:cancelled).once
+      end
+
+      context 'and job is running a task' do
+        it 'raises CancelError' do
+          allow_any_instance_of(MockJob::TaskA).to receive(:perform).and_call_original
+          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_call_original
+          allow_any_instance_of(MockJob::TaskA).to receive(:is_cancelled!).and_raise(LittleMonster::CancelError)
+          allow(job).to receive(:cancel)
+          job.run
+          expect(job).to have_received(:cancel).with(LittleMonster::CancelError).once
+        end
+      end
+    end
+
+    context 'on finish' do
+      it 'notifies status as finished' do
+        allow(job).to receive(:notify_status)
+        job.run
+        expect(job).to have_received(:notify_status).with(:finished).once
       end
     end
   end
@@ -139,11 +166,12 @@ describe LittleMonster::Core::Job do
   describe '#abort_job' do
     before :each do
       allow(job).to receive(:abort_job).and_call_original
+      allow(job).to receive(:notify_status)
       job.send(:abort_job, LittleMonster::FatalTaskError.new)
     end
 
-    it 'sets status as failed' do
-      expect(job.status).to eq(:failed)
+    it 'notifies status as error' do
+      expect(job).to have_received(:notify_status).with(:error).once
     end
 
     it 'calls on_abort' do
@@ -179,11 +207,6 @@ describe LittleMonster::Core::Job do
       job.send(:error, LittleMonster::TaskError.new)
       expect(job).to have_received(:on_error).with(LittleMonster::TaskError)
     end
-
-    it 'sets status to :error' do
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job.status).to be(:error)
-    end
   end
 
   describe '#cancel' do
@@ -204,33 +227,48 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#do_retry' do
-    before :each do
-      allow(job).to receive(:do_retry).and_call_original
-    end
-
     after :each do
-      MockJob.max_retries(-1)
+      MockJob.retries(-1)
     end
 
-    it 'retries if max_retries = -1 (it is by default)' do
-      ret_before = job.instance_variable_get '@retries'
-      job.send('do_retry')
-      expect(job.instance_variable_get('@retries')).to eq(ret_before + 1)
+    context 'if max retries is -1' do
+      it 'raises JobRetryError'  do
+        expect { job.send :do_retry }.to raise_error(LittleMonster::JobRetryError)
+      end
     end
 
-    it 'retries if max_retries not reached' do
-      MockJob.max_retries(5)
-      job.instance_variable_set '@retries', 4
-      job.send 'do_retry'
-      expect(job.instance_variable_get('@retries')).to eq(5)
+    context 'if max retries is not reached' do
+      before :each do
+        MockJob.retries 5
+        job.instance_variable_set '@retries', 4
+      end
+
+      it 'increases retries by 1' do
+        job.send :do_retry rescue
+        expect(job.instance_variable_get('@retries')).to eq(5)
+      end
+
+      it 'raises JobRetryError'  do
+        expect { job.send :do_retry }.to raise_error(LittleMonster::JobRetryError)
+      end
     end
 
-    it 'does not retry if max retries reached' do
-      allow(job).to receive(:abort_job)
-      MockJob.max_retries(5)
-      job.instance_variable_set '@retries', 5
-      job.send 'do_retry'
-      expect(job).to have_received(:abort_job).with(LittleMonster::MaxRetriesError)
+
+    context 'if max retries is reached' do
+      before :each do
+        allow(job).to receive(:abort_job)
+        MockJob.retries 5
+        job.instance_variable_set '@retries', 5
+      end
+
+      it 'does not retry' do
+        job.send :do_retry
+        expect(job).to have_received(:abort_job).with(LittleMonster::MaxRetriesError)
+      end
+
+      it 'does not retry' do
+        expect { job.send :do_retry }.not_to raise_error(LittleMonster::JobRetryError)
+      end
     end
   end
 

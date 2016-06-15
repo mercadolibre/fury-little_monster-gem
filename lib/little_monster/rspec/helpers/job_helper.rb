@@ -3,7 +3,13 @@ module LittleMonster::RSpec
     class Result
       def initialize(job)
         @job = job
-        job.run
+
+        begin
+          job.run
+          @retried = false
+        rescue LittleMonster::JobRetryError
+          @retried = true
+        end
       end
 
       def instance
@@ -12,6 +18,10 @@ module LittleMonster::RSpec
 
       def status
         @job.status
+      end
+
+      def retried?
+        @retried
       end
 
       def retries

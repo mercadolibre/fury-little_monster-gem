@@ -1,4 +1,5 @@
 require 'typhoeus'
+require 'multi_json'
 
 module LittleMonster::Core
   class API
@@ -29,6 +30,10 @@ module LittleMonster::Core
         retries = 1
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
+
+        options[:body] = MultiJson.dump options.fetch(:body, {})
+        options[:headers] ||= {}
+        options[:headers]['Content-Type'] = 'application/json' unless options[:headers]['Content-Type']
 
         begin
           res = Typhoeus.public_send method, url, options

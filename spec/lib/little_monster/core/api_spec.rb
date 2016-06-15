@@ -99,6 +99,7 @@ describe LittleMonster::Core::API do
 
   describe '::request' do
     let(:method) { :get }
+    let(:url) { "http://little_monster_api_url.com#{path}" }
 
     before :each do
       allow(Typhoeus).to receive(method).and_return(response)
@@ -106,10 +107,33 @@ describe LittleMonster::Core::API do
 
     context 'given method, path and options' do
       it 'calls typhoeus with method url and options' do
-        url = "http://little_monster_api_url.com#{path}"
         subject.request method, path, options
         expect(Typhoeus).to have_received(method)
           .with(url, options)
+      end
+
+      context 'request built' do
+        it 'has body dumped to json' do
+          body = { a: :b }
+          options[:body] = body
+          subject.request method, path, options
+          expect(Typhoeus).to have_received(method)
+            .with(url, hash_including(body: MultiJson.dump(body)))
+        end
+
+        it 'has content type set to json if it was not specified' do
+          subject.request method, path, options
+          expect(Typhoeus).to have_received(method)
+            .with(url, hash_including(headers: { 'Content-Type' => 'application/json' }))
+        end
+
+        it 'has content type set to json if specified' do
+          headers = { 'Content-Type' => 'something' }
+          options[:headers] = headers
+          subject.request method, path, options
+          expect(Typhoeus).to have_received(method)
+            .with(url, hash_including(headers: headers))
+        end
       end
 
       it 'returns the response' do

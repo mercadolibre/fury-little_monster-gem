@@ -44,6 +44,14 @@ module LittleMonster::Core
           retry if retries <= LittleMonster.api_request_retries
         end
 
+        res.define_singleton_method(:body) do
+          begin
+            MultiJson.load(res.options[:response_body], symbolize_keys: true)
+          rescue
+            res.options[:response_body]
+          end
+        end
+
         res
       end
     end

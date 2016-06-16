@@ -5,7 +5,7 @@ class MockJob::TaskA < LittleMonster::Task
   end
 
   def run
-    output[:mock_task_a] = @my_var
     is_cancelled!
+    @my_var
   end
 end

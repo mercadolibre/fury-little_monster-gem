@@ -15,10 +15,6 @@ describe LittleMonster::Core::Task do
     it 'has previous_output' do
       expect(mock_task).to respond_to(:previous_output)
     end
-
-    it 'has output' do
-      expect(mock_task).to respond_to(:output)
-    end
   end
 
   describe '#initialize' do
@@ -36,10 +32,6 @@ describe LittleMonster::Core::Task do
 
     it 'sets params' do
       expect(mock_task.instance_variable_get('@params')).to eq(params)
-    end
-
-    it 'initializes outputs to empty hash' do
-      expect(mock_task.instance_variable_get('@output')).to eq({})
     end
 
     context 'when it is not overriden' do
@@ -92,30 +84,6 @@ describe LittleMonster::Core::Task do
 
     it 'raises CancelError if is_cancelled!' do
       allow(mock_task).to receive(:is_cancelled!).and_raise(LittleMonster::CancelError)
-      expect { mock_task.run }.to raise_error(LittleMonster::CancelError)
-    end
-  end
-
-  describe '#perform' do
-    let(:output) { double }
-
-    before :each do
-      allow(mock_task).to receive(:run)
-    end
-
-    it 'calls run' do
-      mock_task.perform
-      expect(mock_task).to have_received(:run)
-    end
-
-    it 'returns output' do
-      mock_task.instance_variable_set('@output', output)
-      expect(mock_task.perform).to eq(output)
-    end
-
-    it 'raises CancelError if is_cancelled!' do
-      allow(mock_task).to receive(:is_cancelled!).and_raise(LittleMonster::CancelError)
-      allow(mock_task).to receive(:run).and_call_original
       expect { mock_task.run }.to raise_error(LittleMonster::CancelError)
     end
   end

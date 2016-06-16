@@ -8,7 +8,7 @@ describe LittleMonster::RSpec::JobHelper do
     }
   end
 
-  describe LittleMonster::RSpec::JobHelper::Result do
+  describe described_class::Result do
     let(:job) { job_class.new(nil) }
     let(:result) { described_class.new job }
 
@@ -92,13 +92,13 @@ describe LittleMonster::RSpec::JobHelper do
           it 'makes tasks fails with specified expection' do
             options[:fails] = [{ task: :task_a, error: LittleMonster::TaskError }]
             run_job(job_class, options)
-            expect { MockJob::TaskA.new(nil, nil).perform }.to raise_error(LittleMonster::TaskError)
+            expect { MockJob::TaskA.new(nil, nil).run }.to raise_error(LittleMonster::TaskError)
           end
 
           it 'makes each job fails with standard error when no exception is provided' do
             options[:fails] = [{ task: :task_a }]
             run_job(job_class, options)
-            expect { MockJob::TaskA.new(nil, nil).perform }.to raise_error(StandardError)
+            expect { MockJob::TaskA.new(nil, nil).run }.to raise_error(StandardError)
           end
         end
       end

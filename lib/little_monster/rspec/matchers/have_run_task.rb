@@ -14,7 +14,8 @@ module LittleMonster::RSpec::Matchers
     end
 
     def matches?(job)
-      @task = job.runned_tasks[@expected_task]
+      @task = job.runned_tasks[@expected_task][:instance]
+      @task_output = job.runned_tasks[@expected_task][:output]
       check_task_run && check_params && check_output && check_previous_output
     end
 
@@ -40,7 +41,7 @@ module LittleMonster::RSpec::Matchers
 
     def check_output
       if defined?(@expected_output)
-        @task.output == @expected_output
+        @task_output == @expected_output
       else
         true
       end

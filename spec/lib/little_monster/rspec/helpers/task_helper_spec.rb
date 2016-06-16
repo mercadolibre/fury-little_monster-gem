@@ -9,6 +9,28 @@ describe LittleMonster::RSpec::TaskHelper do
     }
   end
 
+  describe described_class::Result do
+    let(:task_instance) { double(run: double) }
+    let!(:result) { described_class.new task_instance }
+
+    describe '#initialize' do
+      it 'sets task variable' do
+        expect(result.instance_variable_get '@task').to eq(task_instance)
+      end
+
+      it 'calls run on task' do
+        expect(task_instance).to have_received(:run)
+      end
+
+      it 'sets output variable to task run output' do
+        expect(result.instance_variable_get '@output').to eq(task_instance.run)
+      end
+    end
+
+    specify { expect(result.instance).to eq(task_instance) }
+    specify { expect(result.output).to eq(task_instance.run) }
+  end
+
   describe '::run_task' do
     context 'given a task and an options hash' do
       it 'builds an instance from task_class' do
@@ -17,22 +39,12 @@ describe LittleMonster::RSpec::TaskHelper do
         expect(task_class).to have_received(:new)
       end
 
-      it 'calls perform on instance' do
-        task_double = instance_double task_class
-        allow(task_double).to receive(:perform)
-        allow(task_class).to receive(:new).and_return(task_double)
-
-        run_task task_class
-
-        expect(task_double).to have_received(:perform)
-      end
-
-      it 'returns instance' do
-        expect(run_task(task_class).class).to eq(task_class)
+      it 'returns a task result instance' do
+        expect(run_task(task_class).class).to eq(described_class::Result)
       end
 
       context 'returned task instance' do
-        let(:task) { run_task task_class, options }
+        let(:task) { run_task(task_class, options).instance }
 
         it 'has params key from options' do
           expect(task.params).to eq(options[:params])

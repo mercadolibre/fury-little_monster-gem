@@ -28,9 +28,10 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
   describe '#matches?' do
     context 'given a job_result' do
       let(:task) { double }
+      let(:task_output) { {} }
       let(:job_result) do
         instance_double(LittleMonster::RSpec::JobHelper::Result,
-                        runned_tasks: { expected_task => task })
+                        runned_tasks: { expected_task => { instance: task, output: task_output } })
       end
 
       before :each do
@@ -40,9 +41,14 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
         allow(subject).to receive(:check_output).and_return(true)
       end
 
-      it 'sets the tasks instance variable from the job runned_tasks' do
+      it 'sets the task instance variable from the job runned_tasks[instance] key' do
         subject.matches?(job_result)
         expect(subject.instance_variable_get '@task').to eq(task)
+      end
+
+      it 'sets the task output instance variable from the job runned_tasks[output] key' do
+        subject.matches?(job_result)
+        expect(subject.instance_variable_get '@task_output').to eq(task_output)
       end
 
       it 'returns true if alls checks pass' do
@@ -125,7 +131,7 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
   end
 
   describe '#check_params' do
-    context 'when expected_params is not nil' do
+    context 'when expected_params is defined' do
       let(:expected_params) { { a: :b } }
       before :each do
         subject.instance_variable_set '@expected_params', expected_params
@@ -152,7 +158,7 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
   end
 
   describe '#check_previous_output' do
-    context 'when expected_previous_output is not nil' do
+    context 'when expected_previous_output is defined' do
       let(:expected_previous_output) { { a: :b } }
       before :each do
         subject.instance_variable_set '@expected_previous_output', expected_previous_output
@@ -179,21 +185,19 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
   end
 
   describe '#check_output' do
-    context 'when expected_output is not nil' do
+    context 'when expected_output is defined' do
       let(:expected_output) { { a: :b } }
       before :each do
         subject.instance_variable_set '@expected_output', expected_output
       end
 
       it 'returns true if task output match expected output' do
-        task = double(output: expected_output)
-        subject.instance_variable_set '@task', task
+        subject.instance_variable_set '@task_output', expected_output
         expect(subject.check_output).to be true
       end
 
       it 'returns false if task output dont match expected output' do
-        task = double(output: {})
-        subject.instance_variable_set '@task', task
+        subject.instance_variable_set '@task_output', {}
         expect(subject.check_output).to be false
       end
     end

@@ -65,25 +65,30 @@ describe LittleMonster::Core::Job do
 
       it 'build the task class based on class parent module and symbol' do
         MockJob.task_list :task_a
-        run_job(MockJob)
+        job.run
         expect(MockJob::TaskA).to have_received(:new)
       end
 
-      it 'calls the first task with empty outputs' do
-        job.run
-        expect(MockJob::TaskA).to have_received(:new).with(params, {})
+      context 'on mock job' do
+        it 'calls the first task with empty outputs' do
+          job.run
+          expect(MockJob::TaskA).to have_received(:new).with(params, {})
+        end
+
+        it 'calls the later task with chained outputs' do
+          task_a_output = double
+          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_return(task_a_output)
+          job.run
+          expect(MockJob::TaskB).to have_received(:new).with(params, task_a_output)
+        end
+
+        it 'returns the output of the last task' do
+          last_task_return = double
+          allow_any_instance_of(MockJob::TaskB).to receive(:run).and_return(last_task_return)
+          expect(job.run).to eq(last_task_return)
+        end
       end
 
-      it 'calls the later task with chained outputs' do
-        allow_any_instance_of(MockJob::TaskA).to receive(:run)
-        allow_any_instance_of(MockJob::TaskA).to receive(:perform).and_return(mock_task_a: 1)
-        job.run
-        expect(MockJob::TaskB).to have_received(:new).with(params, mock_task_a: 1)
-      end
-
-      it 'returns the hash containing all outputs' do
-        expect(job.run).to eq(mock_task_a: 'task_a_finished', mock_task_b: 'task_b_finished')
-      end
 
       it 'sets status as error if task_name does not exist' do
         MockJob.task_list :not_existing_task
@@ -144,7 +149,7 @@ describe LittleMonster::Core::Job do
 
       context 'and job is running a task' do
         it 'raises CancelError' do
-          allow_any_instance_of(MockJob::TaskA).to receive(:perform).and_call_original
+          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_call_original
           allow_any_instance_of(MockJob::TaskA).to receive(:run).and_call_original
           allow_any_instance_of(MockJob::TaskA).to receive(:is_cancelled!).and_raise(LittleMonster::CancelError)
           allow(job).to receive(:cancel)
@@ -261,18 +266,20 @@ describe LittleMonster::Core::Job do
         job.instance_variable_set '@retries', 5
       end
 
-      it 'does not retry' do
+      it 'aborts job' do
         job.send :do_retry
         expect(job).to have_received(:abort_job).with(LittleMonster::MaxRetriesError)
       end
 
       it 'does not retry' do
-        expect { job.send :do_retry }.not_to raise_error(LittleMonster::JobRetryError)
+        allow(LittleMonster::JobRetryError).to receive(:new)
+        job.send :do_retry
+        expect(LittleMonster::JobRetryError).not_to have_received(:new)
       end
     end
   end
 
   describe '#is_cancelled?' do
-    it { job.send(:is_cancelled?) == false }
+    it { expect(job.send(:is_cancelled?)).to be false }
   end
 end

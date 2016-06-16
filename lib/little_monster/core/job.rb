@@ -64,12 +64,16 @@ module LittleMonster::Core
           task = task_class_for(task_name).new(@params, @output)
           task.send(:set_default_values, @params, @output, method(:is_cancelled?))
 
-          @output = task.perform
+          @output = task.run
           notify_current_task task_name, :finished
 
           logger.debug "Succesfuly finished #{task_name}"
 
-          @runned_tasks[task_name] = task if mock?
+          if mock?
+            @runned_tasks[task_name] = {}
+            @runned_tasks[task_name][:instance] = task
+            @runned_tasks[task_name][:output] = @output
+          end
         rescue CancelError => e
           cancel e
           return

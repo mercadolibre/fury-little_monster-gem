@@ -4,7 +4,6 @@ module LittleMonster::Core
 
     attr_reader :params
     attr_reader :previous_output
-    attr_reader :output
 
     def initialize(params, previous_output)
       set_default_values params, previous_output
@@ -15,12 +14,6 @@ module LittleMonster::Core
     end
 
     def on_error(error)
-    end
-
-    def perform
-      logger.debug 'Starting'
-      run
-      output
     end
 
     def error(e)
@@ -40,7 +33,6 @@ module LittleMonster::Core
       @cancelled_callback = cancelled_callback
       @params = params
       @previous_output = previous_output
-      @output = {}
     end
   end
 end

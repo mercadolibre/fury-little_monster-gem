@@ -34,6 +34,7 @@ module LittleMonster::Core
       attr_reader :params
       attr_reader :tags
       attr_reader :status
+
       attr_reader :retries
       attr_reader :current_task
       attr_reader :output
@@ -41,12 +42,13 @@ module LittleMonster::Core
     def initialize(options={})
       @id = options.fetch(:id, nil)
       @params = options.fetch(:params, {}).freeze
-      @tags = options.fetch(:tags, {})
+      @tags = options.fetch(:tags, {}).freeze
 
-      @status = options.fetch(:status, :pending)
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
+      @output = options.fetch(:last_output, nil)
 
+      @status = :pending
 
       @runned_tasks = {} if mock?
       # TODO: setup logger
@@ -55,7 +57,6 @@ module LittleMonster::Core
 
     def run
       notify_status :running
-      @output = {}
 
       self.class.tasks.each do |task_name|
         logger.debug "Starting #{task_name} with output => #{@output}"
@@ -69,7 +70,7 @@ module LittleMonster::Core
           task.send(:set_default_values, @params, @output, method(:is_cancelled?))
 
           @output = task.run
-          notify_current_task task_name, :finished
+          notify_current_task task_name, :finished, output: @output
 
           logger.debug "Succesfuly finished #{task_name}"
 
@@ -87,11 +88,10 @@ module LittleMonster::Core
           return
         end
 
-        # @retries = 0 #Hago esto para que despues de succesful un task resete retries
+        @retries = 0 #Hago esto para que despues de succesful un task resete retries
       end
 
-      notify_current_task nil
-      notify_status :finished
+      notify_status :finished, output: @output
 
       logger.info "[job:#{self.class}] [action:finish] #{@output}"
       logger.info 'Succesfuly finished'
@@ -124,12 +124,12 @@ module LittleMonster::Core
     def do_retry
       if self.class.max_retries == -1 || self.class.max_retries > @retries
         @retries += 1
-        logger.info "Retry ##{@retries} of #{self.class.max_retries}"
+        logger.info "Retry ##{retries} of #{self.class.max_retries}"
 
         notify_status :pending
-        notify_current_task current_task, :pending
+        notify_current_task current_task, :pending, retry: retries
 
-        raise JobRetryError, "doing retry #{@retries} of #{self.class.max_retries}"
+        raise JobRetryError, "doing retry #{retries} of #{self.class.max_retries}"
       else
         logger.error 'Max retries'
         # TODO: ponerle infomacion al error
@@ -164,14 +164,14 @@ module LittleMonster::Core
       do_retry
     end
 
-    def notify_status(next_status)
+    def notify_status(next_status, options={})
       @status = next_status
       # TODO: notify api
     end
 
-    def notify_current_task(task, status=:running)
+    def notify_current_task(task, status=:running, options={})
       @current_task = task
-      # TODO: notify api
+      # TODO: notify api status and options
     end
 
     def task_class_for(task_name)

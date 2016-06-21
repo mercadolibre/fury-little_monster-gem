@@ -43,7 +43,6 @@ module LittleMonster::RSpec
 
       job_instance = job_class.new(params: options[:params])
       job_instance.define_singleton_method(:is_cancelled?) { options.fetch(:cancelled, false) }
-      job_instance.instance_variable_set('@retries', options[:retry]) if options[:retry]
 
       if options[:fails]
         options[:fails] = [options[:fails]] unless options[:fails].is_a? Array

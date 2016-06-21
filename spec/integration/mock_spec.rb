@@ -14,7 +14,7 @@ describe MockJob do
   end
 
   it 'ends with status failed if max retries is reached' do
-    expect(run_job(:mock_job, retry: 4, fails: { task: :task_a, error: LittleMonster::TaskError })).to have_ended_with_status :error
+    expect(run_job(:mock_job, fails: { task: :task_a, error: LittleMonster::TaskError })).to have_ended_with_status :pending
   end
 
   it 'runs task_b' do

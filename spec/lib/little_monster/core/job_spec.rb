@@ -36,20 +36,47 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#initialize' do
-    it 'sets the params' do
-      expect(job.instance_variable_get('@params')).to eq(options[:params])
+    context 'given a full options hash' do
+      let(:options) do
+        {
+          id: 1,
+          params: { a: :b },
+          tags: { tag: 'a tag' },
+          retries: 2,
+          current_task: :task_a,
+          last_output: { b: :c }
+        }
+      end
+
+      it { expect(job.id).to eq(options[:id]) }
+      it { expect(job.params).to eq(options[:params]) }
+      it { expect(job.tags).to eq(options[:tags]) }
+      it { expect(job.retries).to eq(options[:retries]) }
+      it { expect(job.current_task).to eq(options[:current_task]) }
+      it { expect(job.output).to eq(options[:last_output]) }
     end
 
-    it 'freezes the params' do
-      expect(job.instance_variable_get('@params').frozen?).to be true
-    end
+    context 'given empty options' do
+      let(:options) { {} }
 
-    it 'sets current_task to nil' do
-      expect(job.current_task).to be_nil
+      it { expect(job.id).to be_nil }
+      it { expect(job.params).to eq({}) }
+      it { expect(job.tags).to eq({}) }
+      it { expect(job.retries).to eq(0) }
+      it { expect(job.current_task).to be_nil }
+      it { expect(job.output).to be_nil }
     end
 
     it 'sets status to pending' do
       expect(job.status).to eq(:pending)
+    end
+
+    it 'freezes the params' do
+      expect(job.params.frozen?).to be true
+    end
+
+    it 'freezes the tags' do
+      expect(job.tags.frozen?).to be true
     end
   end
 
@@ -77,7 +104,7 @@ describe LittleMonster::Core::Job do
       context 'on mock job' do
         it 'calls the first task with empty outputs' do
           job.run
-          expect(MockJob::TaskA).to have_received(:new).with(options[:params], {})
+          expect(MockJob::TaskA).to have_received(:new).with(options[:params], nil)
         end
 
         it 'calls the later task with chained outputs' do
@@ -85,6 +112,20 @@ describe LittleMonster::Core::Job do
           allow_any_instance_of(MockJob::TaskA).to receive(:run).and_return(task_a_output)
           job.run
           expect(MockJob::TaskB).to have_received(:new).with(options[:params], task_a_output)
+        end
+
+        it 'notifies api task a finished with output' do
+          output = double
+          MockJob.tasks.each do |task|
+            allow_any_instance_of(MockJob.task_class_for task).to receive(:run).and_return(output)
+          end
+
+          allow(job).to receive(:notify_current_task)
+          job.run
+
+          MockJob.tasks.each do |task|
+            expect(job).to have_received(:notify_current_task).with(task, :finished, output: output)
+          end
         end
 
         it 'returns the output of the last task' do
@@ -165,10 +206,13 @@ describe LittleMonster::Core::Job do
     end
 
     context 'on finish' do
-      it 'notifies status as finished' do
+      let(:output) { double }
+
+      it 'notifies status as finished and passes output' do
         allow(job).to receive(:notify_status)
+        allow_any_instance_of(MockJob::TaskB).to receive(:run).and_return(output)
         job.run
-        expect(job).to have_received(:notify_status).with(:finished).once
+        expect(job).to have_received(:notify_status).with(:finished, output: output).once
       end
     end
   end
@@ -250,16 +294,29 @@ describe LittleMonster::Core::Job do
     context 'if max retries is not reached' do
       before :each do
         MockJob.retries 5
+        job.instance_variable_set '@current_task', :task_a
         job.instance_variable_set '@retries', 4
       end
 
       it 'increases retries by 1' do
-        job.send :do_retry rescue
+        job.send :do_retry rescue nil
         expect(job.instance_variable_get('@retries')).to eq(5)
       end
 
       it 'raises JobRetryError'  do
         expect { job.send :do_retry }.to raise_error(LittleMonster::JobRetryError)
+      end
+
+      it 'notifies status to pending' do
+        allow(job).to receive(:notify_status)
+        job.send :do_retry rescue nil
+        expect(job).to have_received(:notify_status).with(:pending)
+      end
+
+      it 'notifies current task to pending and set retries' do
+        allow(job).to receive(:notify_current_task)
+        job.send :do_retry rescue nil
+        expect(job).to have_received(:notify_current_task).with(job.current_task, :pending, retry: job.retries)
       end
     end
 

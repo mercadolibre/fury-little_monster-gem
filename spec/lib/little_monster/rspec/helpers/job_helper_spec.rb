@@ -78,11 +78,6 @@ describe LittleMonster::RSpec::JobHelper do
           expect(job.is_cancelled?).to be false
         end
 
-        it 'has retries variable set if options has retries' do
-          options[:retry] = 10
-          expect(job.instance_variable_get('@retries')).to eq(options[:retry])
-        end
-
         context 'given fail key in options' do
           it 'makes each task fail' do
             options[:fails] = [{ task: :task_a }]

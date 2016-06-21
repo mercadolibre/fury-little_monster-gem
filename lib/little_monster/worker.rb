@@ -5,8 +5,6 @@ module LittleMonster
     include LittleMonster::Loggable
     include ::Toiler::Worker
 
-    attr_reader :params
-
     def self.worker_queue(queue)
       toiler_options queue: queue
     end
@@ -22,8 +20,9 @@ module LittleMonster
 
     toiler_options on_visibility_extend: (proc do |_, body|
       logger.debug 'sending heartbeat'
-      params = MultiJson.load body['Message'], symbolize_keys: true
-      LittleMonster::Job.send_api_heartbeat params[:job_id]
+      message = MultiJson.load body['Message'], symbolize_keys: true
+      #send heartbeat
+      #LittleMonster::Job.send_api_heartbeat message[:job_id]
     end)
 
     def initialize
@@ -33,12 +32,12 @@ module LittleMonster
     end
 
     def perform(_sqs_msg, body)
-      params = MultiJson.load body['Message'], symbolize_keys: true
+      message = MultiJson.load body['Message'], symbolize_keys: true
 
       on_message
 
-      job_class = params[:job][:name].to_s.camelcase.constantize
-      @job = job_class.new(params)
+      job_class = message[:name].to_s.camelcase.constantize
+      @job = job_class.new(message)
 
       @job.run
     end

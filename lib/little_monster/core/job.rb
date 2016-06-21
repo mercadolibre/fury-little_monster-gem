@@ -28,25 +28,29 @@ module LittleMonster::Core
       def mock?
         @@mock ||= false
       end
-
-      def send_api_heartbeat(job_id)
-        API.put "/job/#{job_id}/worker", body: { pid: Process.pid }
-      end
     end
 
-    attr_reader :current_task
-    attr_reader :params
-    attr_reader :output
-    attr_reader :status
+      attr_reader :id
+      attr_reader :params
+      attr_reader :tags
+      attr_reader :status
+      attr_reader :retries
+      attr_reader :current_task
+      attr_reader :output
 
-    def initialize(params)
-      logger.debug "Starting with #{params}"
-      @retries = 0 # TODO: traer esto de la api
-      @params = params.freeze
-      @current_task = nil
-      @status = :pending
+    def initialize(options={})
+      @id = options.fetch(:id, nil)
+      @params = options.fetch(:params, {}).freeze
+      @tags = options.fetch(:tags, {})
+
+      @status = options.fetch(:status, :pending)
+      @retries = options.fetch(:retries, 0)
+      @current_task = options.fetch(:current_task, nil)
+
 
       @runned_tasks = {} if mock?
+      # TODO: setup logger
+      logger.debug "Starting with #{params}"
     end
 
     def run

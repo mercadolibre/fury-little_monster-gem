@@ -41,7 +41,7 @@ module LittleMonster::RSpec
       job_class = job.class == Class ? job : job.to_s.camelcase.constantize
       job_class.mock!
 
-      job_instance = job_class.new(options[:params])
+      job_instance = job_class.new(params: options[:params])
       job_instance.define_singleton_method(:is_cancelled?) { options.fetch(:cancelled, false) }
       job_instance.instance_variable_set('@retries', options[:retry]) if options[:retry]
 

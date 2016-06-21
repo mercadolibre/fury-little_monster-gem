@@ -5,11 +5,16 @@ describe LittleMonster::Core::Job do
     load './spec/mock/mock_job.rb'
   end
 
-  let(:params) { { a: 'b' } }
-  let(:job) { MockJob.new params }
+  let(:options) do
+    {
+      params: { a: 'b' }
+    }
+  end
+
+  let(:job) { MockJob.new options }
 
   context 'class level instance variables' do
-    let(:job_class) { MockJob.new(nil).class }
+    let(:job_class) { MockJob.new.class }
 
     describe '::task_list' do
       let(:tasks) { [:mock_task_b, :mock_task_a] }
@@ -32,7 +37,7 @@ describe LittleMonster::Core::Job do
 
   describe '#initialize' do
     it 'sets the params' do
-      expect(job.instance_variable_get('@params')).to eq(params)
+      expect(job.instance_variable_get('@params')).to eq(options[:params])
     end
 
     it 'freezes the params' do
@@ -72,14 +77,14 @@ describe LittleMonster::Core::Job do
       context 'on mock job' do
         it 'calls the first task with empty outputs' do
           job.run
-          expect(MockJob::TaskA).to have_received(:new).with(params, {})
+          expect(MockJob::TaskA).to have_received(:new).with(options[:params], {})
         end
 
         it 'calls the later task with chained outputs' do
           task_a_output = double
           allow_any_instance_of(MockJob::TaskA).to receive(:run).and_return(task_a_output)
           job.run
-          expect(MockJob::TaskB).to have_received(:new).with(params, task_a_output)
+          expect(MockJob::TaskB).to have_received(:new).with(options[:params], task_a_output)
         end
 
         it 'returns the output of the last task' do
@@ -92,7 +97,7 @@ describe LittleMonster::Core::Job do
 
       it 'sets status as error if task_name does not exist' do
         MockJob.task_list :not_existing_task
-        f = MockJob.new params
+        f = MockJob.new options
         f.run
         expect(f.status).to eq(:error)
       end

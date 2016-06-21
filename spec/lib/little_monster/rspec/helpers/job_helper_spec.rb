@@ -9,7 +9,7 @@ describe LittleMonster::RSpec::JobHelper do
   end
 
   describe described_class::Result do
-    let(:job) { job_class.new(nil) }
+    let(:job) { job_class.new }
     let(:result) { described_class.new job }
 
     describe '#initalize' do
@@ -58,7 +58,7 @@ describe LittleMonster::RSpec::JobHelper do
       it 'builds an instance of the job' do
         allow(job_class).to receive(:new).and_call_original
         run_job job_class.to_s.underscore, options
-        expect(job_class).to have_received(:new).with(options[:params])
+        expect(job_class).to have_received(:new).with(params: options[:params])
       end
 
       context 'instance' do
@@ -104,7 +104,7 @@ describe LittleMonster::RSpec::JobHelper do
       end
 
       context 'output' do
-        let(:job) { job_class.new(nil) }
+        let(:job) { job_class.new }
 
         before :each do
           allow(job_class).to receive(:new).and_return(job)

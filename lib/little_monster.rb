@@ -1,6 +1,7 @@
 require 'active_support/all'
 require 'oj'
 require 'multi_json'
+require 'toiler'
 require 'little_monster/config'
 require 'little_monster/core'
 
@@ -36,6 +37,10 @@ module LittleMonster
       job_requests_retries: 4,
       job_requests_retry_wait: 1
     }
+  end
+
+  def logger
+    Toiler.logger
   end
 
   def method_missing(method, *args, &block)

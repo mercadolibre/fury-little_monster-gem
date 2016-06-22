@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'Write a short summary, because Rubygems requires one.'
   spec.description   = 'Write a longer description or delete this line.'
-  spec.homepage      = "http://github.com/mercadolibre/fury-little_monster"
+  spec.homepage      = 'http://github.com/mercadolibre/fury-little_monster'
   spec.license       = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or

@@ -30,16 +30,16 @@ module LittleMonster::Core
       end
     end
 
-      attr_reader :id
-      attr_reader :params
-      attr_reader :tags
-      attr_reader :status
+    attr_reader :id
+    attr_reader :params
+    attr_reader :tags
+    attr_reader :status
 
-      attr_reader :retries
-      attr_reader :current_task
-      attr_reader :output
+    attr_reader :retries
+    attr_reader :current_task
+    attr_reader :output
 
-    def initialize(options={})
+    def initialize(options = {})
       @id = options.fetch(:id, nil)
       @params = options.fetch(:params, {}).freeze
       @tags = options.fetch(:tags, {}).freeze
@@ -88,7 +88,7 @@ module LittleMonster::Core
           return
         end
 
-        @retries = 0 #Hago esto para que despues de succesful un task resete retries
+        @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
       notify_status :finished, output: @output
@@ -158,12 +158,12 @@ module LittleMonster::Core
       do_retry
     end
 
-    def notify_status(next_status, options={})
+    def notify_status(next_status, _options = {})
       @status = next_status
       # TODO: notify api
     end
 
-    def notify_current_task(task, status=:running, options={})
+    def notify_current_task(task, _status = :running, _options = {})
       @current_task = task
       # TODO: notify api status and options
     end

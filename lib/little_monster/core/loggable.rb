@@ -21,7 +21,7 @@ module LittleMonster::Core
         @logger
       end
 
-      def initialize_logger(file, formatter=nil)
+      def initialize_logger(file, formatter = nil)
         return @logger = Logger.new('/dev/null') if $ENV == 'test'
 
         @logger = Logger.new(file)
@@ -35,7 +35,7 @@ module LittleMonster::Core
 
       def default_formatter
         return LittleMonster.default_formatter if LittleMonster.default_formatter
-        return proc do |severity, datetime, _progname, msg|
+        proc do |severity, datetime, _progname, msg|
           date_format = datetime.strftime('%Y-%m-%d %H:%M:%S')
           "#{date_format} -  [level:#{severity}]  (#{to_s.underscore}): #{msg}\n"
         end

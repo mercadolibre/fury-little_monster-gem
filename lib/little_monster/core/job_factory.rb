@@ -1,6 +1,6 @@
 module LittleMonster::Core
   class Job::Factory
-    def initialize(message={})
+    def initialize(message = {})
       @id = message[:id]
       @name = message[:name]
       @params = message[:params]
@@ -21,15 +21,14 @@ module LittleMonster::Core
         current_task: current_task[:name],
         retries: current_task[:retries],
         last_output: current_task[:previous_output]
-      }.delete_if { |_,value| value.nil? }
-
+      }.delete_if { |_, value| value.nil? }
 
       job_class = @name.to_s.camelcase.constantize
       job_class.new job_attributes
     end
 
     def fetch_attributes
-      #resp = API.get "/job/#{@id}"
+      # resp = API.get "/job/#{@id}"
       {}
     end
 
@@ -42,7 +41,7 @@ module LittleMonster::Core
       {
         name: @api_attributes[:tasks][task_index][:name],
         retries: @api_attributes[:tasks][task_index][:retries],
-        previous_output: (task_index > 0 ? @api_attributes[:tasks][task_index-1][:output] : nil)
+        previous_output: (task_index > 0 ? @api_attributes[:tasks][task_index - 1][:output] : nil)
       }
     end
   end

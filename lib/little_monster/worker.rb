@@ -18,11 +18,11 @@ module LittleMonster
 
     toiler_options parser: MultiJson
 
-    toiler_options on_visibility_extend: (proc do |_, body|
+    toiler_options on_visibility_extend: (proc do |_, _body|
       logger.debug 'sending heartbeat'
-      #message = MultiJson.load body['Message'], symbolize_keys: true
-      #send heartbeat
-      #LittleMonster::Job.send_api_heartbeat message[:job_id]
+      # message = MultiJson.load body['Message'], symbolize_keys: true
+      # send heartbeat
+      # LittleMonster::Job.send_api_heartbeat message[:job_id]
     end)
 
     def initialize

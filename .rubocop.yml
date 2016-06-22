@@ -7,6 +7,9 @@ Style/FrozenStringLiteralComment:
                  to help transition from Ruby 2.3.0 to Ruby 3.0.
   Enabled: false
 
+Style/ClassAndModuleChildren:
+  Enabled: false
+
 Metrics/LineLength:
   Max: 110
 

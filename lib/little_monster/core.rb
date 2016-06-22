@@ -9,3 +9,4 @@ require 'little_monster/core/loggable' # must be required first to satisfy job a
 require 'little_monster/core/api'
 require 'little_monster/core/job'
 require 'little_monster/core/task'
+require 'little_monster/core/job_factory'

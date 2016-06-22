@@ -20,7 +20,7 @@ module LittleMonster
 
     toiler_options on_visibility_extend: (proc do |_, body|
       logger.debug 'sending heartbeat'
-      message = MultiJson.load body['Message'], symbolize_keys: true
+      #message = MultiJson.load body['Message'], symbolize_keys: true
       #send heartbeat
       #LittleMonster::Job.send_api_heartbeat message[:job_id]
     end)
@@ -33,13 +33,12 @@ module LittleMonster
 
     def perform(_sqs_msg, body)
       message = MultiJson.load body['Message'], symbolize_keys: true
+      message[:params] = MultiJson.load message[:params], symbolize_keys: true
 
       on_message
 
-      job_class = message[:name].to_s.camelcase.constantize
-      @job = job_class.new(message)
-
-      @job.run
+      job = LittleMonster::Job::Factory.new(message).build
+      job.run unless job.nil?
     end
   end
 end

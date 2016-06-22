@@ -40,7 +40,49 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#fetch_attributes' do
-    it 'fetches the job attributes from api'
+    let(:response) { double(success?: true, body: double) }
+
+    before :each do
+      allow(LittleMonster::API).to receive(:get).and_return(response)
+    end
+
+    context 'when env is test' do
+      before :each do
+        allow(LittleMonster.env).to receive(:test?).and_return(true)
+      end
+
+      it 'does not make a request' do
+        factory.fetch_attributes
+        expect(LittleMonster::API).not_to have_received(:get)
+      end
+
+      it { expect(factory.fetch_attributes).to eq({}) }
+    end
+
+    context 'when env is not test' do
+      before :each do
+        allow(LittleMonster.env).to receive(:test?).and_return(false)
+      end
+
+      it 'makes a request to api' do
+        factory.fetch_attributes
+        expect(LittleMonster::API).to have_received(:get).with("/job/#{message[:id]}")
+      end
+
+      context 'when request succeds' do
+        it 'returns request body' do
+          expect(factory.fetch_attributes).to eq(response.body)
+        end
+      end
+
+      context 'when request fails' do
+        before :each do
+          allow(response).to receive(:success?).and_return(false)
+        end
+
+        it { expect(factory.fetch_attributes).to eq({}) }
+      end
+    end
   end
 
   describe '#find_current_task' do

@@ -28,8 +28,14 @@ module LittleMonster::Core
     end
 
     def fetch_attributes
-      # resp = API.get "/job/#{@id}"
-      {}
+      return {} if LittleMonster.env.test?
+      resp = API.get "/job/#{@id}"
+
+      if resp.success?
+        resp.body
+      else
+        {}
+      end
     end
 
     def find_current_task

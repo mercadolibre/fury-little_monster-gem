@@ -39,4 +39,22 @@ describe LittleMonster::Worker do
       expect(job).not_to have_received(:run)
     end
   end
+
+  describe '::worker_queue' do
+    it 'sets toiler queue' do
+      queue = double
+      allow(described_class).to receive(:toiler_options)
+      described_class.worker_queue queue
+      expect(described_class).to have_received(:toiler_options).with(queue: queue).once
+    end
+  end
+
+  describe '::worker_concurrency' do
+    it 'sets toiler concurrency' do
+      concurrency = double
+      allow(described_class).to receive(:toiler_options)
+      described_class.worker_concurrency concurrency
+      expect(described_class).to have_received(:toiler_options).with(concurrency: concurrency).once
+    end
+  end
 end

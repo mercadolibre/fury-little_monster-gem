@@ -95,7 +95,6 @@ module LittleMonster::Core
 
       logger.info "[job:#{self.class}] [action:finish] #{@output}"
       logger.info 'Succesfuly finished'
-      # TODO: report to the api job finished
       @output
     end
 
@@ -115,11 +114,6 @@ module LittleMonster::Core
     private
 
     attr_writer :status
-
-    def is_cancelled?
-      # TODO: checks against the api if job cancelled
-      false # by default is false
-    end
 
     def do_retry
       if self.class.max_retries == -1 || self.class.max_retries > @retries
@@ -172,6 +166,11 @@ module LittleMonster::Core
     def notify_current_task(task, status=:running, options={})
       @current_task = task
       # TODO: notify api status and options
+    end
+
+    def is_cancelled?
+      # TODO: checks against the api if job cancelled
+      false # by default is false
     end
 
     def task_class_for(task_name)

@@ -342,6 +342,14 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#is_cancelled?' do
-    it { expect(job.send(:is_cancelled?)).to be false }
+    it
+  end
+
+  describe '#notify_status' do
+    it
+  end
+
+  describe '#notify_current_task' do
+    it
   end
 end

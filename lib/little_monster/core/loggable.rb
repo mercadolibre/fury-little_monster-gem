@@ -22,7 +22,7 @@ module LittleMonster::Core
       end
 
       def initialize_logger(file, formatter = nil)
-        return @logger = Logger.new('/dev/null') if $ENV == 'test'
+        return @logger = Logger.new('/dev/null') if LittleMonster.env.test?
 
         @logger = Logger.new(file)
         @logger.progname = to_s.underscore

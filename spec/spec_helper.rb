@@ -4,6 +4,8 @@ SimpleCov.start do
   add_filter '/spec/'
 end
 
+ENV['RUBY_ENV'] = 'test'
+
 require 'rspec'
 require 'byebug'
 require 'require_all'
@@ -16,8 +18,6 @@ require_rel '../jobs'
 require_rel '../tasks'
 
 require_rel 'mock'
-
-$ENV = 'test'
 
 RSpec.configure do |conf|
   conf.color = true

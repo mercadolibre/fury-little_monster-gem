@@ -33,11 +33,7 @@ describe LittleMonster::Core::Loggable do
 
   context  'when env is not test' do
     before :each do
-      $ENV = 'development'
-    end
-
-    after :each do
-      $ENV = 'test'
+      allow(LittleMonster.env).to receive(:test?).and_return(false)
     end
 
     describe 'initialize_logger' do

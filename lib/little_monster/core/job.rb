@@ -51,6 +51,9 @@ module LittleMonster::Core
       @status = :pending
 
       @runned_tasks = {} if mock?
+
+      notify_task_list
+
       # TODO: setup logger
       logger.debug "Starting with #{params}"
     end
@@ -121,7 +124,7 @@ module LittleMonster::Core
         logger.info "Retry ##{retries} of #{self.class.max_retries}"
 
         notify_status :pending
-        notify_current_task current_task, :pending, retry: retries
+        notify_current_task current_task, :pending, retries: retries
 
         raise JobRetryError, "doing retry #{retries} of #{self.class.max_retries}"
       else
@@ -158,19 +161,52 @@ module LittleMonster::Core
       do_retry
     end
 
-    def notify_status(next_status, _options = {})
-      @status = next_status
-      # TODO: notify api
+    def notify_task_list
+      return true unless should_request?
+      res = LittleMonster::API.post "/jobs/#{id}/tasks", body: {
+        tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
+      }
+
+      res.success?
     end
 
-    def notify_current_task(task, _status = :running, _options = {})
+    def notify_status(next_status, options = {})
+      @status = next_status
+
+      return true unless should_request?
+
+      job_update = { status: @status }
+      job_update.merge!(options)
+
+      resp = LittleMonster::API.put "/jobs/#{id}", body: job_update
+      resp.success?
+    end
+
+    def notify_current_task(task, status = :running, options = {})
       @current_task = task
-      # TODO: notify api status and options
+
+      return true unless should_request?
+
+      task_update = { status: status }
+      task_update.merge!(options)
+
+      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", body: { task: task_update }
+      resp.success?
     end
 
     def is_cancelled?
-      # TODO: checks against the api if job cancelled
-      false # by default is false
+      return false unless should_request?
+      resp = LittleMonster::API.get "/jobs/#{id}"
+
+      if resp.success?
+        resp.body[:cancel]
+      else
+        false
+      end
+    end
+
+    def should_request?
+      !(mock? || LittleMonster.env.test?)
     end
 
     def task_class_for(task_name)

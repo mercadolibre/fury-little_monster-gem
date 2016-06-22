@@ -10,6 +10,12 @@ module LittleMonster
 
   def init
     @@config = Config.new default_config_values
+
+    @@env = ActiveSupport::StringInquirer.new(ENV['LITTLE_MONSTER_ENV'] || ENV['RUBY_ENV'] || 'development')
+  end
+
+  def env
+    @@env
   end
 
   def configure

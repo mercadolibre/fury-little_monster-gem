@@ -7,6 +7,7 @@ describe LittleMonster::Core::Job do
 
   let(:options) do
     {
+      id: 0,
       params: { a: 'b' }
     }
   end
@@ -77,6 +78,11 @@ describe LittleMonster::Core::Job do
 
     it 'freezes the tags' do
       expect(job.tags.frozen?).to be true
+    end
+
+    it 'notifies task list' do
+      allow_any_instance_of(MockJob).to receive(:notify_task_list)
+      expect(job).to have_received(:notify_task_list).once
     end
   end
 
@@ -316,7 +322,7 @@ describe LittleMonster::Core::Job do
       it 'notifies current task to pending and set retries' do
         allow(job).to receive(:notify_current_task)
         job.send :do_retry rescue nil
-        expect(job).to have_received(:notify_current_task).with(job.current_task, :pending, retry: job.retries)
+        expect(job).to have_received(:notify_current_task).with(job.current_task, :pending, retries: job.retries)
       end
     end
 
@@ -341,15 +347,188 @@ describe LittleMonster::Core::Job do
     end
   end
 
-  describe '#is_cancelled?' do
-    it
+  describe 'notifiers' do
+    let(:response) { double(success?: false) }
+
+    before :each do
+      allow(LittleMonster::API).to receive(:post).and_return(response)
+      allow(LittleMonster::API).to receive(:get).and_return(response)
+      allow(LittleMonster::API).to receive(:put).and_return(response)
+    end
+
+    describe '#notify_task_list' do
+      context 'when should_request is false' do
+        it 'returns true' do
+          expect(job.send(:notify_task_list)).to be true
+        end
+
+        it 'does not send any request' do
+          job.send(:notify_task_list)
+          expect(LittleMonster::API).not_to have_received(:post)
+        end
+      end
+
+      context 'when should_request is true' do
+        before :each do
+          allow(job).to receive(:should_request?).and_return(true)
+        end
+
+        it 'makes a request to api with task list' do
+          tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
+          job.send(:notify_task_list)
+          expect(LittleMonster::API).to have_received(:post).with("/jobs/#{job.id}/tasks",
+                                                                  body: { tasks: tasks_name_with_order }).once
+        end
+
+        it 'returns request success?' do
+          expect(job.send(:notify_task_list)).to eq(response.success?)
+        end
+      end
+    end
+
+    describe '#is_cancelled?' do
+      context 'when should_request is false' do
+        it 'returns false' do
+          expect(job.send(:is_cancelled?)).to be false
+        end
+
+        it 'does not send any request' do
+          job.send(:is_cancelled?)
+          expect(LittleMonster::API).not_to have_received(:get)
+        end
+      end
+
+      context 'when should_request is true' do
+        before :each do
+          allow(job).to receive(:should_request?).and_return(true)
+        end
+
+        it 'makes a request to api' do
+          job.send(:is_cancelled?)
+          expect(LittleMonster::API).to have_received(:get).with("/jobs/#{job.id}")
+        end
+
+        context 'if request was successful' do
+          before :each do
+            allow(response).to receive(:success?).and_return(true)
+          end
+
+          it 'returns true if response cancel is true' do
+            allow(response).to receive(:body).and_return(cancel: true)
+            expect(job.send(:is_cancelled?)).to be true
+          end
+
+          it 'returns false if response cancel is false' do
+            allow(response).to receive(:body).and_return(cancel: false)
+            expect(job.send(:is_cancelled?)).to be false
+          end
+        end
+
+        context 'if request was not succesful' do
+          before :each do
+            allow(response).to receive(:success?).and_return(false)
+          end
+
+          it 'returns false' do
+            expect(job.send(:is_cancelled?)).to be false
+          end
+        end
+      end
+    end
+
+    describe '#notify_status' do
+      context 'given a status and options' do
+        let(:status) { :finished }
+        let(:options) { { output: double } }
+
+        context 'when should_request is false' do
+          it 'returns true' do
+            expect(job.send(:notify_status, status, options)).to be true
+          end
+
+          it 'does not send any request' do
+            job.send(:notify_status, status, options)
+            expect(LittleMonster::API).not_to have_received(:put)
+          end
+        end
+
+        context 'when should_request is true' do
+          before :each do
+            allow(job).to receive(:should_request?).and_return(true)
+          end
+
+          it 'makes a request to api with status and options' do
+            job.send(:notify_status, status, options)
+            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
+                                                                   body: { status: status }.merge(options)).once
+          end
+
+          it 'returns request success?' do
+            expect(job.send(:notify_status, status, options)).to eq(response.success?)
+          end
+        end
+      end
+    end
+
+    describe '#notify_current_task' do
+      context 'given a task, status and options' do
+        let(:task) { :task }
+        let(:status) { :finished }
+        let(:options) { { retries: 5 } }
+
+        context 'when should_request is false' do
+          it 'returns true' do
+            expect(job.send(:notify_current_task, task, status, options)).to be true
+          end
+
+          it 'does not send any request' do
+            job.send(:notify_current_task, task, status, options)
+            expect(LittleMonster::API).not_to have_received(:put)
+          end
+        end
+
+        context 'when should_request is true' do
+          before :each do
+            allow(job).to receive(:should_request?).and_return(true)
+          end
+
+          it 'makes a request to api with status and options' do
+            job.send(:notify_current_task, task, status, options)
+            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/tasks/#{task}",
+                                                                   body: { task: { status: status }.merge(options) }).once
+          end
+
+          it 'returns request success?' do
+            expect(job.send(:notify_current_task, task, status, options)).to eq(response.success?)
+          end
+        end
+      end
+    end
   end
 
-  describe '#notify_status' do
-    it
-  end
+  describe '#should_request?' do
+    it 'returns false if class is mock and env is test' do
+      allow(job).to receive(:mock?).and_return(true)
+      allow(LittleMonster.env).to receive(:test?).and_return(true)
+      expect(job.send(:should_request?)).to be false
+    end
 
-  describe '#notify_current_task' do
-    it
+    it 'returns false if class is not mock and env is test' do
+      allow(job).to receive(:mock?).and_return(false)
+      allow(LittleMonster.env).to receive(:test?).and_return(true)
+      expect(job.send(:should_request?)).to be false
+    end
+
+    it 'returns false if class is mock and env is not test' do
+      allow(job).to receive(:mock?).and_return(true)
+      allow(LittleMonster.env).to receive(:test?).and_return(false)
+      expect(job.send(:should_request?)).to be false
+    end
+
+    it 'returns true if class is not mock and env is not test' do
+      allow(job).to receive(:mock?).and_return(false)
+      allow(LittleMonster.env).to receive(:test?).and_return(false)
+      expect(job.send(:should_request?)).to be true
+    end
   end
 end

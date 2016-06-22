@@ -59,7 +59,7 @@ module LittleMonster::Core
       notify_status :running
 
       self.class.tasks.each do |task_name|
-        logger.debug "Starting #{task_name} with output => #{@output}"
+        logger.debug "running #{task_name}"
 
         notify_current_task task_name, :running
 

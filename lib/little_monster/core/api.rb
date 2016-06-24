@@ -3,7 +3,7 @@ require 'multi_json'
 
 module LittleMonster::Core
   class API
-    include Loggable
+    extend Loggable
 
     class << self
       def get(path, params = {}, options = {})

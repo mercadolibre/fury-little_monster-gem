@@ -28,7 +28,7 @@ module LittleMonster::Core
     end
 
     def fetch_attributes
-      return {} if LittleMonster.env.test?
+      return {} if ['development', 'test'].include? LittleMonster.env
       resp = API.get "/job/#{@id}"
 
       if resp.success?

@@ -46,9 +46,9 @@ describe LittleMonster::Core::Job::Factory do
       allow(LittleMonster::API).to receive(:get).and_return(response)
     end
 
-    context 'when env is test' do
+    context 'when env is test or development' do
       before :each do
-        allow(LittleMonster.env).to receive(:test?).and_return(true)
+        allow(LittleMonster).to receive(:env).and_return('test')
       end
 
       it 'does not make a request' do
@@ -59,9 +59,9 @@ describe LittleMonster::Core::Job::Factory do
       it { expect(factory.fetch_attributes).to eq({}) }
     end
 
-    context 'when env is not test' do
+    context 'when env is not test nor development' do
       before :each do
-        allow(LittleMonster.env).to receive(:test?).and_return(false)
+        allow(LittleMonster).to receive(:env).and_return('production')
       end
 
       it 'makes a request to api' do

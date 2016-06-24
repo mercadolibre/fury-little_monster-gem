@@ -205,6 +205,13 @@ describe LittleMonster::Core::API do
               .exactly(retries+1).times
           end
         end
+
+        context 'if request is critical' do
+          it 'raises APIUnreachableError after all requests fail' do
+            options[:critical] = true
+            expect { subject.request method, path, options }.to raise_error(LittleMonster::APIUnreachableError, "critical request to #{path} has fail, check little monster api")
+          end
+        end
       end
     end
   end

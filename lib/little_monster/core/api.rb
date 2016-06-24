@@ -47,6 +47,9 @@ module LittleMonster::Core
             retries += 1
             retry
           end
+
+          logger.error 'request has reached max retries'
+          raise APIUnreachableError, "critical request to #{path} has fail, check little monster api" if options[:critical]
         end
 
         res.define_singleton_method(:body) do

@@ -84,6 +84,9 @@ module LittleMonster::Core
             @runned_tasks[task_name][:instance] = task
             @runned_tasks[task_name][:output] = @output
           end
+        rescue APIUnreachableError => e
+          raise e
+          return
         rescue CancelError => e
           cancel e
           return
@@ -171,7 +174,8 @@ module LittleMonster::Core
           tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
         },
         retries: LittleMonster.job_requests_retries,
-        retry_wait: LittleMonster.job_requests_retry_wait
+        retry_wait: LittleMonster.job_requests_retry_wait,
+        critical: true
       }
 
       res = LittleMonster::API.post "/jobs/#{id}/tasks", options
@@ -185,11 +189,9 @@ module LittleMonster::Core
 
       params = { body: { status: @status } }
       params[:body].merge!(options)
-
-      if @status == :finished
-        params[:retries] = LittleMonster.job_requests_retries
-        params[:retry_wait] = LittleMonster.job_requests_retry_wait
-      end
+      params[:retries] = LittleMonster.job_requests_retries
+      params[:retry_wait] = LittleMonster.job_requests_retry_wait
+      params[:critical] = true
 
       resp = LittleMonster::API.put "/jobs/#{id}", params
       resp.success?
@@ -204,6 +206,7 @@ module LittleMonster::Core
       params[:body][:task].merge!(options)
       params[:retries] = LittleMonster.task_requests_retries
       params[:retry_wait] = LittleMonster.task_requests_retry_wait
+      params[:critical] = true
 
       resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", params
       resp.success?

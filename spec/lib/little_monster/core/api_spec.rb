@@ -121,6 +121,12 @@ describe LittleMonster::Core::API do
             .with(url, hash_including(body: MultiJson.dump(body)))
         end
 
+        it 'has tiemout set to configured timeout' do
+          subject.request method, path, options
+          expect(Typhoeus).to have_received(method)
+            .with(url, hash_including(timeout: LittleMonster.request_timeout))
+        end
+
         it 'has content type set to json if it was not specified' do
           subject.request method, path, options
           expect(Typhoeus).to have_received(method)
@@ -164,10 +170,40 @@ describe LittleMonster::Core::API do
           allow(response).to receive(:code).and_return(500)
         end
 
-        it 'retries the amount of times configured' do
-          subject.request method, path, options
-          expect(Typhoeus).to have_received(method)
-            .exactly(LittleMonster.api_request_retries).times
+        context 'if no retry configs were passed' do
+          it 'waits the default amount of time between requests' do
+            subject.request method, path, options
+            expect(subject).to have_received(:sleep).with(LittleMonster.default_request_retry_wait)
+              .exactly(LittleMonster.default_request_retries).times
+          end
+
+          it 'retries the defaulted amount of times' do
+            subject.request method, path, options
+            expect(Typhoeus).to have_received(method)
+              .exactly(LittleMonster.default_request_retries+1).times #es la cantidad de retries +1 de el primer request
+          end
+        end
+
+        context 'given retries and retry_wait in options' do
+          let(:retries) { LittleMonster.default_request_retries+1 }
+          let(:retry_wait) { LittleMonster.default_request_retry_wait+1 }
+
+          before :each do
+            options[:retries] = retries
+            options[:retry_wait] = retry_wait
+          end
+
+          it 'waits the specified amount of time between requests' do
+            subject.request method, path, options
+            expect(subject).to have_received(:sleep).with(retry_wait)
+              .exactly(retries).times
+          end
+
+          it 'retries the specified amount of times' do
+            subject.request method, path, options
+            expect(Typhoeus).to have_received(method)
+              .exactly(retries+1).times
+          end
         end
       end
     end

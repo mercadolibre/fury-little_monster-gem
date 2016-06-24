@@ -370,11 +370,13 @@ describe LittleMonster::Core::Job do
           allow(job).to receive(:should_request?).and_return(true)
         end
 
-        it 'makes a request to api with task list' do
+        it 'makes a request to api with task list, retries and retry wait' do
           tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
           job.send(:notify_task_list)
           expect(LittleMonster::API).to have_received(:post).with("/jobs/#{job.id}/tasks",
-                                                                  body: { tasks: tasks_name_with_order }).once
+                                                                  body: { tasks: tasks_name_with_order },
+                                                                  retries: LittleMonster.job_requests_retries,
+                                                                  retry_wait: LittleMonster.job_requests_retry_wait).once
         end
 
         it 'returns request success?' do
@@ -435,7 +437,7 @@ describe LittleMonster::Core::Job do
 
     describe '#notify_status' do
       context 'given a status and options' do
-        let(:status) { :finished }
+        let(:status) { :my_status }
         let(:options) { { output: double } }
 
         context 'when should_request is false' do
@@ -458,6 +460,18 @@ describe LittleMonster::Core::Job do
             job.send(:notify_status, status, options)
             expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
                                                                    body: { status: status }.merge(options)).once
+          end
+
+          context 'when status is finished' do
+            let(:status) { :finished }
+
+            it 'makes a request to api with status, options, retries and retry wait' do
+              job.send(:notify_status, status, options)
+              expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
+                                                                     body: { status: status }.merge(options),
+                                                                     retries: LittleMonster.job_requests_retries,
+                                                                     retry_wait: LittleMonster.job_requests_retry_wait).once
+            end
           end
 
           it 'returns request success?' do
@@ -489,10 +503,12 @@ describe LittleMonster::Core::Job do
             allow(job).to receive(:should_request?).and_return(true)
           end
 
-          it 'makes a request to api with status and options' do
+          it 'makes a request to api with status, options retries and retry wait' do
             job.send(:notify_current_task, task, status, options)
             expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/tasks/#{task}",
-                                                                   body: { task: { status: status }.merge(options) }).once
+                                                                   body: { task: { status: status }.merge(options) },
+                                                                   retries: LittleMonster.task_requests_retries,
+                                                                   retry_wait: LittleMonster.task_requests_retry_wait).once
           end
 
           it 'returns request success?' do

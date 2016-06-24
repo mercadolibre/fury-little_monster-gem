@@ -1,6 +1,12 @@
 module LittleMonster::Core
   class TaggedLogger
+    attr_reader :tags
+
     LEVELS = [:unknown, :fatal, :error, :warn, :info, :debug]
+
+    def self.tags_to_string(hash)
+      hash.map { |k, v| "[#{k}:#{v}]" }.join
+    end
 
     def initialize
       @tags = Hash.new({})
@@ -13,21 +19,21 @@ module LittleMonster::Core
       end
 
       if LEVELS.include? method.to_sym
-        return LittleMonster.logger.public_send method, tagged_message(method.to_sym, *args)
+        return LittleMonster.logger.public_send method, tag_message(method.to_sym, *args)
       end
 
       super method, *args, &block
     end
 
-    def tags_for(key, tags={})
-      @tags[key] = tags
+    def tags_for(key, t={})
+      @tags[key] = t
     end
 
-    def tags(tags={})
-      tags_for(:default, tags)
+    def default_tags(t)
+      tags_for(:default, t)
     end
 
-    def tagged_message(level, message='')
+    def tag_message(level, message='')
       prefix_string =  tags_to_string @tags[:default].merge(@tags[level])
       "#{prefix_string} -- #{message}"
     end
@@ -37,7 +43,7 @@ module LittleMonster::Core
     end
 
     def tags_to_string(hash)
-      hash.map { |k, v| "[#{k}:#{v}]" }.join
+      self.class.tags_to_string hash
     end
   end
 end

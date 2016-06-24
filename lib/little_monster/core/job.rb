@@ -86,7 +86,6 @@ module LittleMonster::Core
           end
         rescue APIUnreachableError => e
           raise e
-          return
         rescue CancelError => e
           cancel e
           return

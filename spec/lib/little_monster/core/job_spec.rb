@@ -183,6 +183,18 @@ describe LittleMonster::Core::Job do
           expect(mock_task).to have_received(:error).with(LittleMonster::TaskError)
         end
       end
+
+      context 'when api is down' do
+        it 'raises APIUnreachableError when notify_current_task raises error' do
+          allow(job).to receive(:notify_current_task).and_raise(LittleMonster::APIUnreachableError, 'api down')
+          expect { job.run }.to raise_error(LittleMonster::APIUnreachableError)
+        end
+
+        it 'raises APIUnreachableError when notify_status raises error' do
+          allow(job).to receive(:notify_status).and_raise(LittleMonster::APIUnreachableError, 'api down')
+          expect { job.run }.to raise_error(LittleMonster::APIUnreachableError)
+        end
+      end
     end
 
     context 'when cancelled' do

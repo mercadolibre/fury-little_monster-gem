@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
-require_relative 'cli'
+require_relative '../lib/little_monster/generators/cli'
 LittleMonster::Cli.start

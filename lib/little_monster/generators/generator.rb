@@ -1,4 +1,3 @@
-require 'byebug'
 require 'thor'
 require "active_support/all"
 

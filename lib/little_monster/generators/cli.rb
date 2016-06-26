@@ -1,11 +1,10 @@
-require 'byebug'
 require 'thor'
 
 require_relative './generator'
 
 module LittleMonster
   class Cli < Thor
-    desc 'version','version'
+    desc 'show version','version'
     map %w[-v --version] => :version
     def version
       say '0.0.0'

@@ -5,7 +5,6 @@ module LittleMonster
   class Generator < Thor::Group
     include Thor::Actions
 
-
     argument :job_name, 
       type: :string, 
       banner: 'Job Name',
@@ -15,9 +14,6 @@ module LittleMonster
       type: :array, 
       banner: 'A set of instructions for making or preparing something',
       required: true
-
-
-    class_option :enviroment, :default => :development
 
     def self.source_root
       File.dirname(__FILE__)

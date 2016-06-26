@@ -1,8 +1,8 @@
 class <%= @job_name.camelize %> < LittleMonster::Job
-  <% if @job_tasks.size == 0 %>
+  <% if !@job_tasks || @job_tasks.size == 0 %>
     task_list :something_to_do
   <% else %>
-    task_list :<%= @job_tasks.join(", :") %>
+    task_list :<%= @task_names.join(", :") %>
   <% end %>
 
   def on_cancel

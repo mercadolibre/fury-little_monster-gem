@@ -1,37 +1,4 @@
 #!/usr/bin/env ruby
 
-require 'bundler'
-Bundler.require(:default)
-require 'little_monster'
-require 'little_monster/generators'
-
-#job_name = ARGV.shift
-#tasks_names = ARGV
-#
-
-module LittleMonster::Generators
-  class Command < Thor
-
-    desc "generate <job_name> [task_lists]", "Creates a jobs and tasks schemas"
-    option :environment, type: :string, 
-      aliases: :e
-    banner: 'environment default: development'
-
-
-    def generate(name)
-      job = LittleMonster::Generators::Jobs.new(job_name, *tasks_names)
-      tasks = LittleMonster::Generators::Tasks.new(job_name, *tasks_names)
-
-      job.generate
-      tasks.generate
-    end
-
-    desc 'run_job <job_name> [params]', 'runs a job'
-    def run_job                                                                                                                               
-      puts 'should run'
-    end
-  end
-
-end
-
-LittleMonster::Generators::MyCLI.start(ARGV)
+require_relative 'cli'
+LittleMonster::Cli.start

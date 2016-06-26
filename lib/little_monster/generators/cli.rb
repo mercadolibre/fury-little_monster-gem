@@ -1,5 +1,5 @@
 require 'thor'
-require_relative './generator'
+require_relative './generate'
 
 module LittleMonster
   class Cli < Thor

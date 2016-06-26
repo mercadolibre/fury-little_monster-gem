@@ -1,5 +1,4 @@
 require 'thor'
-
 require_relative './generator'
 
 module LittleMonster
@@ -13,19 +12,9 @@ module LittleMonster
     desc 'generate', 'generate a new job'
     map %w[g --generate] => :generate
 
-    argument :job_name, 
-      type: :string, 
-      banner: 'Job Name',
-      required: true
-
-    argument :task_names, 
-      type: :array, 
-      banner: 'A set of instructions for making or preparing something',
-      required: true
-
-    def generate
+    def generate(*args)
       #generator.destination_root = '/tmp'
-      invoke Generator
+      invoke Generator,args
     end
   end
 end

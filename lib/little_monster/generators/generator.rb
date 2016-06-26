@@ -1,5 +1,5 @@
 require 'thor'
-require "active_support/all"
+require 'active_support/core_ext/string'
 
 module LittleMonster
   class Generator < Thor::Group

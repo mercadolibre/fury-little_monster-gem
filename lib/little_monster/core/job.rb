@@ -6,8 +6,7 @@ module LittleMonster::Core
       attr_reader :tasks
 
       def task_list(*tasks)
-        byebug
-        @tasks = *tasks || []
+        @tasks = *tasks
       end
 
       def retries(value)
@@ -41,6 +40,7 @@ module LittleMonster::Core
     attr_reader :output
 
     def initialize(options = {})
+      @tasks ||= []
       @id = options.fetch(:id, nil)
       @params = options.fetch(:params, {}).freeze
       @tags = options.fetch(:tags, {}).freeze

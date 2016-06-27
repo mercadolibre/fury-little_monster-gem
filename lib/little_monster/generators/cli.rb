@@ -10,7 +10,20 @@ module LittleMonster
       say '0.0.0'
     end
     
+    desc 'start to run a task','run task'
+    argument :job, type: :string
+    option :message, type: :string, aliases: :m
+    def start
+      require_all "./jobs"
+      require_all "./tasks"
+
+      message={params:{"un_parametro":"un valor"},name: job}
+      #on_message
+      job = LittleMonster::Job::Factory.new(message).build
+      job.run unless job.nil?
+    end
+
+
     register(LittleMonster::Generate, 'generate', 'generate <job_name> <task_list>', 'Creates a job with his respective tasks.')
-    register(LittleMonster::Run, 'run', 'Run a job')
   end
 end

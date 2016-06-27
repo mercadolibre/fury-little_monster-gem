@@ -7,6 +7,8 @@ describe LittleMonster::Config do
         {
           little_monster_api_url: 'little_monster_api_url',
           api_request_retries: 100,
+          worker_concurrency: 200,
+          worker_queue: nil,
           key: :value
         }
       end

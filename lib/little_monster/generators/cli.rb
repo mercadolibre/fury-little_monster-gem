@@ -17,7 +17,7 @@ module LittleMonster
       aliases: :m,
       default: {}
     def start(job)
-
+      require 'little_monster'
       require_relative "./jobs/#{job}.rb"
       Dir["tasks/*.rb"].each {|file| require_relative file }
 

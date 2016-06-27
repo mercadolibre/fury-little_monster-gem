@@ -6,6 +6,7 @@ module LittleMonster::Core
       attr_reader :tasks
 
       def task_list(*tasks)
+        byebug
         @tasks = *tasks || []
       end
 

@@ -19,7 +19,7 @@ module LittleMonster::RSpec::Matchers
     end
   end
 
-  def have_tasks(*args)
+  def has_tasks(*args)
     HasTasks.new(*args)
   end
 end

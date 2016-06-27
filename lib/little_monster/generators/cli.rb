@@ -16,11 +16,11 @@ module LittleMonster
       type: :hash, 
       aliases: :m,
       default: {}
+
     def start(job)
-      
       require 'little_monster'
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
-      Dir["#{Dir.pwd}/tasks/*.rb"].each {|file| require_relative file }
+      Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
 
       message={params:{"un_parametro":"un valor"},name: job}
       #on_message

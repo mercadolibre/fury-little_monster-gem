@@ -1,6 +1,16 @@
 class <%= @job_name.camelize %> < LittleMonster::Job
   task_list :<%= @task_names.join(", :") %>
-  def on_cancel
-    #Code me!
-  end
+  
+  # Callbacks
+  # def on_cancel
+  #   #Code me!
+  # end
+  # 
+  # def on_error
+  #   #code me
+  # end
+
+  # def on_abort
+  #   #code me
+  # end
 end

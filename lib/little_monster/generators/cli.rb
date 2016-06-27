@@ -12,10 +12,13 @@ module LittleMonster
     end
     
     desc 'start to run a task','run task'
-    option :job, type: :string
-    option :message, type: :string, aliases: :m
-    def start
-      require_relative "./jobs/#{option['job']}.rb"
+    option :message, 
+      type: :hash, 
+      aliases: :m,
+      default: {}
+    def start(job)
+
+      require_relative "./jobs/#{job}.rb"
       Dir["tasks/*.rb"].each {|file| require_relative file }
 
       message={params:{"un_parametro":"un valor"},name: job}

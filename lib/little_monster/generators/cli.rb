@@ -11,5 +11,6 @@ module LittleMonster
     end
     
     register(LittleMonster::Generate, 'generate', 'generate <job_name> <task_list>', 'Creates a job with his respective tasks.')
+    register(LittleMonster::Run, 'run', 'Run a job')
   end
 end

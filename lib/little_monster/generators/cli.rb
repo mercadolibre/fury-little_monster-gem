@@ -16,7 +16,7 @@ module LittleMonster
     option :message, type: :string, aliases: :m
     def start
       require_relative "./jobs/#{job}.rb"
-      Dir["#{File.dirname("./tasks/**/*.rb"].each { |f| load(f) }
+      Dir["#{File.dirname("./tasks/**/*.rb")].each { |f| load(f) }
       
       message={params:{"un_parametro":"un valor"},name: job}
       #on_message

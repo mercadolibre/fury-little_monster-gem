@@ -6,7 +6,7 @@ module LittleMonster::Core
       attr_reader :tasks
 
       def task_list(*tasks)
-        @tasks = *tasks
+        @tasks = *tasks || []
       end
 
       def retries(value)

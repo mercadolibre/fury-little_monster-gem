@@ -1,4 +1,5 @@
 require 'thor'
+require 'require_all'
 require_relative './generate'
 
 module LittleMonster
@@ -14,9 +15,9 @@ module LittleMonster
     argument :job, type: :string
     option :message, type: :string, aliases: :m
     def start
-      require_all "./jobs"
-      require_all "./tasks"
-
+      require_relative "./jobs/#{job}.rb"
+      Dir["#{File.dirname("./tasks/**/*.rb"].each { |f| load(f) }
+      
       message={params:{"un_parametro":"un valor"},name: job}
       #on_message
       job = LittleMonster::Job::Factory.new(message).build

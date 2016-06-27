@@ -5,13 +5,9 @@ module LittleMonster
     include LittleMonster::Loggable
     include ::Toiler::Worker
 
-    def self.worker_queue(queue)
-      toiler_options queue: queue
-    end
+    toiler_options queue: LittleMonster.worker_queue
 
-    def self.worker_concurrency(concurrency)
-      toiler_options concurrency: concurrency
-    end
+    toiler_options concurrency: LittleMonster.worker_concurrency
 
     toiler_options auto_visibility_timeout: true,
                    auto_delete: true

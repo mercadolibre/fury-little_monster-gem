@@ -1,5 +1,5 @@
 module LittleMonster::RSpec::Matchers
-  class Run
+  class HaveTasks
     def initialize(*expected_tasks)
       @expected_tasks = expected_tasks
     end
@@ -20,6 +20,6 @@ module LittleMonster::RSpec::Matchers
   end
 
   def have_tasks(*args)
-    Run.new(*args)
+    HaveTasks.new(*args)
   end
 end

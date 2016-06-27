@@ -3,8 +3,6 @@ module LittleMonster::Core
     include Loggable
 
     class << self
-      attr_reader :tasks
-
       def task_list(*tasks)
         @tasks = *tasks
       end
@@ -23,6 +21,10 @@ module LittleMonster::Core
 
       def mock!
         @@mock = true
+      end
+
+      def tasks
+        @tasks ||= []
       end
 
       def mock?

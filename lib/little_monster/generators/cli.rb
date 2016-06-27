@@ -11,7 +11,7 @@ module LittleMonster
       say '0.0.0'
     end
     
-    desc 'start to run a task','run task'
+    desc 'start <job>','runs a job'
     option :message, 
       type: :hash, 
       aliases: :m,

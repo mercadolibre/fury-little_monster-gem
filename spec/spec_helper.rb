@@ -12,7 +12,6 @@ require 'require_all'
 
 require 'little_monster'
 require 'little_monster/rspec'
-require 'little_monster/generators'
 
 require_rel '../jobs'
 require_rel '../tasks'

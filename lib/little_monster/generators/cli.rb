@@ -12,7 +12,7 @@ module LittleMonster
       say '0.0.0'
     end
     
-    desc 'start <job>','runs a job'
+    desc 'exec <job>','runs a job'
     option :message, 
       type: :hash, 
       aliases: :m,
@@ -34,7 +34,7 @@ module LittleMonster
       job.run unless job.nil?
     end
 
-    register(LittleMonster::ConfGen, 'new', 'new','Creates new Little Monster Schema app')
+    register(LittleMonster::ConfGen, 'init', 'init','Creates new Little Monster Schema app')
     register(LittleMonster::Generate, 'generate', 'generate <job_name> <task_list>...', 'Creates a job with his respective tasks.')
   end
 end

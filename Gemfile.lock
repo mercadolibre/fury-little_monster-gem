@@ -4,7 +4,6 @@ PATH
     little_monster (0.0.1)
       activesupport
       multi_json
-      rainbow
       thor
       tilt
       toiler

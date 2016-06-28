@@ -18,7 +18,11 @@ module LittleMonster
       aliases: :m,
       default: {}
 
-    method_option :message,aliases: '-m', :type => :string, :default => '{}'
+    method_option :message,
+      aliases: '-m', 
+      type: :string, 
+      default: '{}',
+      desc: 'Message that will be send as parameter (must be a JSON format)'
     def start(job)
       require 'little_monster'
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"

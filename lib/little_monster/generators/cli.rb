@@ -1,5 +1,5 @@
 require 'thor'
-
+require_relative './conf_gen'
 require_relative './generate'
 
 module LittleMonster

@@ -10,7 +10,7 @@ module LittleMonster
     end
 
     def create_conf_file
-      directory("./template/config")
+      directory("./templates/config")
     end
 
     def create_tasks_file

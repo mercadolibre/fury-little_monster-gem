@@ -23,9 +23,9 @@ module LittleMonster
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
       Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
 
-      message={params:{"un_parametro":"un valor"},name: job}
+      message={params:options[:message],name: job}
       #on_message
-      job = LittleMonster::Job::Factory.new(options[:message]).build
+      job = LittleMonster::Job::Factory.new(message).build
       job.run unless job.nil?
     end
 

@@ -23,7 +23,7 @@ module LittleMonster
       type: :string, 
       default: '{}',
       desc: 'Message that will be send as parameter (must be a JSON format)'
-    def start(job)
+    def exec(job)
       require 'little_monster'
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
       Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
@@ -35,6 +35,6 @@ module LittleMonster
     end
 
     register(LittleMonster::ConfGen, 'new', 'new','Creates new Little Monster Schema app')
-    register(LittleMonster::Generate, 'generate', 'generate <job_name> <task_list>', 'Creates a job with his respective tasks.')
+    register(LittleMonster::Generate, 'generate', 'generate <job_name> <task_list>...', 'Creates a job with his respective tasks.')
   end
 end

@@ -17,6 +17,7 @@ module LittleMonster
       aliases: :m,
       default: {}
 
+    method_option :message,aliases: '-m', :type => :hash, :default => {}
     def start(job)
       require 'little_monster'
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
@@ -24,7 +25,7 @@ module LittleMonster
 
       message={params:{"un_parametro":"un valor"},name: job}
       #on_message
-      job = LittleMonster::Job::Factory.new(message).build
+      job = LittleMonster::Job::Factory.new(options[:message]).build
       job.run unless job.nil?
     end
 

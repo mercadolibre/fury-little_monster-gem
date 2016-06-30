@@ -21,16 +21,9 @@ module LittleMonster::Core
       @key_owners[@current_task] << output_key.to_sym
     end
 
-    def to_s
-      res = ''
-      @outputs.each do |kv|
-        res << "\n #{kv}"
-      end
-      res << 'owners :'
-      @key_owners.each do |k, v|
-        res << "#{k} => #{v}"
-      end
-      res
+    def to_json
+      return '{}' if @key_owners.empty?
+      MultiJson.dump({ 'outputs' => @outputs, 'owners' => @key_owners })
     end
   end
 end

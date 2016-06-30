@@ -1,14 +1,9 @@
 module LittleMonster::Core
   class OutputData
-    def initialize
+    def initialize(job)
       @outputs = {}
       @key_owners = {}
-    end
-
-    def give_to(task)
-      @current_task = task.to_sym
-      @key_owners[@current_task] = []
-      self
+      @job = job
     end
 
     def [](output_key)
@@ -18,7 +13,8 @@ module LittleMonster::Core
     def []=(output_key, value)
       raise KeyError, "The key #{output_key} already exists" if @outputs.include? output_key.to_sym
       @outputs[output_key.to_sym] = value
-      @key_owners[@current_task] << output_key.to_sym
+      @key_owners[@job.current_task.to_sym] = [] unless @key_owners[@job.current_task.to_sym].is_a? Array
+      @key_owners[@job.current_task.to_sym] << output_key.to_sym
     end
 
     def to_json

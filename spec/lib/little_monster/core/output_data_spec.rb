@@ -1,7 +1,8 @@
 require 'spec_helper'
 
 describe LittleMonster::Core::OutputData do
-  let(:output_data) { LittleMonster::Core::OutputData.new }
+  let(:job) { double(current_task: 'a_task') }
+  let(:output_data) { LittleMonster::Core::OutputData.new(job) }
 
   describe '#initialize' do
     it 'sets appropiate variables' do
@@ -10,55 +11,31 @@ describe LittleMonster::Core::OutputData do
     end
   end
 
-  describe '#give_to' do
-    it 'returns self' do
-      expect(output_data.give_to(:a_task)).to eq(output_data)
-    end
-
-    it 'sets the task as current_task' do
-      output_data.give_to(:a_task)
-      expect(output_data.instance_variable_get '@current_task').to eq(:a_task)
-    end
-
-    it 'initializes key_owners for the given task' do
-      output_data.give_to(:a_task)
-      expect(output_data.instance_variable_get('@key_owners')[:a_task]).to eq([])
-    end
-  end
-
   describe '#[]=' do
-    before :each do
-      @od = output_data.give_to(:a_task)
-    end
-
     it 'raises KeyError if key already exists' do
-      @od['some_key'] = 'value'
-      expect{ @od['some_key'] = 'othet value' }.to raise_error(KeyError)
+      output_data['some_key'] = 'value'
+      expect{ output_data['some_key'] = 'othet value' }.to raise_error(KeyError)
     end
 
     it 'sets the key value if non exiting' do
-      @od[:some_key] = 'value'
-      expect(@od.instance_variable_get('@outputs')[:some_key]).to  eq('value')
+      output_data[:some_key] = 'value'
+      expect(output_data.instance_variable_get('@outputs')[:some_key]).to  eq('value')
     end
 
     it 'appends the task name and key to key_owners' do
-      @od[:some_key] = 'value'
-      expect(@od.instance_variable_get('@key_owners')[:a_task]).to  include(:some_key)
+      output_data[:some_key] = 'value'
+      expect(output_data.instance_variable_get('@key_owners')[:a_task]).to  include(:some_key)
     end
   end
 
   describe '#[]' do
-    before :each do
-      @od = output_data.give_to(:a_task)
-    end
-
     it 'returns the appropiate value if requested' do
-      @od[:some_key] = 'value'
-      expect(@od['some_key']).to eq('value')
+      output_data[:some_key] = 'value'
+      expect(output_data['some_key']).to eq('value')
     end
 
     it 'returns nil if key has no value' do
-      expect(@od['some_key']).to be_nil
+      expect(output_data['some_key']).to be_nil
     end
   end
 
@@ -66,11 +43,11 @@ describe LittleMonster::Core::OutputData do
     let(:json_data) { {'outputs' => { 'key' => 'value', 'lol' => 'some', 'keys' => 'nul' }, 'owners' => { 'a_task' => ['key', 'lol'], 'b_task' => ['keys'] } } }
 
     it 'returns each key owner and each output' do
-      od = output_data.give_to(:a_task)
-      od[:key] = 'value'
-      od[:lol] = 'some'
-      od = output_data.give_to(:b_task)
-      od[:keys] = 'nul'
+      allow(job).to receive(:current_task).and_return(:a_task)
+      output_data[:key] = 'value'
+      output_data[:lol] = 'some'
+      allow(job).to receive(:current_task).and_return(:b_task)
+      output_data[:keys] = 'nul'
 
       expect(MultiJson.load(output_data.to_json)).to eq(json_data)
     end

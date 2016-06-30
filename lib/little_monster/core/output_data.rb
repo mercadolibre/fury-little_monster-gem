@@ -6,16 +6,16 @@ module LittleMonster::Core
     end
 
     def give_to(task)
-      @current_task = task
+      @current_task = task.to_sym
       @key_owners[@current_task] = []
-      return self
+      self
     end
 
-    def [] (output_key)
-      return @outputs[output_key.to_sym]
+    def [](output_key)
+      @outputs[output_key.to_sym]
     end
 
-    def []= (output_key, value)
+    def []=(output_key, value)
       raise KeyError, "The key #{output_key} already exists" if @outputs.include? output_key.to_sym
       @outputs[output_key.to_sym] = value
       @key_owners[@current_task] << output_key.to_sym
@@ -23,7 +23,7 @@ module LittleMonster::Core
 
     def to_json
       return '{}' if @key_owners.empty?
-      MultiJson.dump({ 'outputs' => @outputs, 'owners' => @key_owners })
+      MultiJson.dump('outputs' => @outputs, 'owners' => @key_owners)
     end
   end
 end

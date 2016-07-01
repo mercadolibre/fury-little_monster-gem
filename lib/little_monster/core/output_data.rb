@@ -7,7 +7,7 @@ module LittleMonster::Core
     end
 
     def ==(other)
-      return false unless other.is_a? OutputData
+      return false unless is_valid? other
       @outputs.each { |k, v| return false if other[k] == v }
       true
     end
@@ -26,6 +26,12 @@ module LittleMonster::Core
     def to_json
       return '{}' if @key_owners.empty?
       MultiJson.dump('outputs' => @outputs, 'owners' => @key_owners)
+    end
+
+    private
+
+    def is_valid?(other)
+      other.instance_of?(OutputData) || other.instance_of?(Hash)
     end
   end
 end

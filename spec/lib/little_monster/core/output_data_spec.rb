@@ -41,7 +41,7 @@ describe LittleMonster::Core::OutputData do
   end
 
   describe '#==' do
-    it 'returns false if type differs'
+    it 'returns false if type is not OutputData or Hash'
     it 'returns true if @outputs is equal'
     it 'returns false if @outputs differs'
   end

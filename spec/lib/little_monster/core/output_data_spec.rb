@@ -41,9 +41,32 @@ describe LittleMonster::Core::OutputData do
   end
 
   describe '#==' do
-    it 'returns false if type is not OutputData or Hash'
-    it 'returns true if @outputs is equal'
-    it 'returns false if @outputs differs'
+    it 'returns false if type is not OutputData or Hash' do
+      expect(output_data == []).to eq false
+    end
+
+    it 'returns true if both nil' do
+      output_data = nil
+      expect(output_data == nil).to eq true
+    end
+
+    it 'returns true if @outputs is equal' do
+      data = LittleMonster::Core::OutputData.new job
+      data[:lol] = 'juan'
+      data['pepe'] = 'lol'
+      output_data['lol'] = 'juan'
+      output_data['pepe'] = 'lol'
+      expect(output_data == data).to eq true
+    end
+
+    it 'returns false if @outputs differs' do
+      data = LittleMonster::Core::OutputData.new job
+      data[:ll] = 'juan'
+      data['pepe'] = 'lol'
+      output_data['lol'] = 'juan'
+      output_data['pepe'] = 'lol'
+      expect(output_data == data).to eq false
+    end
   end
 
   describe '#to_json' do

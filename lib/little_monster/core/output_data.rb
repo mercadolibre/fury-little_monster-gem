@@ -8,7 +8,7 @@ module LittleMonster::Core
 
     def ==(other)
       return false unless is_valid? other
-      @outputs.each { |k, v| return false if other[k] == v }
+      @outputs.each { |k, v| return false unless other[k.to_sym] == v }
       true
     end
 

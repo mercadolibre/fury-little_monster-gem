@@ -6,6 +6,12 @@ module LittleMonster::Core
       @job = job
     end
 
+    def ==(other)
+      return false unless other.is_a? OutputData
+      @outputs.each { |k, v| return false if other[k] == v }
+      true
+    end
+
     def [](output_key)
       @outputs[output_key.to_sym]
     end

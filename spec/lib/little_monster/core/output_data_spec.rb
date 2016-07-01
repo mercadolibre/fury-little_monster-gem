@@ -8,6 +8,7 @@ describe LittleMonster::Core::OutputData do
     it 'sets appropiate variables' do
       expect(output_data.instance_variable_get '@outputs').to eq({})
       expect(output_data.instance_variable_get('@key_owners')).to eq({})
+      expect(output_data.instance_variable_get('@job')).to eq(job)
     end
   end
 
@@ -37,6 +38,12 @@ describe LittleMonster::Core::OutputData do
     it 'returns nil if key has no value' do
       expect(output_data['some_key']).to be_nil
     end
+  end
+
+  describe '#==' do
+    it 'returns false if type differs'
+    it 'returns true if @outputs is equal'
+    it 'returns false if @outputs differs'
   end
 
   describe '#to_json' do

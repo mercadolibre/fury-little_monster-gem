@@ -65,7 +65,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
       it { expect(job.current_task).to be_nil }
-      it { expect(job.output).to be_nil }
+      it { expect(job.output).to be_instance_of(LittleMonster::Core::OutputData) }
     end
 
     it 'sets status to pending' do
@@ -110,34 +110,35 @@ describe LittleMonster::Core::Job do
       context 'on mock job' do
         it 'calls the first task with empty outputs' do
           job.run
-          expect(MockJob::TaskA).to have_received(:new).with(options[:params], nil)
+          expect(MockJob::TaskA).to have_received(:new).with(options[:params], LittleMonster::Core::OutputData)
         end
 
         it 'calls the later task with chained outputs' do
           task_a_output = double
-          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_return(task_a_output)
+          allow_any_instance_of(MockJob::TaskA).to receive(:run) { job.instance_variable_get('@output')[:task_a_output] = task_a_output }
           job.run
-          expect(MockJob::TaskB).to have_received(:new).with(options[:params], task_a_output)
+          expect(MockJob::TaskB).to have_received(:new).with(options[:params], LittleMonster::Core::OutputData)
+          expect(job.instance_variable_get('@output')[:task_a_output]).to eq(task_a_output)
         end
 
         it 'notifies api task a finished with output' do
-          output = double
+          output = LittleMonster::Core::OutputData.new(job)
           MockJob.tasks.each do |task|
-            allow_any_instance_of(MockJob.task_class_for task).to receive(:run).and_return(output)
+            allow_any_instance_of(MockJob.task_class_for task).to receive(:run)
           end
 
           allow(job).to receive(:notify_current_task)
           job.run
 
           MockJob.tasks.each do |task|
-            expect(job).to have_received(:notify_current_task).with(task, :finished, output: output)
+            expect(job).to have_received(:notify_current_task).with(task, :finished)
           end
         end
 
-        it 'returns the output of the last task' do
-          last_task_return = double
-          allow_any_instance_of(MockJob::TaskB).to receive(:run).and_return(last_task_return)
-          expect(job.run).to eq(last_task_return)
+        it 'returns the output of the entire output data' do
+          output = LittleMonster::Core::OutputData.new(job)
+          job.run
+          expect(job.instance_variable_get('@output')).to eq(output)
         end
       end
 
@@ -212,11 +213,10 @@ describe LittleMonster::Core::Job do
     end
 
     context 'on finish' do
-      let(:output) { double }
+      let(:output) { LittleMonster::Core::OutputData.new job }
 
       it 'notifies status as finished and passes output' do
         allow(job).to receive(:notify_status)
-        allow_any_instance_of(MockJob::TaskB).to receive(:run).and_return(output)
         job.run
         expect(job).to have_received(:notify_status).with(:finished, output: output).once
       end

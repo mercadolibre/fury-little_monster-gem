@@ -1,11 +1,20 @@
 require 'spec_helper'
 
 describe LittleMonster::RSpec::TaskHelper do
+  let(:job_options) do
+    {
+      id: 0,
+      params: { a: 'b' }
+    }
+  end
+
+  let(:job) { MockJob.new job_options }
+
   let(:task_class) { MockJob::Task }
   let(:options) do
     {
       params: { a: :b },
-      previous_output: { c: :d }
+      output: LittleMonster::Core::OutputData.new(job)
     }
   end
 
@@ -51,7 +60,7 @@ describe LittleMonster::RSpec::TaskHelper do
         end
 
         it 'has preveious output key from options' do
-          expect(task.previous_output).to eq(options[:previous_output])
+          expect(task.output).to eq(options[:output])
         end
 
         it 'has cancelled_callback to true if cancelled is true' do

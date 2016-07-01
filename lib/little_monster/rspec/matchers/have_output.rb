@@ -5,7 +5,11 @@ module LittleMonster::RSpec::Matchers
     end
 
     def matches?(actual)
-      @actual_output = actual.output
+      if actual.instance_variable_get('@job') != nil
+        @actual_output = actual.instance_variable_get('@job').instance_variable_get('@output')
+      else
+        @actual_output = actual.output
+      end
       @actual_output == @expected_output
     end
 

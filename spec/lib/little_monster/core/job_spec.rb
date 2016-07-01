@@ -136,9 +136,8 @@ describe LittleMonster::Core::Job do
         end
 
         it 'returns the output of the entire output data' do
-          output = LittleMonster::Core::OutputData.new(job)
           job.run
-          expect(job.instance_variable_get('@output')).to eq(output)
+          expect(job.instance_variable_get('@output')).to eq({ task_b: "task_b_finished" })
         end
       end
 
@@ -213,12 +212,10 @@ describe LittleMonster::Core::Job do
     end
 
     context 'on finish' do
-      let(:output) { LittleMonster::Core::OutputData.new job }
-
       it 'notifies status as finished and passes output' do
         allow(job).to receive(:notify_status)
         job.run
-        expect(job).to have_received(:notify_status).with(:finished, output: output).once
+        expect(job).to have_received(:notify_status).with(:finished, output: job.instance_variable_get('@output')).once
       end
     end
   end

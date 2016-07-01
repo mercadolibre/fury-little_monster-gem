@@ -7,7 +7,7 @@ module LittleMonster::Core
     end
 
     def ==(other)
-      return false unless is_valid? other
+      return false unless is_valid?(other) && other.length == length
       @outputs.each { |k, v| return false unless other[k.to_sym] == v }
       true
     end
@@ -26,6 +26,10 @@ module LittleMonster::Core
     def to_json
       return '{}' if @key_owners.empty?
       MultiJson.dump('outputs' => @outputs, 'owners' => @key_owners)
+    end
+
+    def length
+      @outputs.length
     end
 
     private

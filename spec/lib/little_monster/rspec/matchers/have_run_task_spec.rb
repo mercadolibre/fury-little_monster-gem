@@ -37,7 +37,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
       before :each do
         allow(subject).to receive(:check_task_run).and_return(true)
         allow(subject).to receive(:check_params).and_return(true)
-        allow(subject).to receive(:check_previous_output).and_return(true)
         allow(subject).to receive(:check_output).and_return(true)
       end
 
@@ -64,10 +63,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
           allow(subject).to receive(:check_params).and_return(false)
         end
 
-        it 'fails checking previous_output' do
-          allow(subject).to receive(:check_previous_output).and_return(false)
-        end
-
         it 'fails checking output' do
           allow(subject).to receive(:check_output).and_return(false)
         end
@@ -89,20 +84,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
 
     it 'returns self' do
       expect(subject.with_params params).to eq(subject)
-    end
-  end
-
-
-  describe 'with_previous_output' do
-    let(:previous_output) { double }
-
-    it 'sets expected_previous_output' do
-      subject.with_previous_output previous_output
-      expect(subject.expected_previous_output).to eq(previous_output)
-    end
-
-    it 'returns self' do
-      expect(subject.with_previous_output previous_output).to eq(subject)
     end
   end
 
@@ -157,33 +138,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
     end
   end
 
-  describe '#check_previous_output' do
-    context 'when expected_previous_output is defined' do
-      let(:expected_previous_output) { { a: :b } }
-      before :each do
-        subject.instance_variable_set '@expected_previous_output', expected_previous_output
-      end
-
-      it 'returns true if task previous_output match expected previous_output' do
-        task = double(previous_output: expected_previous_output)
-        subject.instance_variable_set '@task', task
-        expect(subject.check_previous_output).to be true
-      end
-
-      it 'returns false if task previous_output dont match expected previous_output' do
-        task = double(previous_output: {})
-        subject.instance_variable_set '@task', task
-        expect(subject.check_previous_output).to be false
-      end
-    end
-
-    context 'when expected_previous_output is not defined' do
-      it 'returns true' do
-        expect(subject.check_previous_output).to be true
-      end
-    end
-  end
-
   describe '#check_output' do
     context 'when expected_output is defined' do
       let(:expected_output) { { a: :b } }
@@ -213,7 +167,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
     before :each do
       allow(subject).to receive(:check_task_run).and_return(true)
       allow(subject).to receive(:check_params).and_return(true)
-      allow(subject).to receive(:check_previous_output).and_return(true)
       allow(subject).to receive(:check_output).and_return(true)
     end
 
@@ -233,36 +186,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
 
       specify do
         expect(subject.failure_message).to include("\twith params #{expected_params} but received #{actual_params}\n")
-      end
-    end
-
-    context 'when check previous_output failed' do
-      let(:expected_previous_output) { { a: :b } }
-      let(:actual_previous_output) { { b: :c } }
-
-      before :each do
-        allow(subject).to receive(:check_previous_output).and_return(false)
-        subject.instance_variable_set '@expected_previous_output', expected_previous_output
-        subject.instance_variable_set '@task', double(previous_output: actual_previous_output)
-      end
-
-      specify do
-        expect(subject.failure_message).to include("\twith previous_output #{expected_previous_output} but received #{actual_previous_output}\n")
-      end
-    end
-
-    context 'when check output failed' do
-      let(:expected_output) { { a: :b } }
-      let(:actual_output) { { b: :c } }
-
-      before :each do
-        allow(subject).to receive(:check_output).and_return(false)
-        subject.instance_variable_set '@expected_output', expected_output
-        subject.instance_variable_set '@task', double(output: actual_output)
-      end
-
-      specify do
-        expect(subject.failure_message).to include("\twith output #{expected_output} but outputed #{actual_output}\n")
       end
     end
   end

@@ -1,11 +1,16 @@
 class <%= @job_name.camelize %> < LittleMonster::Job
-  <% if @job_tasks.size == 0 %>
-    task_list :something_to_do
-  <% else %>
-    task_list :<%= @job_tasks.join(", :") %>
-  <% end %>
+  task_list :<%= @task_names.join(", :") %>
+  
+  # Callbacks
+  # def on_cancel
+  #   #Code me!
+  # end
+  # 
+  # def on_error
+  #   #code me
+  # end
 
-  def on_cancel
-    #Code me!
-  end
+  # def on_abort
+  #   #code me
+  # end
 end

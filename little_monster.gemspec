@@ -32,7 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'multi_json'
   spec.add_runtime_dependency 'typhoeus'
   spec.add_runtime_dependency 'tilt'
-  spec.add_runtime_dependency 'rainbow'
+  spec.add_runtime_dependency 'thor'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'require_all'

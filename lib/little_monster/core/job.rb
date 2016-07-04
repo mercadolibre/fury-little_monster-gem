@@ -39,7 +39,7 @@ module LittleMonster::Core
 
     attr_reader :retries
     attr_reader :current_task
-    attr_reader :output
+    attr_reader :data
 
     def initialize(options = {})
       @id = options.fetch(:id, nil)
@@ -48,7 +48,7 @@ module LittleMonster::Core
 
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
-      @output = options.fetch(:last_output, OutputData.new(self))
+      @data = options.fetch(:last_data, OutputData.new(self))
 
       @status = :pending
 
@@ -71,8 +71,8 @@ module LittleMonster::Core
         begin
           raise LittleMonster::CancelError if is_cancelled?
 
-          task = task_class_for(task_name).new(@params, @output)
-          task.send(:set_default_values, @params, @output, method(:is_cancelled?))
+          task = task_class_for(task_name).new(@params, @data)
+          task.send(:set_default_values, @params, @data, method(:is_cancelled?))
 
           task.run
           notify_current_task task_name, :finished #saque la notificacion con OutputData
@@ -82,7 +82,7 @@ module LittleMonster::Core
           if mock?
             @runned_tasks[task_name] = {}
             @runned_tasks[task_name][:instance] = task
-            @runned_tasks[task_name][:output] = @output
+            @runned_tasks[task_name][:data] = @data
           end
         rescue APIUnreachableError => e
           raise e
@@ -98,11 +98,11 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      notify_status :finished, output: @output
+      notify_status :finished, data: @data
 
-      logger.info "[job:#{self.class}] [action:finish] #{@output}"
+      logger.info "[job:#{self.class}] [action:finish] #{@data}"
       logger.info 'Succesfuly finished'
-      @output
+      @data
     end
 
     def on_error(error)

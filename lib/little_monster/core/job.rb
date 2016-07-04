@@ -48,7 +48,7 @@ module LittleMonster::Core
 
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
-      @output = options.fetch(:last_output, nil)
+      @output = options.fetch(:last_output, OutputData.new(self))
 
       @status = :pending
 
@@ -66,7 +66,7 @@ module LittleMonster::Core
       self.class.tasks.each do |task_name|
         logger.debug "running #{task_name}"
 
-        notify_current_task task_name, :running
+        notify_current_task task_name, :running #saque la notificacion con OutputData
 
         begin
           raise LittleMonster::CancelError if is_cancelled?
@@ -74,8 +74,8 @@ module LittleMonster::Core
           task = task_class_for(task_name).new(@params, @output)
           task.send(:set_default_values, @params, @output, method(:is_cancelled?))
 
-          @output = task.run
-          notify_current_task task_name, :finished, output: @output
+          task.run
+          notify_current_task task_name, :finished #saque la notificacion con OutputData
 
           logger.debug "Succesfuly finished #{task_name}"
 

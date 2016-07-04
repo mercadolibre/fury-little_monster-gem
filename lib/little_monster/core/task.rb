@@ -3,10 +3,10 @@ module LittleMonster::Core
     include Loggable
 
     attr_reader :params
-    attr_reader :previous_output
+    attr_reader :output
 
-    def initialize(params, previous_output)
-      set_default_values params, previous_output
+    def initialize(params, output)
+      set_default_values params, output
     end
 
     def run
@@ -29,10 +29,10 @@ module LittleMonster::Core
 
     private
 
-    def set_default_values(params, previous_output, cancelled_callback = nil)
+    def set_default_values(params, output, cancelled_callback = nil)
       @cancelled_callback = cancelled_callback
       @params = params
-      @previous_output = previous_output
+      @output = output
     end
   end
 end

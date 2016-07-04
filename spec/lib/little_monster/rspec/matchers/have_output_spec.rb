@@ -2,7 +2,8 @@ require 'spec_helper'
 require_relative './shared_examples/matcher'
 
 describe LittleMonster::RSpec::Matchers::HaveOutput do
-  let(:output) { { a: :b } }
+  let(:job) { double(current_task: 'a_task') }
+  let(:output) { LittleMonster::Core::OutputData.new(job) }
   subject { described_class.new output }
 
   it_behaves_like 'matcher'

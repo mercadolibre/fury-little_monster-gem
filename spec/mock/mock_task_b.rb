@@ -1,5 +1,5 @@
 class MockJob::TaskB < LittleMonster::Task
   def run
-    'task_b_finished'
+    output[:task_b] = 'task_b_finished'
   end
 end

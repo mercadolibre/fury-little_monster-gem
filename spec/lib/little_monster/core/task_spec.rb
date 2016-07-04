@@ -1,6 +1,15 @@
 require 'spec_helper'
 
 describe LittleMonster::Core::Task do
+  let(:options) do
+    {
+      id: 0,
+      params: { a: 'b' }
+    }
+  end
+
+  let(:job) { MockJob.new options }
+
   let(:mock_task) { MockJob::Task.new({}, {}) }
 
   after :each do
@@ -12,22 +21,22 @@ describe LittleMonster::Core::Task do
       expect(mock_task).to respond_to(:params)
     end
 
-    it 'has previous_output' do
-      expect(mock_task).to respond_to(:previous_output)
+    it 'has output' do
+      expect(mock_task).to respond_to(:output)
     end
   end
 
   describe '#initialize' do
     let(:params) { { a: 'b' } }
-    let(:previous_output) { { c: 'd' } }
-    let(:mock_task) { MockJob::Task.new(params, previous_output) }
+    let(:output) { LittleMonster::Core::OutputData.new job }
+    let(:mock_task) { MockJob::Task.new(params, output) }
 
     before :each do
       allow_any_instance_of(MockJob::Task).to receive(:set_default_values).and_call_original
     end
 
-    it 'sets previous_output' do
-      expect(mock_task.instance_variable_get('@previous_output')).to eq(previous_output)
+    it 'sets output' do
+      expect(mock_task.instance_variable_get('@output')).to eq(output)
     end
 
     it 'sets params' do
@@ -35,36 +44,36 @@ describe LittleMonster::Core::Task do
     end
 
     context 'when it is not overriden' do
-      it 'call set_default_values with params and previous_outputs' do
+      it 'call set_default_values with params and outputs' do
         mock_task
-        expect(mock_task).to have_received(:set_default_values).with(params, previous_output)
+        expect(mock_task).to have_received(:set_default_values).with(params, output)
       end
     end
   end
 
   describe '#set_default_values' do
     let(:params) { { a: 'b' } }
-    let(:previous_output) { { c: 'd' } }
+    let(:output) { LittleMonster::Core::OutputData.new job }
     let(:cancelled_callback) { double }
-    let(:mock_task) { MockJob::Task.new(params, previous_output) }
+    let(:mock_task) { MockJob::Task.new(params, output) }
 
     it 'sets params' do
-      mock_task.send(:set_default_values, params, previous_output, cancelled_callback)
+      mock_task.send(:set_default_values, params, output, cancelled_callback)
       expect(mock_task.params).to eq(params)
     end
 
-    it 'sets previous_output' do
-      mock_task.send(:set_default_values, params, previous_output, cancelled_callback)
-      expect(mock_task.previous_output).to eq(previous_output)
+    it 'sets output' do
+      mock_task.send(:set_default_values, params, output, cancelled_callback)
+      expect(mock_task.output).to eq(output)
     end
 
     it 'sets cancelled_callback' do
-      mock_task.send(:set_default_values, params, previous_output, cancelled_callback)
+      mock_task.send(:set_default_values, params, output, cancelled_callback)
       expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(cancelled_callback)
     end
 
     it 'sets cancelled_callback to nil if cancelled_callback is not sent' do
-      mock_task.send(:set_default_values, params, previous_output)
+      mock_task.send(:set_default_values, params, output)
       expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(nil)
     end
   end

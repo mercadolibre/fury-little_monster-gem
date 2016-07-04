@@ -5,12 +5,16 @@ module LittleMonster::RSpec::Matchers
     end
 
     def matches?(actual)
-      @actual_output = actual.output
+      if actual.instance_variable_get('@job') != nil
+        @actual_output = actual.instance_variable_get('@job').instance_variable_get('@output')
+      else
+        @actual_output = actual.output
+      end
       @actual_output == @expected_output
     end
 
     def failure_message
-      "expected output #{@expected_output} but was #{@actual_output}"
+      "expected output #{@expected_output} but was #{@actual_output.instance_variable_get('@outputs') || {}}"
     end
 
     def failure_message_when_negated

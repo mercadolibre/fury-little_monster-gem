@@ -14,7 +14,7 @@ module LittleMonster::RSpec::Matchers
     end
 
     def failure_message
-      "expected output #{@expected_output} but was #{@actual_output.instance_variable_get('@outputs') || {}}"
+      "expected output #{@expected_output} but was #{@actual_output || {}}"
     end
 
     def failure_message_when_negated

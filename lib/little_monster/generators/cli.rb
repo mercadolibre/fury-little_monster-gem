@@ -6,7 +6,7 @@ require_relative './generate'
 module LittleMonster
   class Cli < Thor
 
-    desc 'show version','version'
+    desc 'version','shows version'
     map %w[-v --version] => :version
     def version
       say '0.0.0'

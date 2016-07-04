@@ -10,7 +10,7 @@ describe MockJob do
   end
 
   it 'outputs the output of task_b' do
-    expect(run_job(:mock_job)).to have_output({ task_a: 'task_a_finished', task_b: 'task_b_finished' })
+    expect(run_job(:mock_job)).to have_output({ task_b: 'task_b_finished' })
   end
 
   it 'ends with status failed if max retries is reached' do
@@ -20,7 +20,6 @@ describe MockJob do
   it 'runs task_b' do
     expect(run_job(:mock_job, params: { a: :b })).to have_run_task(:task_b)
       .with_params(a: :b)
-      .with_output({ task_a: 'task_a_finished'})
-      .have_output({ task_b: 'task_b_finished', task_a: 'task_a_finished' })
+      .with_output({ task_b: 'task_b_finished' })
   end
 end

@@ -84,6 +84,8 @@ module LittleMonster::Core
             @runned_tasks[task_name][:instance] = task
             @runned_tasks[task_name][:output] = @output
           end
+        rescue APIUnreachableError => e
+          raise e
         rescue CancelError => e
           cancel e
           return
@@ -165,10 +167,17 @@ module LittleMonster::Core
 
     def notify_task_list
       return true unless should_request?
-      res = LittleMonster::API.post "/jobs/#{id}/tasks", body: {
-        tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
+
+      options = {
+        body: {
+          tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
+        },
+        retries: LittleMonster.job_requests_retries,
+        retry_wait: LittleMonster.job_requests_retry_wait,
+        critical: true
       }
 
+      res = LittleMonster::API.post "/jobs/#{id}/tasks", options
       res.success?
     end
 
@@ -177,10 +186,13 @@ module LittleMonster::Core
 
       return true unless should_request?
 
-      job_update = { status: @status }
-      job_update.merge!(options)
+      params = { body: { status: @status } }
+      params[:body].merge!(options)
+      params[:retries] = LittleMonster.job_requests_retries
+      params[:retry_wait] = LittleMonster.job_requests_retry_wait
+      params[:critical] = true
 
-      resp = LittleMonster::API.put "/jobs/#{id}", body: job_update
+      resp = LittleMonster::API.put "/jobs/#{id}", params
       resp.success?
     end
 
@@ -189,10 +201,13 @@ module LittleMonster::Core
 
       return true unless should_request?
 
-      task_update = { status: status }
-      task_update.merge!(options)
+      params = { body: { task: { status: status } } }
+      params[:body][:task].merge!(options)
+      params[:retries] = LittleMonster.task_requests_retries
+      params[:retry_wait] = LittleMonster.task_requests_retry_wait
+      params[:critical] = true
 
-      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", body: { task: task_update }
+      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", params
       resp.success?
     end
 

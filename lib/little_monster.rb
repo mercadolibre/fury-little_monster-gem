@@ -25,9 +25,15 @@ module LittleMonster
   def default_config_values
     {
       api_url: 'http://little_monster_api_url.com/',
-      api_request_retries: 4,
       worker_concurrency: 200,
-      worker_queue: nil
+      worker_queue: nil,
+      request_timeout: 3,
+      default_request_retries: 4,
+      default_request_retry_wait: 1,
+      task_requests_retries: 4,
+      task_requests_retry_wait: 1,
+      job_requests_retries: 4,
+      job_requests_retry_wait: 1
     }
   end
 

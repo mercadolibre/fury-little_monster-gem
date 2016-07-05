@@ -183,6 +183,18 @@ describe LittleMonster::Core::Job do
           expect(mock_task).to have_received(:error).with(LittleMonster::TaskError)
         end
       end
+
+      context 'when api is down' do
+        it 'raises APIUnreachableError when notify_current_task raises error' do
+          allow(job).to receive(:notify_current_task).and_raise(LittleMonster::APIUnreachableError, 'api down')
+          expect { job.run }.to raise_error(LittleMonster::APIUnreachableError)
+        end
+
+        it 'raises APIUnreachableError when notify_status raises error' do
+          allow(job).to receive(:notify_status).and_raise(LittleMonster::APIUnreachableError, 'api down')
+          expect { job.run }.to raise_error(LittleMonster::APIUnreachableError)
+        end
+      end
     end
 
     context 'when cancelled' do
@@ -370,11 +382,14 @@ describe LittleMonster::Core::Job do
           allow(job).to receive(:should_request?).and_return(true)
         end
 
-        it 'makes a request to api with task list' do
+        it 'makes a request to api with task list, critical, retries and retry wait' do
           tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
           job.send(:notify_task_list)
           expect(LittleMonster::API).to have_received(:post).with("/jobs/#{job.id}/tasks",
-                                                                  body: { tasks: tasks_name_with_order }).once
+                                                                  body: { tasks: tasks_name_with_order },
+                                                                  retries: LittleMonster.job_requests_retries,
+                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                  critical: true).once
         end
 
         it 'returns request success?' do
@@ -454,10 +469,13 @@ describe LittleMonster::Core::Job do
             allow(job).to receive(:should_request?).and_return(true)
           end
 
-          it 'makes a request to api with status and options' do
+          it 'makes a request to api with status, options, critial, retries and retry wait' do
             job.send(:notify_status, status, options)
             expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
-                                                                   body: { status: status }.merge(options)).once
+                                                                   body: { status: status }.merge(options),
+                                                                   retries: LittleMonster.job_requests_retries,
+                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                   critical: true).once
           end
 
           it 'returns request success?' do
@@ -489,10 +507,13 @@ describe LittleMonster::Core::Job do
             allow(job).to receive(:should_request?).and_return(true)
           end
 
-          it 'makes a request to api with status and options' do
+          it 'makes a request to api with status, options, critical, retries and retry wait' do
             job.send(:notify_current_task, task, status, options)
             expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/tasks/#{task}",
-                                                                   body: { task: { status: status }.merge(options) }).once
+                                                                   body: { task: { status: status }.merge(options) },
+                                                                   retries: LittleMonster.task_requests_retries,
+                                                                   retry_wait: LittleMonster.task_requests_retry_wait,
+                                                                   critical: true).once
           end
 
           it 'returns request success?' do

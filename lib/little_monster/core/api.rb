@@ -27,7 +27,7 @@ module LittleMonster::Core
       end
 
       def request(method, path, options = {})
-        retries = 1
+        retries = 0
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
 
@@ -35,13 +35,21 @@ module LittleMonster::Core
         options[:headers] ||= {}
         options[:headers]['Content-Type'] = 'application/json' unless options[:headers]['Content-Type']
 
+        options[:timeout] = LittleMonster.request_timeout
+
         begin
           res = Typhoeus.public_send method, url, options
           raise StandardError, "request to #{res.effective_url} failed with status #{res.code} retry #{retries}" if res.code >= 500
         rescue StandardError => e
           logger.error e.message
-          retries += 1
-          retry if retries <= LittleMonster.api_request_retries
+          if retries < options.fetch(:retries, LittleMonster.default_request_retries)
+            sleep(options.fetch(:retry_wait, LittleMonster.default_request_retry_wait))
+            retries += 1
+            retry
+          end
+
+          logger.error 'request has reached max retries'
+          raise APIUnreachableError, "critical request to #{path} has fail, check little monster api" if options[:critical]
         end
 
         res.define_singleton_method(:body) do

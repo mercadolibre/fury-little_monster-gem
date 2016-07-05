@@ -1,5 +1,5 @@
 module LittleMonster::Core
-  class OutputData
+  class Job::Data
     def initialize(job)
       @outputs = {}
       @key_owners = {}
@@ -32,10 +32,14 @@ module LittleMonster::Core
       @outputs.length
     end
 
+    def to_h
+      @output
+    end
+
     private
 
     def is_valid?(other)
-      other.instance_of?(OutputData) || other.instance_of?(Hash)
+      other.instance_of?(Job::Data) || other.instance_of?(Hash)
     end
   end
 end

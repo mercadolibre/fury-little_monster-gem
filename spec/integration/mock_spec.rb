@@ -9,7 +9,7 @@ describe MockJob do
     expect(run_job(:mock_job)).to have_ended_with_status :finished
   end
 
-  it 'outputs the output of task_b' do
+  it 'outputs the data of task_b' do
     expect(run_job(:mock_job)).to have_data({ task_b: 'task_b_finished' })
   end
 
@@ -20,6 +20,6 @@ describe MockJob do
   it 'runs task_b' do
     expect(run_job(:mock_job, params: { a: :b })).to have_run_task(:task_b)
       .with_params(a: :b)
-      .with_output({ task_b: 'task_b_finished' })
+      .with_data({ task_b: 'task_b_finished' })
   end
 end

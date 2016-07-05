@@ -3,7 +3,7 @@ require_relative './shared_examples/matcher'
 
 describe LittleMonster::RSpec::Matchers::HaveData do
   let(:job) { double(current_task: 'a_task') }
-  let(:data) { LittleMonster::Core::OutputData.new(job) }
+  let(:data) { LittleMonster::Core::Job::Data.new(job) }
   subject { described_class.new data }
 
   it_behaves_like 'matcher'

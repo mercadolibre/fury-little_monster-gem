@@ -48,7 +48,7 @@ module LittleMonster::Core
 
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
-      @data = options.fetch(:last_data, OutputData.new(self))
+      @data = options.fetch(:data, Data.new(self))
 
       @status = :pending
 
@@ -66,7 +66,7 @@ module LittleMonster::Core
       self.class.tasks.each do |task_name|
         logger.debug "running #{task_name}"
 
-        notify_current_task task_name, :running #saque la notificacion con OutputData
+        notify_current_task task_name, :running #saque la notificacion con Data
 
         begin
           raise LittleMonster::CancelError if is_cancelled?
@@ -75,7 +75,7 @@ module LittleMonster::Core
           task.send(:set_default_values, @params, @data, method(:is_cancelled?))
 
           task.run
-          notify_current_task task_name, :finished #saque la notificacion con OutputData
+          notify_current_task task_name, :finished #saque la notificacion con Data
 
           logger.debug "Succesfuly finished #{task_name}"
 
@@ -98,7 +98,7 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      notify_status :finished, data: @data
+      notify_status :finished, data: @data.to_json
 
       logger.info "[job:#{self.class}] [action:finish] #{@data}"
       logger.info 'Succesfuly finished'

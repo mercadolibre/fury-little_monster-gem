@@ -3,7 +3,7 @@ module LittleMonster::Core
     include Loggable
 
     attr_reader :params
-    attr_reader :output
+    attr_reader :data
 
     def initialize(params, data)
       set_default_values params, data

@@ -8,17 +8,17 @@ module LittleMonster::RSpec::Matchers
       if actual.instance_variable_get('@job') != nil
         @actual_data = actual.instance_variable_get('@job').instance_variable_get('@data')
       else
-        @actual_data = actual.output
+        @actual_data = actual.data
       end
       @actual_data == @expected_data
     end
 
     def failure_message
-      "expected output #{@expected_data} but was #{@actual_data.instance_variable_get('@outputs') || {}}"
+      "expected data #{@expected_data} but was #{@actual_data.instance_variable_get('@datas') || {}}"
     end
 
     def failure_message_when_negated
-      "expected output not to be #{@expected_data}"
+      "expected data not to be #{@expected_data}"
     end
   end
 

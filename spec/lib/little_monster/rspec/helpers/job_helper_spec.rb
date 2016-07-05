@@ -35,7 +35,7 @@ describe LittleMonster::RSpec::JobHelper do
     specify { expect(result.retried?).to eq(result.instance_variable_get('@retried')) }
     specify { expect(result.status).to eq(job.status) }
     specify { expect(result.retries).to eq(job.instance_variable_get('@retries')) }
-    specify { expect(result.output).to eq(job.output) }
+    specify { expect(result.data).to eq(job.data) }
   end
 
 
@@ -98,7 +98,7 @@ describe LittleMonster::RSpec::JobHelper do
         end
       end
 
-      context 'output' do
+      context 'data' do
         let(:job) { job_class.new }
 
         before :each do

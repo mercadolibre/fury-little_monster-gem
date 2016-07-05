@@ -1,5 +1,9 @@
 require 'spec_helper'
 
+RSpec::Matchers.define :job_data_with_hash do |x|
+  match { |actual| actual == x }
+end
+
 describe LittleMonster::Core::Job do
   after :each do
     load './spec/mock/mock_job.rb'
@@ -45,7 +49,7 @@ describe LittleMonster::Core::Job do
           tags: { tag: 'a tag' },
           retries: 2,
           current_task: :task_a,
-          last_output: { b: :c }
+          data: LittleMonster::Job::Data.new(b: :c)
         }
       end
 
@@ -54,7 +58,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.tags).to eq(options[:tags]) }
       it { expect(job.retries).to eq(options[:retries]) }
       it { expect(job.current_task).to eq(options[:current_task]) }
-      it { expect(job.output).to eq(options[:last_output]) }
+      it { expect(job.data).to eq(options[:data]) }
     end
 
     context 'given empty options' do
@@ -65,7 +69,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
       it { expect(job.current_task).to be_nil }
-      it { expect(job.output).to be_instance_of(LittleMonster::Core::OutputData) }
+      it { expect(job.data).to be_instance_of(LittleMonster::Core::Job::Data) }
     end
 
     it 'sets status to pending' do
@@ -108,21 +112,19 @@ describe LittleMonster::Core::Job do
       end
 
       context 'on mock job' do
-        it 'calls the first task with empty outputs' do
+        it 'calls the first task with empty data' do
+          expect(MockJob::TaskA).to receive(:new).with(options[:params], job_data_with_hash({}))
           job.run
-          expect(MockJob::TaskA).to have_received(:new).with(options[:params], LittleMonster::Core::OutputData)
         end
 
         it 'calls the later task with chained outputs' do
           task_a_output = double
-          allow_any_instance_of(MockJob::TaskA).to receive(:run) { job.instance_variable_get('@output')[:task_a_output] = task_a_output }
+          allow_any_instance_of(MockJob::TaskA).to receive(:run) { job.data[:task_a_output] = task_a_output }
+          expect(MockJob::TaskB).to receive(:new).with(options[:params], job_data_with_hash(task_a_output: task_a_output))
           job.run
-          expect(MockJob::TaskB).to have_received(:new).with(options[:params], LittleMonster::Core::OutputData)
-          expect(job.instance_variable_get('@output')[:task_a_output]).to eq(task_a_output)
         end
 
         it 'notifies api task a finished with output' do
-          output = LittleMonster::Core::OutputData.new(job)
           MockJob.tasks.each do |task|
             allow_any_instance_of(MockJob.task_class_for task).to receive(:run)
           end
@@ -135,9 +137,9 @@ describe LittleMonster::Core::Job do
           end
         end
 
-        it 'returns the output of the entire output data' do
+        it 'returns data' do
           job.run
-          expect(job.instance_variable_get('@output')).to eq({ task_b: "task_b_finished" })
+          expect(job.data).to eq({ task_b: "task_b_finished" })
         end
       end
 
@@ -227,7 +229,7 @@ describe LittleMonster::Core::Job do
       it 'notifies status as finished and passes output' do
         allow(job).to receive(:notify_status)
         job.run
-        expect(job).to have_received(:notify_status).with(:finished, output: job.instance_variable_get('@output')).once
+        expect(job).to have_received(:notify_status).with(:finished, data: job.data.to_json).once
       end
     end
   end

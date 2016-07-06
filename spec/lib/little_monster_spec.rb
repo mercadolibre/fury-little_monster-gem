@@ -18,15 +18,45 @@ describe LittleMonster do
 
       before :each do
         allow(LittleMonster::Config).to receive(:new).and_return(config)
-        LittleMonster.init
       end
 
       it 'sets config static variable' do
+        LittleMonster.init
         expect(LittleMonster.class_variable_get('@@config')).to eq(config)
       end
 
       it 'builds new config with default value' do
+        LittleMonster.init
         expect(LittleMonster::Config).to have_received(:new).with(LittleMonster.default_config_values)
+      end
+
+      context 'logger' do
+        context 'when env is test' do
+          before :each do
+            ENV['RUBY_ENV'] = 'test'
+          end
+
+          it 'is set to /dev/null' do
+            LittleMonster.init
+            expect(LittleMonster.logger.instance_variable_get('@logdev').filename).to eq('/dev/null')
+          end
+        end
+
+        context 'when env is not test' do
+          before :each do
+            ENV['RUBY_ENV'] = 'production'
+          end
+
+          it 'is set to toiler logger' do
+            LittleMonster.init
+            expect(LittleMonster.logger).to eq(Toiler.logger)
+          end
+        end
+
+        after :each do
+          ENV['RUBY_ENV'] = 'test'
+          LittleMonster.init
+        end
       end
     end
 
@@ -39,6 +69,12 @@ describe LittleMonster do
 
       it 'yields the config from the module' do
         expect { |b| LittleMonster.configure(&b) }.to yield_with_args(config)
+      end
+    end
+
+    describe 'logger' do
+      it 'returns logger' do
+        expect(LittleMonster.logger).to eq(LittleMonster.class_variable_get('@@logger'))
       end
     end
 

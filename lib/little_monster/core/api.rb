@@ -6,57 +6,59 @@ module LittleMonster::Core
     include Loggable
 
     class << self
-      def get(path, options = {})
-        request :get, path, options
+      def get(path, params = {}, options = {})
+        request :get, path, params, options
       end
 
-      def post(path, options = {})
-        request :post, path, options
+      def post(path, params = {}, options = {})
+        request :post, path, params, options
       end
 
-      def put(path, options = {})
-        request :put, path, options
+      def put(path, params = {}, options = {})
+        request :put, path, params, options
       end
 
-      def patch(path, options = {})
-        request :patch, path, options
+      def patch(path, params = {}, options = {})
+        request :patch, path, params, options
       end
 
-      def delete(path, options = {})
-        request :delete, path, options
+      def delete(path, params = {}, options = {})
+        request :delete, path, params, options
       end
 
-      def request(method, path, options = {})
-        retries = 0
+      def request(method, path, params = {}, retries: LittleMonster.default_request_retries,
+                                             retry_wait: LittleMonster.default_request_retry_wait,
+                                             critical: false)
+        ret = 0
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
 
-        options[:body] = MultiJson.dump options.fetch(:body, {})
-        options[:headers] ||= {}
-        options[:headers]['Content-Type'] = 'application/json' unless options[:headers]['Content-Type']
+        params[:body] = MultiJson.dump params.fetch(:body, {})
+        params[:headers] ||= {}
+        params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
 
-        options[:timeout] = LittleMonster.request_timeout
+        params[:timeout] = LittleMonster.request_timeout
 
         begin
-          res = Typhoeus.public_send method, url, options
-          raise StandardError, "request to #{res.effective_url} failed with status #{res.code} retry #{retries}" if res.code >= 500
+          res = Typhoeus.public_send method, url, params
+          raise StandardError, "request to #{res.effective_url} failed with status #{res.code} retry #{ret}" if res.code >= 500 || res.code == 0
         rescue StandardError => e
           logger.error e.message
-          if retries < options.fetch(:retries, LittleMonster.default_request_retries)
-            sleep(options.fetch(:retry_wait, LittleMonster.default_request_retry_wait))
-            retries += 1
+          if ret < retries
+            sleep(retry_wait)
+            ret += 1
             retry
           end
 
           logger.error 'request has reached max retries'
-          raise APIUnreachableError, "critical request to #{path} has fail, check little monster api" if options[:critical]
+          raise APIUnreachableError, "critical request to #{path} has fail, check little monster api" if critical
         end
 
         res.define_singleton_method(:body) do
           begin
-            MultiJson.load(res.options[:response_body], symbolize_keys: true)
+            MultiJson.load(res.params[:response_body], symbolize_keys: true)
           rescue
-            res.options[:response_body]
+            res.params[:response_body]
           end
         end
 

@@ -1,5 +1,3 @@
-require 'logger'
-
 module LittleMonster::Core
   module Loggable
     def logger

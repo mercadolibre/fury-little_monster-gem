@@ -386,7 +386,7 @@ describe LittleMonster::Core::Job do
           tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
           job.send(:notify_task_list)
           expect(LittleMonster::API).to have_received(:post).with("/jobs/#{job.id}/tasks",
-                                                                  body: { tasks: tasks_name_with_order },
+                                                                  { body: { tasks: tasks_name_with_order } },
                                                                   retries: LittleMonster.job_requests_retries,
                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
                                                                   critical: true).once
@@ -472,7 +472,7 @@ describe LittleMonster::Core::Job do
           it 'makes a request to api with status, options, critial, retries and retry wait' do
             job.send(:notify_status, status, options)
             expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
-                                                                   body: { status: status }.merge(options),
+                                                                   { body: { status: status }.merge(options) },
                                                                    retries: LittleMonster.job_requests_retries,
                                                                    retry_wait: LittleMonster.job_requests_retry_wait,
                                                                    critical: true).once
@@ -510,7 +510,7 @@ describe LittleMonster::Core::Job do
           it 'makes a request to api with status, options, critical, retries and retry wait' do
             job.send(:notify_current_task, task, status, options)
             expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/tasks/#{task}",
-                                                                   body: { task: { status: status }.merge(options) },
+                                                                   { body: { task: { status: status }.merge(options) } },
                                                                    retries: LittleMonster.task_requests_retries,
                                                                    retry_wait: LittleMonster.task_requests_retry_wait,
                                                                    critical: true).once
@@ -525,27 +525,27 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#should_request?' do
-    it 'returns false if class is mock and env is test' do
+    it 'returns false if class is mock and env is test or development' do
       allow(job).to receive(:mock?).and_return(true)
-      allow(LittleMonster.env).to receive(:test?).and_return(true)
+      allow(LittleMonster).to receive(:env).and_return('test')
       expect(job.send(:should_request?)).to be false
     end
 
-    it 'returns false if class is not mock and env is test' do
+    it 'returns false if class is not mock and env is test or development' do
       allow(job).to receive(:mock?).and_return(false)
-      allow(LittleMonster.env).to receive(:test?).and_return(true)
+      allow(LittleMonster).to receive(:env).and_return('development')
       expect(job.send(:should_request?)).to be false
     end
 
-    it 'returns false if class is mock and env is not test' do
+    it 'returns false if class is mock and env is not test nor development' do
       allow(job).to receive(:mock?).and_return(true)
-      allow(LittleMonster.env).to receive(:test?).and_return(false)
+      allow(LittleMonster).to receive(:env).and_return('stage')
       expect(job.send(:should_request?)).to be false
     end
 
-    it 'returns true if class is not mock and env is not test' do
+    it 'returns true if class is not mock and env is not test nor development' do
       allow(job).to receive(:mock?).and_return(false)
-      allow(LittleMonster.env).to receive(:test?).and_return(false)
+      allow(LittleMonster).to receive(:env).and_return('stage')
       expect(job.send(:should_request?)).to be true
     end
   end

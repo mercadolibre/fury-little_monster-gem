@@ -172,12 +172,11 @@ module LittleMonster::Core
         body: {
           tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
         },
-        retries: LittleMonster.job_requests_retries,
-        retry_wait: LittleMonster.job_requests_retry_wait,
-        critical: true
       }
 
-      res = LittleMonster::API.post "/jobs/#{id}/tasks", options
+      res = LittleMonster::API.post "/jobs/#{id}/tasks", options, retries: LittleMonster.job_requests_retries,
+                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                  critical: true
       res.success?
     end
 
@@ -188,11 +187,10 @@ module LittleMonster::Core
 
       params = { body: { status: @status } }
       params[:body].merge!(options)
-      params[:retries] = LittleMonster.job_requests_retries
-      params[:retry_wait] = LittleMonster.job_requests_retry_wait
-      params[:critical] = true
 
-      resp = LittleMonster::API.put "/jobs/#{id}", params
+      resp = LittleMonster::API.put "/jobs/#{id}", params, retries: LittleMonster.job_requests_retries,
+                                                           retry_wait: LittleMonster.job_requests_retry_wait,
+                                                           critical: true
       resp.success?
     end
 
@@ -203,11 +201,11 @@ module LittleMonster::Core
 
       params = { body: { task: { status: status } } }
       params[:body][:task].merge!(options)
-      params[:retries] = LittleMonster.task_requests_retries
-      params[:retry_wait] = LittleMonster.task_requests_retry_wait
-      params[:critical] = true
 
-      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", params
+      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", params, retries: LittleMonster.task_requests_retries,
+                                                                                  retry_wait: LittleMonster.task_requests_retry_wait,
+                                                                                  critical: true
+
       resp.success?
     end
 
@@ -223,7 +221,7 @@ module LittleMonster::Core
     end
 
     def should_request?
-      !(mock? || LittleMonster.env.test?)
+      !(mock? || %w(development test).include?(LittleMonster.env))
     end
 
     def task_class_for(task_name)

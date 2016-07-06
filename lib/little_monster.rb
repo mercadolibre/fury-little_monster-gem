@@ -14,6 +14,8 @@ module LittleMonster
     @@config = Config.new default_config_values
 
     @@env = ActiveSupport::StringInquirer.new(ENV['LITTLE_MONSTER_ENV'] || ENV['RUBY_ENV'] || 'development')
+
+    @@logger = @@env.test? ? Logger.new('/dev/null') : Toiler.logger
   end
 
   def env
@@ -40,7 +42,7 @@ module LittleMonster
   end
 
   def logger
-    Toiler.logger
+    @@logger
   end
 
   def method_missing(method, *args, &block)

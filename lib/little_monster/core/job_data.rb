@@ -24,16 +24,16 @@ module LittleMonster::Core
     end
 
     def to_json
-      return '{}' if @key_owners.empty?
-      MultiJson.dump('outputs' => @outputs, 'owners' => @key_owners)
+      MultiJson.dump(to_h)
+    end
+
+    def to_h
+      return {} if @key_owners.empty?
+      { outputs: @outputs, owners: @key_owners }
     end
 
     def length
       @outputs.length
-    end
-
-    def to_h
-      @output
     end
 
     private

@@ -33,9 +33,9 @@ module LittleMonster::Core
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
 
-        options[:body] = MultiJson.dump options.fetch(:body, {}) unless options[:body].is_a? String
-        options[:headers] ||= {}
-        options[:headers]['Content-Type'] = 'application/json' unless options[:headers]['Content-Type']
+        params[:body] = MultiJson.dump params.fetch(:body, {}) unless params[:body].is_a? String
+        params[:headers] ||= {}
+        params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
 
         params[:timeout] = LittleMonster.request_timeout
 

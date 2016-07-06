@@ -19,7 +19,6 @@ describe LittleMonster::Core::TaggedLogger do
   end
 
   describe '#initialize' do
-
     it 'sets tags instance variable to a hash' do
       expect(subject.tags.class).to be Hash
     end
@@ -60,6 +59,52 @@ describe LittleMonster::Core::TaggedLogger do
     context 'given a level key and a message' do
       it 'returns default tags merged with tags and message' do
         expect(subject.tag_message key, message).to eq("#{subject.tags_to_string resulting_tags} -- #{message}")
+      end
+    end
+  end
+
+  describe '#method_missing' do
+    context 'if method ends with tags' do
+      before :each do
+        allow(subject).to receive(:tags_for)
+      end
+
+      context 'if method begins with a level' do
+        let(:tags) { { a: :b } }
+
+        it 'calls tags_for with level and args' do
+          subject.info_tags tags
+          expect(subject).to have_received(:tags_for).with(:info, tags)
+        end
+      end
+
+      context 'if method does not begin with a level' do
+        it 'does not call tags_for' do
+          subject.unexisting_level_tags tags rescue nil
+          expect(subject).not_to have_received(:tags_for)
+        end
+
+        it 'raises NoMethodError' do
+          expect { subject.unexisting_level_tags }.to raise_error(NoMethodError)
+        end
+      end
+    end
+
+    context 'if method is a level' do
+      let(:tagged_message) { double }
+
+      it 'calls level log with tagged_message' do
+        allow(subject).to receive(:tag_message).and_return(tagged_message)
+        allow(LittleMonster.logger).to receive(:info)
+
+        subject.info 'message'
+        expect(LittleMonster.logger).to have_received(:info).with(tagged_message)
+      end
+    end
+
+    context 'otherwise' do
+      it 'raises NoMethodError' do
+        expect { subject.not_existing_method }.to raise_error(NoMethodError)
       end
     end
   end

@@ -77,7 +77,7 @@ module LittleMonster::Core
           raise LittleMonster::CancelError if is_cancelled?
 
           task = task_class_for(task_name).new(@params, @data)
-          task.send(:set_default_values, @params, @data, method(:is_cancelled?))
+          task.send(:set_default_values, @params, @data, logger, method(:is_cancelled?))
 
           task.run
           notify_current_task task_name, :finished, data: data.to_h

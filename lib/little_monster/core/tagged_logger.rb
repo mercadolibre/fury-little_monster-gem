@@ -14,8 +14,8 @@ module LittleMonster::Core
 
     def method_missing(method, *args, &block)
       if method.to_s.ends_with? 'tags'
-        tag_key = method.split('_').first.to_sym
-        return public_send('tags_for', *args) if LEVELS.include? tag_key
+        tag_key = method.to_s.split('_').first.to_sym
+        return public_send('tags_for', tag_key, *args) if LEVELS.include? tag_key
       end
 
       if LEVELS.include? method.to_sym

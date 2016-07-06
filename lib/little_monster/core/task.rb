@@ -29,10 +29,11 @@ module LittleMonster::Core
 
     private
 
-    def set_default_values(params, data, cancelled_callback = nil)
+    def set_default_values(params, data, job_logger=nil, cancelled_callback=nil)
       @cancelled_callback = cancelled_callback
       @params = params
       @data = data
+      @logger = job_logger if job_logger
     end
   end
 end

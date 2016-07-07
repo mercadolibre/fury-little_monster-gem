@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe LittleMonster::Core::OutputData do
+describe LittleMonster::Core::Job::Data do
   let(:job) { double(current_task: 'a_task') }
-  let(:output_data) { LittleMonster::Core::OutputData.new(job) }
+  let(:output_data) { described_class.new(job) }
 
   describe '#initialize' do
     it 'sets appropiate variables' do
@@ -41,7 +41,7 @@ describe LittleMonster::Core::OutputData do
   end
 
   describe '#==' do
-    it 'returns false if type is not OutputData or Hash' do
+    it 'returns false if type is not Job::Data or Hash' do
       expect(output_data == []).to eq false
     end
 
@@ -51,7 +51,7 @@ describe LittleMonster::Core::OutputData do
     end
 
     it 'returns true if @outputs is equal' do
-      data = LittleMonster::Core::OutputData.new job
+      data = described_class.new job
       data[:lol] = 'juan'
       data['pepe'] = 'lol'
       output_data['lol'] = 'juan'
@@ -60,7 +60,7 @@ describe LittleMonster::Core::OutputData do
     end
 
     it 'returns false if @outputs differs' do
-      data = LittleMonster::Core::OutputData.new job
+      data = described_class.new job
       data[:ll] = 'juan'
       data['pepe'] = 'lol'
       output_data['lol'] = 'juan'
@@ -70,7 +70,16 @@ describe LittleMonster::Core::OutputData do
   end
 
   describe '#to_json' do
-    let(:json_data) { {'outputs' => { 'key' => 'value', 'lol' => 'some', 'keys' => 'nul' }, 'owners' => { 'a_task' => ['key', 'lol'], 'b_task' => ['keys'] } } }
+    it 'returns a json dump of #to_h' do
+      allow(job).to receive(:current_task).and_return(:a_task)
+      output_data[:key] = 'value'
+      output_data[:lol] = 'some'
+      expect(output_data.to_json).to eq(MultiJson.dump(output_data.to_h))
+    end
+  end
+
+  describe '#to_h' do
+    let(:hash_data) { { outputs: { key: 'value', lol: 'some', keys: 'nul' }, owners: { a_task: [:key, :lol], b_task: [:keys] } } }
 
     it 'returns each key owner and each output' do
       allow(job).to receive(:current_task).and_return(:a_task)
@@ -79,11 +88,11 @@ describe LittleMonster::Core::OutputData do
       allow(job).to receive(:current_task).and_return(:b_task)
       output_data[:keys] = 'nul'
 
-      expect(MultiJson.load(output_data.to_json)).to eq(json_data)
+      expect(output_data.to_h).to eq(hash_data)
     end
 
     it 'returns empty if no data entered' do
-      expect(output_data.to_json).to eq('{}')
+      expect(output_data.to_h).to eq({})
     end
   end
 end

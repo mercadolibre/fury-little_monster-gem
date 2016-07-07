@@ -39,7 +39,7 @@ module LittleMonster::Core
 
     attr_reader :retries
     attr_reader :current_task
-    attr_reader :output
+    attr_reader :data
 
     def initialize(options = {})
       @id = options.fetch(:id, nil)
@@ -48,7 +48,12 @@ module LittleMonster::Core
 
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
-      @output = options.fetch(:last_output, OutputData.new(self))
+
+      @data = if options[:data]
+                Data.new(self, options[:data])
+              else
+                Data.new(self)
+              end
 
       @status = :pending
 
@@ -66,23 +71,23 @@ module LittleMonster::Core
       self.class.tasks.each do |task_name|
         logger.debug "running #{task_name}"
 
-        notify_current_task task_name, :running #saque la notificacion con OutputData
+        notify_current_task task_name, :running
 
         begin
           raise LittleMonster::CancelError if is_cancelled?
 
-          task = task_class_for(task_name).new(@params, @output)
-          task.send(:set_default_values, @params, @output, method(:is_cancelled?))
+          task = task_class_for(task_name).new(@params, @data)
+          task.send(:set_default_values, @params, @data, method(:is_cancelled?))
 
           task.run
-          notify_current_task task_name, :finished #saque la notificacion con OutputData
+          notify_current_task task_name, :finished, data: data.to_h
 
           logger.debug "Succesfuly finished #{task_name}"
 
           if mock?
             @runned_tasks[task_name] = {}
             @runned_tasks[task_name][:instance] = task
-            @runned_tasks[task_name][:output] = @output
+            @runned_tasks[task_name][:data] = @data
           end
         rescue APIUnreachableError => e
           raise e
@@ -98,11 +103,11 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      notify_status :finished, output: @output
+      notify_status :finished, data: data.to_h
 
-      logger.info "[job:#{self.class}] [action:finish] #{@output}"
+      logger.info "[job:#{self.class}] [action:finish] #{@data}"
       logger.info 'Succesfuly finished'
-      @output
+      @data
     end
 
     def on_error(error)
@@ -183,29 +188,30 @@ module LittleMonster::Core
     def notify_status(next_status, options = {})
       @status = next_status
 
-      return true unless should_request?
-
       params = { body: { status: @status } }
       params[:body].merge!(options)
 
-      resp = LittleMonster::API.put "/jobs/#{id}", params, retries: LittleMonster.job_requests_retries,
-                                                           retry_wait: LittleMonster.job_requests_retry_wait,
-                                                           critical: true
-      resp.success?
+      notify_job params, retries: LittleMonster.job_requests_retries,
+                         retry_wait: LittleMonster.job_requests_retry_wait
     end
 
     def notify_current_task(task, status = :running, options = {})
       @current_task = task
 
+      params = { body: { tasks: [{ status: status }] } }
+      params[:body][:data] = options[:data] if options[:data]
+
+      params[:body][:tasks].first.merge!(options.except(:data))
+
+      notify_job params, retries: LittleMonster.task_requests_retries,
+                         retry_wait: LittleMonster.task_requests_retry_wait
+    end
+
+    def notify_job(params={}, options={})
       return true unless should_request?
+      options[:critical] = true
 
-      params = { body: { task: { status: status } } }
-      params[:body][:task].merge!(options)
-
-      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", params, retries: LittleMonster.task_requests_retries,
-                                                                                  retry_wait: LittleMonster.task_requests_retry_wait,
-                                                                                  critical: true
-
+      resp = LittleMonster::API.put "/jobs/#{id}", params, options
       resp.success?
     end
 

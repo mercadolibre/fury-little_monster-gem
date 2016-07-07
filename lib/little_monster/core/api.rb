@@ -33,7 +33,7 @@ module LittleMonster::Core
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
 
-        params[:body] = MultiJson.dump params.fetch(:body, {})
+        params[:body] = MultiJson.dump params.fetch(:body, {}) unless params[:body].is_a? String
         params[:headers] ||= {}
         params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
 

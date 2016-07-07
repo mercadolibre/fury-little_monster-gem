@@ -18,9 +18,9 @@ module LittleMonster::Core
         id: @id,
         params: @params,
         tags: @tags,
+        data: @api_attributes[:data],
         current_task: current_task[:name],
-        retries: current_task[:retries],
-        last_output: current_task[:previous_output]
+        retries: current_task[:retries]
       }.delete_if { |_, value| value.nil? }
 
       job_class = @name.to_s.camelcase.constantize
@@ -48,8 +48,7 @@ module LittleMonster::Core
 
       {
         name: @api_attributes[:tasks][task_index][:name],
-        retries: @api_attributes[:tasks][task_index][:retries],
-        previous_output: (task_index > 0 ? @api_attributes[:tasks][task_index - 1][:output] : nil)
+        retries: @api_attributes[:tasks][task_index][:retries]
       }
     end
   end

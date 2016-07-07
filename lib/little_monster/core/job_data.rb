@@ -1,8 +1,8 @@
 module LittleMonster::Core
-  class OutputData
-    def initialize(job)
-      @outputs = {}
-      @key_owners = {}
+  class Job::Data
+    def initialize(job, params={})
+      @outputs = params.fetch(:outputs, {})
+      @key_owners = params.fetch(:owners, {})
       @job = job
     end
 
@@ -24,8 +24,12 @@ module LittleMonster::Core
     end
 
     def to_json
-      return '{}' if @key_owners.empty?
-      MultiJson.dump('outputs' => @outputs, 'owners' => @key_owners)
+      MultiJson.dump(to_h)
+    end
+
+    def to_h
+      return {} if @key_owners.empty?
+      { outputs: @outputs, owners: @key_owners }
     end
 
     def length
@@ -35,7 +39,7 @@ module LittleMonster::Core
     private
 
     def is_valid?(other)
-      other.instance_of?(OutputData) || other.instance_of?(Hash)
+      other.instance_of?(Job::Data) || other.instance_of?(Hash)
     end
   end
 end

@@ -14,7 +14,7 @@ describe LittleMonster::RSpec::TaskHelper do
   let(:options) do
     {
       params: { a: :b },
-      output: LittleMonster::Core::OutputData.new(job)
+      data: LittleMonster::Core::Job::Data.new(job)
     }
   end
 
@@ -31,13 +31,13 @@ describe LittleMonster::RSpec::TaskHelper do
         expect(task_instance).to have_received(:run)
       end
 
-      it 'sets output variable to task run output' do
-        expect(result.instance_variable_get '@output').to eq(task_instance.run)
+      it 'sets data variable to task run data' do
+        expect(result.instance_variable_get '@data').to eq(task_instance.run)
       end
     end
 
     specify { expect(result.instance).to eq(task_instance) }
-    specify { expect(result.output).to eq(task_instance.run) }
+    specify { expect(result.data).to eq(task_instance.run) }
   end
 
   describe '::run_task' do
@@ -59,8 +59,8 @@ describe LittleMonster::RSpec::TaskHelper do
           expect(task.params).to eq(options[:params])
         end
 
-        it 'has preveious output key from options' do
-          expect(task.output).to eq(options[:output])
+        it 'has preveious data key from options' do
+          expect(task.data).to eq(options[:data])
         end
 
         it 'has cancelled_callback to true if cancelled is true' do

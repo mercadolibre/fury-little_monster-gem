@@ -1,5 +1,9 @@
 require 'spec_helper'
 
+RSpec::Matchers.define :job_data_with_hash do |x|
+  match { |actual| actual == x }
+end
+
 describe LittleMonster::Core::Job do
   after :each do
     load './spec/mock/mock_job.rb'
@@ -45,7 +49,7 @@ describe LittleMonster::Core::Job do
           tags: { tag: 'a tag' },
           retries: 2,
           current_task: :task_a,
-          last_output: { b: :c }
+          data: { outputs: { a: :b }, owners: { c: :d } }
         }
       end
 
@@ -54,7 +58,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.tags).to eq(options[:tags]) }
       it { expect(job.retries).to eq(options[:retries]) }
       it { expect(job.current_task).to eq(options[:current_task]) }
-      it { expect(job.output).to eq(options[:last_output]) }
+      it { expect(job.data).to eq(LittleMonster::Core::Job::Data.new(nil, options[:data])) }
     end
 
     context 'given empty options' do
@@ -65,7 +69,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
       it { expect(job.current_task).to be_nil }
-      it { expect(job.output).to be_instance_of(LittleMonster::Core::OutputData) }
+      it { expect(job.data).to be_instance_of(LittleMonster::Core::Job::Data) }
     end
 
     it 'sets status to pending' do
@@ -108,21 +112,19 @@ describe LittleMonster::Core::Job do
       end
 
       context 'on mock job' do
-        it 'calls the first task with empty outputs' do
+        it 'calls the first task with empty data' do
+          expect(MockJob::TaskA).to receive(:new).with(options[:params], job_data_with_hash({}))
           job.run
-          expect(MockJob::TaskA).to have_received(:new).with(options[:params], LittleMonster::Core::OutputData)
         end
 
         it 'calls the later task with chained outputs' do
           task_a_output = double
-          allow_any_instance_of(MockJob::TaskA).to receive(:run) { job.instance_variable_get('@output')[:task_a_output] = task_a_output }
+          allow_any_instance_of(MockJob::TaskA).to receive(:run) { job.data[:task_a_output] = task_a_output }
+          expect(MockJob::TaskB).to receive(:new).with(options[:params], job_data_with_hash(task_a_output: task_a_output))
           job.run
-          expect(MockJob::TaskB).to have_received(:new).with(options[:params], LittleMonster::Core::OutputData)
-          expect(job.instance_variable_get('@output')[:task_a_output]).to eq(task_a_output)
         end
 
         it 'notifies api task a finished with output' do
-          output = LittleMonster::Core::OutputData.new(job)
           MockJob.tasks.each do |task|
             allow_any_instance_of(MockJob.task_class_for task).to receive(:run)
           end
@@ -131,13 +133,13 @@ describe LittleMonster::Core::Job do
           job.run
 
           MockJob.tasks.each do |task|
-            expect(job).to have_received(:notify_current_task).with(task, :finished)
+            expect(job).to have_received(:notify_current_task).with(task, :finished, data: job.data.to_h)
           end
         end
 
-        it 'returns the output of the entire output data' do
+        it 'returns data' do
           job.run
-          expect(job.instance_variable_get('@output')).to eq({ task_b: "task_b_finished" })
+          expect(job.data).to eq({ task_b: "task_b_finished" })
         end
       end
 
@@ -227,7 +229,7 @@ describe LittleMonster::Core::Job do
       it 'notifies status as finished and passes output' do
         allow(job).to receive(:notify_status)
         job.run
-        expect(job).to have_received(:notify_status).with(:finished, output: job.instance_variable_get('@output')).once
+        expect(job).to have_received(:notify_status).with(:finished, data: job.data.to_h).once
       end
     end
   end
@@ -451,36 +453,22 @@ describe LittleMonster::Core::Job do
     describe '#notify_status' do
       context 'given a status and options' do
         let(:status) { :finished }
-        let(:options) { { output: double } }
+        let(:options) { { cancel: true } }
+        let(:response) { double }
 
-        context 'when should_request is false' do
-          it 'returns true' do
-            expect(job.send(:notify_status, status, options)).to be true
-          end
-
-          it 'does not send any request' do
-            job.send(:notify_status, status, options)
-            expect(LittleMonster::API).not_to have_received(:put)
-          end
+        before :each do
+          allow(job).to receive(:notify_job).and_return(response)
         end
 
-        context 'when should_request is true' do
-          before :each do
-            allow(job).to receive(:should_request?).and_return(true)
-          end
+        it 'calls notify_job with status, params and options' do
+          job.send(:notify_status, status, options)
+          expect(job).to have_received(:notify_job).with({ body: { status: status }.merge(options) },
+                                                         retries: LittleMonster.job_requests_retries,
+                                                         retry_wait: LittleMonster.job_requests_retry_wait).once
+        end
 
-          it 'makes a request to api with status, options, critial, retries and retry wait' do
-            job.send(:notify_status, status, options)
-            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
-                                                                   { body: { status: status }.merge(options) },
-                                                                   retries: LittleMonster.job_requests_retries,
-                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
-                                                                   critical: true).once
-          end
-
-          it 'returns request success?' do
-            expect(job.send(:notify_status, status, options)).to eq(response.success?)
-          end
+        it 'returns request success?' do
+          expect(job.send(:notify_status, status)).to eq(response)
         end
       end
     end
@@ -490,36 +478,75 @@ describe LittleMonster::Core::Job do
         let(:task) { :task }
         let(:status) { :finished }
         let(:options) { { retries: 5 } }
+        let(:response) { double }
 
-        context 'when should_request is false' do
-          it 'returns true' do
-            expect(job.send(:notify_current_task, task, status, options)).to be true
-          end
-
-          it 'does not send any request' do
-            job.send(:notify_current_task, task, status, options)
-            expect(LittleMonster::API).not_to have_received(:put)
-          end
+        before :each do
+          allow(job).to receive(:notify_job).and_return(response)
         end
 
-        context 'when should_request is true' do
-          before :each do
-            allow(job).to receive(:should_request?).and_return(true)
-          end
-
+        context 'if options does not contain data' do
           it 'makes a request to api with status, options, critical, retries and retry wait' do
             job.send(:notify_current_task, task, status, options)
-            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/tasks/#{task}",
-                                                                   { body: { task: { status: status }.merge(options) } },
-                                                                   retries: LittleMonster.task_requests_retries,
-                                                                   retry_wait: LittleMonster.task_requests_retry_wait,
-                                                                   critical: true).once
-          end
-
-          it 'returns request success?' do
-            expect(job.send(:notify_current_task, task, status, options)).to eq(response.success?)
+            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ status: status }.merge(options)] } },
+                                                           retries: LittleMonster.task_requests_retries,
+                                                           retry_wait: LittleMonster.task_requests_retry_wait).once
           end
         end
+
+        context 'if options contains data' do
+          before :each do
+            options[:data] = double
+          end
+
+          it 'makes a request to api with status, options, critical, retries, retry wait and sets data to body' do
+            job.send(:notify_current_task, task, status, options)
+            expect(job).to have_received(:notify_job).with({ body: { data: options[:data],
+                                                                     tasks: [{ status: status }.merge(options.except(:data))] } },
+                                                           retries: LittleMonster.task_requests_retries,
+                                                           retry_wait: LittleMonster.task_requests_retry_wait).once
+          end
+        end
+
+        it 'returns request success?' do
+          expect(job.send(:notify_current_task, task, status, options)).to eq(response)
+        end
+      end
+    end
+  end
+
+  describe '#notify_job' do
+    let(:response) { double(success?: true) }
+
+    before :each do
+      allow(LittleMonster::API).to receive(:put).and_return(response)
+    end
+
+    context 'when should_request is false' do
+      it 'returns true' do
+        expect(job.send(:notify_job)).to be true
+      end
+
+      it 'does not send any request' do
+        job.send(:notify_job)
+        expect(LittleMonster::API).not_to have_received(:put)
+      end
+    end
+
+    context 'when should_request is true' do
+      let(:params) { { body: {} } }
+      let(:options) { { retries: 5 } }
+
+      before :each do
+        allow(job).to receive(:should_request?).and_return(true)
+      end
+
+      it 'makes a request to api with params body with data and options merged with critical' do
+        job.send(:notify_job, params, options)
+        expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", params, options.merge(critical: true)).once
+      end
+
+      it 'returns request success?' do
+        expect(job.send(:notify_job, params, options)).to eq(response.success?)
       end
     end
   end

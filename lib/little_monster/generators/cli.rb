@@ -8,23 +8,26 @@ module LittleMonster
 
     desc 'show version','version'
     map %w[-v --version] => :version
+
     def version
       say '0.0.0'
     end
-    
+
     desc 'exec <job>','runs a job'
-    option :message, 
-      type: :hash, 
+    option :message,
+      type: :hash,
       aliases: :m,
       default: {}
 
     method_option :message,
-      aliases: '-m', 
-      type: :string, 
+      aliases: '-m',
+      type: :string,
       default: '{}',
       desc: 'Message that will be send as parameter (must be a JSON format)'
+
     def exec(job)
       require 'little_monster'
+      require_relative "#{Dir.pwd}/config/application.rb"
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
       Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
 

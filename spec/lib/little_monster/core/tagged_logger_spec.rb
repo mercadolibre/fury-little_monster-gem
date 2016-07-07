@@ -51,15 +51,34 @@ describe LittleMonster::Core::TaggedLogger do
     let(:info_tags) {  { x: :y } }
     let(:resulting_tags) { tags.merge(info_tags) }
 
-    before :each do
-      subject.default_tags tags
-      subject.tags_for :info, info_tags
-    end
-
     context 'given a level key and a message' do
-      it 'returns default tags merged with tags and message' do
-        expect(subject.tag_message key, message).to eq("#{subject.tags_to_string resulting_tags} -- #{message}")
+      context 'if there are no tags set' do
+        it 'returns message' do
+          expect(subject.tag_message key, message).to eq(message)
+        end
       end
+
+      context 'if there are tags set' do
+        before :each do
+          subject.default_tags tags
+          subject.tags_for :info, info_tags
+        end
+
+        it 'returns default tags merged with tags and message' do
+          expect(subject.tag_message key, message).to eq("#{subject.tags_to_string resulting_tags} -- #{message}")
+        end
+      end
+    end
+  end
+
+  describe '#log_tags' do
+    let(:level) { :info }
+    let(:tags) { { a: :b } }
+
+    it 'calls level log with hash converted to string'  do
+      allow(LittleMonster.logger).to receive(level)
+      subject.log_tags(level, tags)
+      expect(LittleMonster.logger).to have_received(level).with('[a:b]')
     end
   end
 

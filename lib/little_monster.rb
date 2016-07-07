@@ -1,5 +1,4 @@
 require 'active_support/all'
-require 'oj'
 require 'multi_json'
 require 'little_monster/config'
 require 'little_monster/core'

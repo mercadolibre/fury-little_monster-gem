@@ -167,7 +167,12 @@ module LittleMonster::Core
       logger.error e.message
 
       on_error e
-      do_retry
+
+      if LittleMonster.env.development?
+        raise e
+      else
+        do_retry
+      end
     end
 
     def notify_task_list

@@ -46,8 +46,8 @@ module LittleMonster::Core
       @params = options.fetch(:params, {}).freeze
       @tags = options.fetch(:tags, {}).freeze
 
-      @retries = options.fetch(:retries, 0)
-      @current_task = options.fetch(:current_task, nil)
+      @retries = options[:retries] || 0
+      @current_task = options.fetch(:current_task, self.class.tasks.first)
 
       @data = if options[:data]
                 Data.new(self, options[:data])
@@ -68,7 +68,7 @@ module LittleMonster::Core
     def run
       notify_status :running
 
-      self.class.tasks.each do |task_name|
+      self.class.tasks[(self.class.tasks.find_index(current_task) || self.class.tasks.length)..-1].each do |task_name|
         logger.debug "running #{task_name}"
 
         notify_current_task task_name, :running

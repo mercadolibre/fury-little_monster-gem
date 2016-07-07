@@ -80,7 +80,7 @@ module LittleMonster::Core
           task.send(:set_default_values, @params, @data, method(:is_cancelled?))
 
           task.run
-          notify_current_task task_name, :finished
+          notify_current_task task_name, :finished, data: data.to_h
 
           logger.debug "Succesfuly finished #{task_name}"
 
@@ -103,7 +103,7 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      notify_status :finished
+      notify_status :finished, data: data.to_h
 
       logger.info "[job:#{self.class}] [action:finish] #{@data}"
       logger.info 'Succesfuly finished'
@@ -199,7 +199,9 @@ module LittleMonster::Core
       @current_task = task
 
       params = { body: { tasks: [{ status: status }] } }
-      params[:body][:tasks].first.merge!(options)
+      params[:body][:data] = options[:data] if options[:data]
+
+      params[:body][:tasks].first.merge!(options.except(:data))
 
       notify_job params, retries: LittleMonster.task_requests_retries,
                          retry_wait: LittleMonster.task_requests_retry_wait
@@ -207,10 +209,6 @@ module LittleMonster::Core
 
     def notify_job(params={}, options={})
       return true unless should_request?
-
-      if params[:body]
-        params[:body][:data] = data.to_h
-      end
       options[:critical] = true
 
       resp = LittleMonster::API.put "/jobs/#{id}", params, options

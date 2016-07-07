@@ -162,6 +162,8 @@ module LittleMonster::Core
     end
 
     def error(e)
+      raise e if LittleMonster.env.development?
+
       return abort_job(e) if e.is_a?(FatalTaskError) || e.is_a?(NameError)
 
       logger.error e.message

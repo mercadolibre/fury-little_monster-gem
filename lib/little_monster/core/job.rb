@@ -162,17 +162,14 @@ module LittleMonster::Core
     end
 
     def error(e)
+      raise e if LittleMonster.env.development?
+
       return abort_job(e) if e.is_a?(FatalTaskError) || e.is_a?(NameError)
 
       logger.error e.message
 
       on_error e
-
-      if LittleMonster.env.development?
-        raise e
-      else
-        do_retry
-      end
+      do_retry
     end
 
     def notify_task_list

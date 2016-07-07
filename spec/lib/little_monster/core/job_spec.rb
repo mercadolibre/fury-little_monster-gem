@@ -257,26 +257,43 @@ describe LittleMonster::Core::Job do
       allow(job).to receive(:do_retry)
     end
 
-    it 'does not abort if it did not receive a FatalTaskError' do
-      allow(job).to receive(:abort_job)
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job).not_to have_received(:abort_job).with LittleMonster::FatalTaskError
+    context 'if env is development' do
+      before :each do
+        allow(LittleMonster.env).to receive(:development?).and_return(true)
+      end
+
+      it 'raises passed exception' do
+        e = StandardError.new
+        expect { job.send(:error, e) }.to raise_error(e)
+      end
     end
 
-    it 'aborts if received a FatalTaskError' do
-      allow(job).to receive(:abort_job)
-      job.send(:error, LittleMonster::FatalTaskError.new)
-      expect(job).to have_received(:abort_job).with LittleMonster::FatalTaskError
-    end
+    context 'if env is not development' do
+      before :each do
+        allow(LittleMonster.env).to receive(:development?).and_return(false)
+      end
 
-    it 'calls do_retry if non FatalTaskError' do
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job).to have_received(:do_retry).with no_args
-    end
+      it 'does not abort if it did not receive a FatalTaskError' do
+        allow(job).to receive(:abort_job)
+        job.send(:error, LittleMonster::TaskError.new)
+        expect(job).not_to have_received(:abort_job).with LittleMonster::FatalTaskError
+      end
 
-    it 'calls on_error' do
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job).to have_received(:on_error).with(LittleMonster::TaskError)
+      it 'aborts if received a FatalTaskError' do
+        allow(job).to receive(:abort_job)
+        job.send(:error, LittleMonster::FatalTaskError.new)
+        expect(job).to have_received(:abort_job).with LittleMonster::FatalTaskError
+      end
+
+      it 'calls do_retry if non FatalTaskError' do
+        job.send(:error, LittleMonster::TaskError.new)
+        expect(job).to have_received(:do_retry).with no_args
+      end
+
+      it 'calls on_error' do
+        job.send(:error, LittleMonster::TaskError.new)
+        expect(job).to have_received(:on_error).with(LittleMonster::TaskError)
+      end
     end
   end
 

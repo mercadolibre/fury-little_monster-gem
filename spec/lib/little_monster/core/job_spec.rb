@@ -49,7 +49,7 @@ describe LittleMonster::Core::Job do
           tags: { tag: 'a tag' },
           retries: 2,
           current_task: :task_a,
-          data: LittleMonster::Job::Data.new(b: :c)
+          data: { outputs: { a: :b }, owners: { c: :d } }
         }
       end
 
@@ -58,7 +58,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.tags).to eq(options[:tags]) }
       it { expect(job.retries).to eq(options[:retries]) }
       it { expect(job.current_task).to eq(options[:current_task]) }
-      it { expect(job.data).to eq(options[:data]) }
+      it { expect(job.data).to eq(LittleMonster::Core::Job::Data.new(nil, options[:data])) }
     end
 
     context 'given empty options' do

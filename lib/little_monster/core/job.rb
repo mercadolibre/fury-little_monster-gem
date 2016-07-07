@@ -48,7 +48,12 @@ module LittleMonster::Core
 
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
-      @data = options.fetch(:data, Data.new(self))
+
+      @data = if options[:data]
+                Data.new(self, options[:data])
+              else
+                Data.new(self)
+              end
 
       @status = :pending
 

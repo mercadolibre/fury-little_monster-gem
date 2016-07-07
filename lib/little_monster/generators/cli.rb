@@ -1,5 +1,4 @@
 require 'thor'
-require 'json'
 require_relative './conf_gen'
 require_relative './generate'
 
@@ -31,8 +30,8 @@ module LittleMonster
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
       Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
 
-      msg=JSON.parse(options[:message])
-      message={params:msg ,name: job}
+      msg = MultiJson.load(options[:message], symbolize_keys: true)
+      message = {params:msg ,name: job}
       job = LittleMonster::Job::Factory.new(message).build
       job.run unless job.nil?
     end

@@ -35,7 +35,8 @@ module LittleMonster::Core
 
     def tag_message(level, message='')
       prefix_string =  tags_to_string @tags[:default].merge(@tags[level])
-      "#{prefix_string} -- #{message}"
+      prefix_string << ' -- ' unless prefix_string.blank?
+      [prefix_string, message].join
     end
 
     def log_tags(level, tags_hash)

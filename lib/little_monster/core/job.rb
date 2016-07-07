@@ -57,14 +57,21 @@ module LittleMonster::Core
 
       @runned_tasks = {} if mock?
 
-      # TODO: setup logger
+      logger.default_tags = tags.merge(
+        id: @id,
+        job: self.class.to_s,
+        retry: @retries,
+        current_task: @current_task
+      )
+
+      logger.info "[type:start_job] Starting job with [data:#{data.to_h[:outputs]}]"
     end
 
     def run
       notify_status :running
 
       tasks_to_run.each do |task_name|
-        logger.debug "running #{task_name}"
+        logger.info "[type:start_task] [data:#{data.to_h[:outputs]}]"
 
         notify_current_task task_name, :running
 
@@ -77,7 +84,7 @@ module LittleMonster::Core
           task.run
           notify_current_task task_name, :finished, data: data
 
-          logger.debug "Succesfuly finished #{task_name}"
+          logger.info "[type:finish_task] [status:succesful] [data:#{data.to_h[:outputs]}]"
 
           if mock?
             @runned_tasks[task_name] = {}
@@ -85,11 +92,14 @@ module LittleMonster::Core
             @runned_tasks[task_name][:data] = @data.to_h[:outputs].to_h.dup
           end
         rescue APIUnreachableError => e
+          logger.error "[type:api_unreachable] [message:#{e.message}]"
           raise e
         rescue CancelError => e
+          logger.info "[type:cancel] job was cancelled"
           cancel e
           return
         rescue StandardError => e
+          logger.debug "[type:standard_error] an error was catched with [message:#{e.message}]"
           task.error e unless e.is_a? NameError
           error e
           return
@@ -100,8 +110,8 @@ module LittleMonster::Core
 
       notify_status :finished, data: data
 
-      logger.info "[job:#{self.class}] [action:finish] #{@data}"
-      logger.info 'Succesfuly finished'
+      logger.info "[type:job_finish] [status:succesful] [data:#{@data.to_h[:outputs]}]"
+      logger.debug 'job was succesfuly finished'
       @data
     end
 
@@ -124,44 +134,55 @@ module LittleMonster::Core
 
     def do_retry
       if self.class.max_retries == -1 || self.class.max_retries > @retries
+        logger.debug "Retry ##{retries} of #{self.class.max_retries}"
+
         @retries += 1
-        logger.info "Retry ##{retries} of #{self.class.max_retries}"
+
+        logger.debug 'notifiying retry'
 
         notify_status :pending
         notify_current_task current_task, :pending, retries: retries
 
+        logger.info "[type:job_retry] [data:#{@data.to_h[:outputs]}]"
         raise JobRetryError, "doing retry #{retries} of #{self.class.max_retries}"
       else
-        logger.error 'Max retries'
-        # TODO: ponerle infomacion al error
+        logger.debug 'job has reached max retries'
+
+        logger.info "[type:job_max_retries] [retries:#{self.class.max_retries}]"
         abort_job(MaxRetriesError.new)
       end
     end
 
     def abort_job(e)
-      logger.info "Failed with #{e.class} Error description => #{e.message}"
+      logger.debug 'notifiying abort...'
 
       notify_status :error
       notify_current_task current_task, :error
 
       on_abort e
+
+      logger.info "[type:job_finish] [status:error] [data:#{@data.to_h[:outputs]}]"
     end
 
     def cancel(e)
-      logger.info "cancelled. Description => #{e.message}"
+      logger.debug 'notifiying cancel...'
 
       notify_status :cancelled
       notify_current_task current_task, :cancelled
 
       on_cancel
+
+      logger.info "[type:job_finish] [status:cancelled] [data:#{@data.to_h[:outputs]}]"
     end
 
     def error(e)
       raise e if LittleMonster.env.development?
+      logger.error "[type:error] #{e.class} -- #{e.message} \n #{e.backtrace}"
 
-      return abort_job(e) if e.is_a?(FatalTaskError) || e.is_a?(NameError)
-
-      logger.error e.message
+      if e.is_a?(FatalTaskError) || e.is_a?(NameError)
+        logger.debug 'error is fatal, aborting run'
+        return abort_job(e)
+      end
 
       on_error e
       do_retry

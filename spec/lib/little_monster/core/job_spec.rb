@@ -111,6 +111,14 @@ describe LittleMonster::Core::Job do
         expect(MockJob::TaskA).to have_received(:new)
       end
 
+      it 'calls set_default_values on task with params, output, logger, and is_cancelled method' do
+        MockJob.task_list :task_a
+        task = double(set_default_values: nil, run: nil)
+        allow(MockJob::TaskA).to receive(:new).and_return(task)
+        job.run
+        expect(task).to have_received(:set_default_values).with(job.params, job.data, job.logger, job.method(:is_cancelled?))
+      end
+
       context 'on mock job' do
         it 'calls the first task with empty data' do
           expect(MockJob::TaskA).to receive(:new).with(options[:params], job_data_with_hash({}))

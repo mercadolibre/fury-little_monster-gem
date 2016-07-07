@@ -13,9 +13,14 @@ module LittleMonster::Core
     end
 
     def method_missing(method, *args, &block)
-      if method.to_s.ends_with? 'tags'
+      if method.to_s.ends_with? 'tags='
         tag_key = method.to_s.split('_').first.to_sym
         return public_send('tags_for', tag_key, *args) if LEVELS.include? tag_key
+      end
+
+      if method.to_s.ends_with? 'tags'
+        tag_key = method.to_s.split('_').first.to_sym
+        return @tags[tag_key] if LEVELS.include? tag_key
       end
 
       if LEVELS.include? method.to_sym
@@ -29,7 +34,11 @@ module LittleMonster::Core
       @tags[key] = t
     end
 
-    def default_tags(t)
+    def default_tags
+      @tags[:default]
+    end
+
+    def default_tags=(t)
       tags_for(:default, t)
     end
 

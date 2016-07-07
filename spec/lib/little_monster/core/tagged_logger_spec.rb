@@ -38,10 +38,10 @@ describe LittleMonster::Core::TaggedLogger do
     end
   end
 
-  describe '#default_tags' do
+  describe '#default_tags=' do
     context 'given a hash' do
       it 'sets the hash under the default key in @tags' do
-        subject.default_tags hash
+        subject.default_tags = hash
         expect(subject.tags[:default]).to eq(hash)
       end
     end
@@ -60,7 +60,7 @@ describe LittleMonster::Core::TaggedLogger do
 
       context 'if there are tags set' do
         before :each do
-          subject.default_tags tags
+          subject.default_tags = tags
           subject.tags_for :info, info_tags
         end
 
@@ -83,7 +83,7 @@ describe LittleMonster::Core::TaggedLogger do
   end
 
   describe '#method_missing' do
-    context 'if method ends with tags' do
+    context 'if method ends with tags=' do
       before :each do
         allow(subject).to receive(:tags_for)
       end
@@ -92,17 +92,29 @@ describe LittleMonster::Core::TaggedLogger do
         let(:tags) { { a: :b } }
 
         it 'calls tags_for with level and args' do
-          subject.info_tags tags
+          subject.info_tags = tags
           expect(subject).to have_received(:tags_for).with(:info, tags)
         end
       end
 
       context 'if method does not begin with a level' do
-        it 'does not call tags_for' do
-          subject.unexisting_level_tags tags rescue nil
-          expect(subject).not_to have_received(:tags_for)
+        it 'raises NoMethodError' do
+          expect { subject.unexisting_level_tags = {} }.to raise_error(NoMethodError)
         end
+      end
+    end
 
+    context 'if method ends with tags' do
+      context 'if method begins with a level' do
+        let(:tags) { { a: :b } }
+
+        it 'returns the tags for that level' do
+          subject.tags_for :info, tags
+          expect(subject.info_tags).to eq(tags)
+        end
+      end
+
+      context 'if method does not begin with a level' do
         it 'raises NoMethodError' do
           expect { subject.unexisting_level_tags }.to raise_error(NoMethodError)
         end

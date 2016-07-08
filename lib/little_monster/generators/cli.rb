@@ -5,13 +5,18 @@ require_relative './generate'
 
 module LittleMonster
   class Cli < Thor
+    class_option :environment, 
+      default: 'development', 
+      type: :string,
+      desc: 'environment'
+    aliases: '-e','e'
 
     desc 'version','shows version'
     map %w[-v --version] => :version
     def version
       say '0.0.0'
     end
-    
+
     desc 'exec <job>','runs a job'
     option :message, 
       type: :hash, 
@@ -23,15 +28,24 @@ module LittleMonster
       type: :string, 
       default: '{}',
       desc: 'Message that will be send as parameter (must be a JSON format)'
+
     def exec(job)
+      require 'vcr'
       require 'little_monster'
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
-      Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
+      require 'webmock'
 
-      msg=JSON.parse(options[:message])
-      message={params:msg ,name: job}
-      job = LittleMonster::Job::Factory.new(message).build
-      job.run unless job.nil?
+      Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
+      VCR.configure do |config|
+        config.cassette_library_dir = "mocks/vcr_cassettes"
+        config.hook_into :webmock # or :fakeweb
+      end
+      VCR.use_cassette("testing") do 
+        msg=JSON.parse(options[:message])
+        message={params:msg ,name: job}
+        job = LittleMonster::Job::Factory.new(message).build
+        job.run unless job.nil?
+      end
     end
 
     register(LittleMonster::ConfGen, 'init', 'init','Creates new Little Monster Schema app')

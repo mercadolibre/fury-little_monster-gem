@@ -32,8 +32,8 @@ module LittleMonster
     method_option :record_mode,
       aliases: '-r',
       type: :string,
-      enum: ['none','new','reload']
-      default: 'new_episodes',
+      enum: ['none','new','reload'],
+      default: 'new',
       desc: 'Recording mocks mode  none|new|reload',
       banner: 'Recording type could be none,new or reload on default assume none'
 
@@ -53,7 +53,7 @@ module LittleMonster
 
       vcr_mode = { 'none' => :none,
                    'only_new' => :new_episodes,
-                   'reload' => :all }.fetch(options[:record_mode],:none)
+                   'reload' => :all }.fetch(options[:record_mode], :none)
 
       VCR.use_cassette(job.to_s, record: vcr_mode) do 
         msg=JSON.parse(options[:message])

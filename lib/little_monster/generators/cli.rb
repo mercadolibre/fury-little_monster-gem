@@ -36,7 +36,7 @@ module LittleMonster
       desc: 'Recording mocks mode  none|only_new|reload'
 
     def exec(job)
-      ENV['LITTLE_MONSTER_ENV'] = option[:environment]
+      ENV['LITTLE_MONSTER_ENV'] = options[:environment]
       require 'vcr'
       require 'little_monster'
       require_relative "#{Dir.pwd}/config/application.rb"
@@ -51,7 +51,7 @@ module LittleMonster
 
       vcr_mode = { 'none' => :none,
                    'only_new' => :new_episodes,
-                   'reload' => :all }.fetch(option[:record_mode],:none)
+                   'reload' => :all }.fetch(options[:record_mode],:none)
 
       VCR.use_cassette(job.to_s, record: vcr_mode) do 
         msg=JSON.parse(options[:message])

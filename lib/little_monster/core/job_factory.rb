@@ -21,7 +21,7 @@ module LittleMonster::Core
         data: @api_attributes[:data],
         current_task: current_task[:name],
         retries: current_task[:retries]
-      }.delete_if { |_, value| value.nil? }
+      }
 
       job_class = @name.to_s.camelcase.constantize
       job_class.new job_attributes
@@ -33,11 +33,7 @@ module LittleMonster::Core
                                     retry_wait: LittleMonster.job_requests_retry_wait,
                                     critical: true
 
-      if resp.success?
-        resp.body
-      else
-        {}
-      end
+      resp.success? ? resp.body : {}
     end
 
     def find_current_task
@@ -47,7 +43,7 @@ module LittleMonster::Core
       return {} if task_index.nil?
 
       {
-        name: @api_attributes[:tasks][task_index][:name],
+        name: @api_attributes[:tasks][task_index][:name].to_sym,
         retries: @api_attributes[:tasks][task_index][:retries]
       }
     end

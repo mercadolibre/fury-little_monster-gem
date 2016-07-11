@@ -68,7 +68,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.params).to eq({}) }
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
-      it { expect(job.current_task).to be_nil }
+      it { expect(job.current_task).to eq(job.class.tasks.first) }
       it { expect(job.data).to be_instance_of(LittleMonster::Core::Job::Data) }
     end
 
@@ -140,6 +140,38 @@ describe LittleMonster::Core::Job do
         it 'returns data' do
           job.run
           expect(job.data).to eq({ task_b: "task_b_finished" })
+        end
+
+        context 'if job run is from rebuild' do
+          context 'and it already ran task_a' do
+            before :each do
+              job.instance_variable_set '@current_task', :task_b
+              job.run
+            end
+
+            it 'does not build task_a' do
+              expect(MockJob::TaskA).not_to have_received(:new)
+            end
+
+            it 'builds task_b' do
+              expect(MockJob::TaskB).to have_received(:new)
+            end
+          end
+
+          context 'if it does not have any current_task' do
+            before :each do
+              job.instance_variable_set '@current_task', nil
+              job.run
+            end
+
+            it 'does not build task_a' do
+              expect(MockJob::TaskA).not_to have_received(:new)
+            end
+
+            it 'does not build task_b' do
+              expect(MockJob::TaskB).not_to have_received(:new)
+            end
+          end
         end
       end
 
@@ -591,6 +623,28 @@ describe LittleMonster::Core::Job do
       allow(job).to receive(:mock?).and_return(false)
       allow(LittleMonster).to receive(:env).and_return('stage')
       expect(job.send(:should_request?)).to be true
+    end
+  end
+
+  describe '#tasks_to_run' do
+    context 'if job has no current_task' do
+      before :each do
+        job.instance_variable_set('@current_task', nil)
+      end
+
+      it 'returns []' do
+        expect(job.send :tasks_to_run).to eq([])
+      end
+    end
+
+    context 'if job has current_task' do
+      before :each do
+        job.instance_variable_set('@current_task', :task_b)
+      end
+
+      it 'returns array sliced from current task to end' do
+        expect(job.send :tasks_to_run).to eq([:task_b])
+      end
     end
   end
 end

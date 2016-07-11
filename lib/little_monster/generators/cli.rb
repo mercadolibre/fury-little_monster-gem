@@ -33,7 +33,7 @@ module LittleMonster
       aliases: '-r',
       type: :string,
       enum: ['none','new','reload'],
-      default: 'new',
+      default: 'none',
       desc: 'Recording mocks mode  none|new|reload',
       banner: 'Recording type could be none,new or reload on default assume none'
 

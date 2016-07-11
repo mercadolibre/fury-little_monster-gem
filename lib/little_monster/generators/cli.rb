@@ -1,5 +1,4 @@
 require 'thor'
-require 'json'
 require_relative './conf_gen'
 require_relative './generate'
 
@@ -13,25 +12,27 @@ module LittleMonster
 
     desc 'version','shows version'
     map %w[-v --version] => :version
+
     def version
       say '0.0.0'
     end
 
     desc 'exec <job>','runs a job'
-    option :message, 
-      type: :hash, 
+    option :message,
+      type: :hash,
       aliases: :m,
       default: {}
 
     method_option :message,
-      aliases: '-m', 
-      type: :string, 
+      aliases: '-m',
+      type: :string,
       default: '{}',
       desc: 'Message that will be send as parameter (must be a JSON format)'
 
     def exec(job)
       require 'vcr'
       require 'little_monster'
+      require_relative "#{Dir.pwd}/config/application.rb"
       require_relative "#{Dir.pwd}/jobs/#{job}.rb"
       require 'webmock'
 

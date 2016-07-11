@@ -7,7 +7,7 @@ module LittleMonster::RSpec
 
   # when required, this files define custom matchers on rspec
   require 'little_monster/rspec/matchers/have_ended_with_status'
-  require 'little_monster/rspec/matchers/have_output'
+  require 'little_monster/rspec/matchers/have_data'
   require 'little_monster/rspec/matchers/have_run'
   require 'little_monster/rspec/matchers/have_run_task'
 

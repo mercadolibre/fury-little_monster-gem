@@ -2,8 +2,8 @@ module LittleMonster::RSpec::Matchers
   class HaveRunTask
     attr_reader :expected_task
     attr_reader :expected_params
-    attr_reader :expected_previous_output
-    attr_reader :expected_output
+    attr_reader :expected_previous_data
+    attr_reader :expected_data
 
     def initialize(expected_task)
       @expected_task = if expected_task.class == Class
@@ -15,8 +15,8 @@ module LittleMonster::RSpec::Matchers
 
     def matches?(job)
       @task = job.runned_tasks[@expected_task][:instance]
-      @task_output = job.runned_tasks[@expected_task][:output]
-      check_task_run && check_params && check_output
+      @task_data = job.runned_tasks[@expected_task][:data]
+      check_task_run && check_params && check_data
     end
 
     def check_task_run
@@ -31,9 +31,9 @@ module LittleMonster::RSpec::Matchers
       end
     end
 
-    def check_output
-      if defined?(@expected_output)
-        @task_output == @expected_output
+    def check_data
+      if defined?(@expected_data)
+        @task_data == @expected_data
       else
         true
       end
@@ -44,15 +44,15 @@ module LittleMonster::RSpec::Matchers
       self
     end
 
-    def with_output(output)
-      @expected_output = output
+    def with_data(data)
+      @expected_data = data
       self
     end
 
     def failure_message
       message = "task #{@expected_task} was expected to run\n"
       message << "\twith params #{@expected_params} but received #{@task.params || 'nil'}\n" unless check_params
-      message << "\twith output #{@expected_output} but outputed #{@task.output.instance_variable_get('@outputs') || 'nil'}\n" unless check_output
+      message << "\twith data #{@expected_data} but was #{@task.data.instance_variable_get('@datas') || 'nil'}\n" unless check_data
       message
     end
   end

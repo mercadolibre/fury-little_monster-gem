@@ -18,9 +18,9 @@ module LittleMonster::Core
         id: @id,
         params: @params,
         tags: @tags,
+        data: @api_attributes[:data],
         current_task: current_task[:name],
-        retries: current_task[:retries],
-        last_output: current_task[:previous_output]
+        retries: current_task[:retries]
       }.delete_if { |_, value| value.nil? }
 
       job_class = @name.to_s.camelcase.constantize
@@ -29,7 +29,9 @@ module LittleMonster::Core
 
     def fetch_attributes
       return {} if %w(development test).include? LittleMonster.env
-      resp = API.get "/job/#{@id}"
+      resp = API.get "/job/#{@id}", retries: LittleMonster.job_requests_retries,
+                                    retry_wait: LittleMonster.job_requests_retry_wait,
+                                    critical: true
 
       if resp.success?
         resp.body
@@ -46,8 +48,7 @@ module LittleMonster::Core
 
       {
         name: @api_attributes[:tasks][task_index][:name],
-        retries: @api_attributes[:tasks][task_index][:retries],
-        previous_output: (task_index > 0 ? @api_attributes[:tasks][task_index - 1][:output] : nil)
+        retries: @api_attributes[:tasks][task_index][:retries]
       }
     end
   end

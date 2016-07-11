@@ -28,8 +28,8 @@ module LittleMonster::RSpec
         @job.instance_variable_get '@retries'
       end
 
-      def output
-        @job.output
+      def data
+        @job.data
       end
 
       def runned_tasks

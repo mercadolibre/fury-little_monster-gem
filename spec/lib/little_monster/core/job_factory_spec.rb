@@ -66,7 +66,10 @@ describe LittleMonster::Core::Job::Factory do
 
       it 'makes a request to api' do
         factory.fetch_attributes
-        expect(LittleMonster::API).to have_received(:get).with("/job/#{message[:id]}")
+        expect(LittleMonster::API).to have_received(:get)
+          .with("/job/#{message[:id]}", retries: LittleMonster.job_requests_retries,
+                                        retry_wait: LittleMonster.job_requests_retry_wait,
+                                        critical: true).once
       end
 
       context 'when request succeds' do
@@ -92,12 +95,10 @@ describe LittleMonster::Core::Job::Factory do
           {
             name: 'a',
             retries: 0,
-            output: {},
             status: 'finished'
           },{
             name: 'b',
             retries: 1,
-            output: {},
             status: 'pending'
           }
         ]
@@ -108,32 +109,12 @@ describe LittleMonster::Core::Job::Factory do
       factory.instance_variable_set '@api_attributes', api_attributes
     end
 
-    it 'returns a hash with name retries and previous_output' do
-      expect(factory.find_current_task.keys).to eq([:name, :retries, :previous_output])
+    it 'returns a hash with name retries' do
+      expect(factory.find_current_task.keys).to eq([:name, :retries])
     end
 
     it 'returns the first task with status pending from api attributes' do
       expect(factory.find_current_task[:name]).to eq('b')
     end
-
-    context 'previous_output' do
-      context 'when selected tasks is the first' do
-        before :each do
-          api_attributes[:tasks].first[:status] = 'pending'
-          factory.instance_variable_set '@api_attributes', api_attributes
-        end
-
-        it 'is nil' do
-          expect(factory.find_current_task[:previous_output]).to be_nil
-        end
-      end
-
-      context 'when selected task is not the first' do
-        it 'is the output of the previous task' do
-          expect(factory.find_current_task[:previous_output]).to eq({})
-        end
-      end
-    end
-
   end
 end

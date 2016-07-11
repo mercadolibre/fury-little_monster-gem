@@ -39,7 +39,7 @@ module LittleMonster::Core
 
     attr_reader :retries
     attr_reader :current_task
-    attr_reader :output
+    attr_reader :data
 
     def initialize(options = {})
       @id = options.fetch(:id, nil)
@@ -48,7 +48,12 @@ module LittleMonster::Core
 
       @retries = options.fetch(:retries, 0)
       @current_task = options.fetch(:current_task, nil)
-      @output = options.fetch(:last_output, OutputData.new(self))
+
+      @data = if options[:data]
+                Data.new(self, options[:data])
+              else
+                Data.new(self)
+              end
 
       @status = :pending
 
@@ -66,24 +71,26 @@ module LittleMonster::Core
       self.class.tasks.each do |task_name|
         logger.debug "running #{task_name}"
 
-        notify_current_task task_name, :running #saque la notificacion con OutputData
+        notify_current_task task_name, :running
 
         begin
           raise LittleMonster::CancelError if is_cancelled?
 
-          task = task_class_for(task_name).new(@params, @output)
-          task.send(:set_default_values, @params, @output, method(:is_cancelled?))
+          task = task_class_for(task_name).new(@params, @data)
+          task.send(:set_default_values, @params, @data, method(:is_cancelled?))
 
           task.run
-          notify_current_task task_name, :finished #saque la notificacion con OutputData
+          notify_current_task task_name, :finished, data: data.to_h
 
           logger.debug "Succesfuly finished #{task_name}"
 
           if mock?
             @runned_tasks[task_name] = {}
             @runned_tasks[task_name][:instance] = task
-            @runned_tasks[task_name][:output] = @output
+            @runned_tasks[task_name][:data] = @data.dup
           end
+        rescue APIUnreachableError => e
+          raise e
         rescue CancelError => e
           cancel e
           return
@@ -96,11 +103,11 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      notify_status :finished, output: @output
+      notify_status :finished, data: data.to_h
 
-      logger.info "[job:#{self.class}] [action:finish] #{@output}"
+      logger.info "[job:#{self.class}] [action:finish] #{@data}"
       logger.info 'Succesfuly finished'
-      @output
+      @data
     end
 
     def on_error(error)
@@ -155,6 +162,8 @@ module LittleMonster::Core
     end
 
     def error(e)
+      raise e if LittleMonster.env.development?
+
       return abort_job(e) if e.is_a?(FatalTaskError) || e.is_a?(NameError)
 
       logger.error e.message
@@ -165,34 +174,46 @@ module LittleMonster::Core
 
     def notify_task_list
       return true unless should_request?
-      res = LittleMonster::API.post "/jobs/#{id}/tasks", body: {
-        tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
+
+      options = {
+        body: {
+          tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
+        },
       }
 
+      res = LittleMonster::API.post "/jobs/#{id}/tasks", options, retries: LittleMonster.job_requests_retries,
+                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                  critical: true
       res.success?
     end
 
     def notify_status(next_status, options = {})
       @status = next_status
 
-      return true unless should_request?
+      params = { body: { status: @status } }
+      params[:body].merge!(options)
 
-      job_update = { status: @status }
-      job_update.merge!(options)
-
-      resp = LittleMonster::API.put "/jobs/#{id}", body: job_update
-      resp.success?
+      notify_job params, retries: LittleMonster.job_requests_retries,
+                         retry_wait: LittleMonster.job_requests_retry_wait
     end
 
     def notify_current_task(task, status = :running, options = {})
       @current_task = task
 
+      params = { body: { tasks: [{ status: status }] } }
+      params[:body][:data] = options[:data] if options[:data]
+
+      params[:body][:tasks].first.merge!(options.except(:data))
+
+      notify_job params, retries: LittleMonster.task_requests_retries,
+                         retry_wait: LittleMonster.task_requests_retry_wait
+    end
+
+    def notify_job(params={}, options={})
       return true unless should_request?
+      options[:critical] = true
 
-      task_update = { status: status }
-      task_update.merge!(options)
-
-      resp = LittleMonster::API.put "/jobs/#{id}/tasks/#{@current_task}", body: { task: task_update }
+      resp = LittleMonster::API.put "/jobs/#{id}", params, options
       resp.success?
     end
 
@@ -208,7 +229,7 @@ module LittleMonster::Core
     end
 
     def should_request?
-      !(mock? || LittleMonster.env.test?)
+      !(mock? || %w(development test).include?(LittleMonster.env))
     end
 
     def task_class_for(task_name)

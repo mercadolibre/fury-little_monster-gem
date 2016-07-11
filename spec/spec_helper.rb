@@ -25,4 +25,9 @@ RSpec.configure do |conf|
   conf.mock_with :rspec do |mocks|
     mocks.verify_partial_doubles = true
   end
+
+  conf.before :each do
+    allow_any_instance_of(Kernel).to receive(:sleep)
+  end
 end
+

@@ -28,16 +28,16 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
   describe '#matches?' do
     context 'given a job_result' do
       let(:task) { double }
-      let(:task_output) { {} }
+      let(:task_data) { {} }
       let(:job_result) do
         instance_double(LittleMonster::RSpec::JobHelper::Result,
-                        runned_tasks: { expected_task => { instance: task, output: task_output } })
+                        runned_tasks: { expected_task => { instance: task, data: task_data } })
       end
 
       before :each do
         allow(subject).to receive(:check_task_run).and_return(true)
         allow(subject).to receive(:check_params).and_return(true)
-        allow(subject).to receive(:check_output).and_return(true)
+        allow(subject).to receive(:check_data).and_return(true)
       end
 
       it 'sets the task instance variable from the job runned_tasks[instance] key' do
@@ -45,9 +45,9 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
         expect(subject.instance_variable_get '@task').to eq(task)
       end
 
-      it 'sets the task output instance variable from the job runned_tasks[output] key' do
+      it 'sets the task data instance variable from the job runned_tasks[data] key' do
         subject.matches?(job_result)
-        expect(subject.instance_variable_get '@task_output').to eq(task_output)
+        expect(subject.instance_variable_get '@task_data').to eq(task_data)
       end
 
       it 'returns true if alls checks pass' do
@@ -63,8 +63,8 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
           allow(subject).to receive(:check_params).and_return(false)
         end
 
-        it 'fails checking output' do
-          allow(subject).to receive(:check_output).and_return(false)
+        it 'fails checking data' do
+          allow(subject).to receive(:check_data).and_return(false)
         end
 
         after :each do
@@ -87,16 +87,16 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
     end
   end
 
-  describe 'with_output' do
-    let(:output) { double }
+  describe 'with_data' do
+    let(:data) { double }
 
-    it 'sets expected_output' do
-      subject.with_output output
-      expect(subject.expected_output).to eq(output)
+    it 'sets expected_data' do
+      subject.with_data data
+      expect(subject.expected_data).to eq(data)
     end
 
     it 'returns self' do
-      expect(subject.with_output output).to eq(subject)
+      expect(subject.with_data data).to eq(subject)
     end
   end
 
@@ -138,27 +138,27 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
     end
   end
 
-  describe '#check_output' do
-    context 'when expected_output is defined' do
-      let(:expected_output) { { a: :b } }
+  describe '#check_data' do
+    context 'when expected_data is defined' do
+      let(:expected_data) { { a: :b } }
       before :each do
-        subject.instance_variable_set '@expected_output', expected_output
+        subject.instance_variable_set '@expected_data', expected_data
       end
 
-      it 'returns true if task output match expected output' do
-        subject.instance_variable_set '@task_output', expected_output
-        expect(subject.check_output).to be true
+      it 'returns true if task data match expected data' do
+        subject.instance_variable_set '@task_data', expected_data
+        expect(subject.check_data).to be true
       end
 
-      it 'returns false if task output dont match expected output' do
-        subject.instance_variable_set '@task_output', {}
-        expect(subject.check_output).to be false
+      it 'returns false if task data dont match expected data' do
+        subject.instance_variable_set '@task_data', {}
+        expect(subject.check_data).to be false
       end
     end
 
-    context 'when expected_output is not defined' do
+    context 'when expected_data is not defined' do
       it 'returns true' do
-        expect(subject.check_output).to be true
+        expect(subject.check_data).to be true
       end
     end
   end
@@ -167,7 +167,7 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
     before :each do
       allow(subject).to receive(:check_task_run).and_return(true)
       allow(subject).to receive(:check_params).and_return(true)
-      allow(subject).to receive(:check_output).and_return(true)
+      allow(subject).to receive(:check_data).and_return(true)
     end
 
     specify do

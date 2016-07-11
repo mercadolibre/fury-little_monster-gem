@@ -32,8 +32,10 @@ module LittleMonster
     method_option :record_mode,
       aliases: '-r',
       type: :string,
+      enum: ['none','new','reload']
       default: 'new_episodes',
-      desc: 'Recording mocks mode  none|only_new|reload'
+      desc: 'Recording mocks mode  none|new|reload',
+      banner: 'Recording type could be none,new or reload on default assume none'
 
     def exec(job)
       ENV['LITTLE_MONSTER_ENV'] = options[:environment]

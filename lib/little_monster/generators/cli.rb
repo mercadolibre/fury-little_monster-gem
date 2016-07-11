@@ -52,7 +52,7 @@ module LittleMonster
       end
 
       vcr_mode = { 'none' => :none,
-                   'only_new' => :new_episodes,
+                   'new' => :new_episodes,
                    'reload' => :all }.fetch(options[:record_mode], :none)
 
       VCR.use_cassette(job.to_s, record: vcr_mode) do 

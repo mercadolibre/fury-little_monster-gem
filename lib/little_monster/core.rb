@@ -5,6 +5,7 @@ require 'little_monster/core/errors/max_retries_error'
 require 'little_monster/core/errors/job_not_found_error'
 require 'little_monster/core/errors/job_retry_error'
 require 'little_monster/core/errors/api_unreachable_error'
+require 'little_monster/core/errors/job_already_locked_error'
 
 require 'little_monster/core/tagged_logger'
 require 'little_monster/core/loggable' # must be required first to satisfy job and task dependencies

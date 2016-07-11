@@ -36,7 +36,7 @@ describe LittleMonster::RSpec::Matchers::HaveData do
     end
 
     specify do
-      expect(subject.failure_message).to eq("expected data #{data} but was {}")
+      expect(subject.failure_message).to eq("expected data #{data} but was nil")
     end
   end
 

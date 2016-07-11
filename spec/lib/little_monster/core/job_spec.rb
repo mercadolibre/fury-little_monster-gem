@@ -68,7 +68,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.params).to eq({}) }
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
-      it { expect(job.current_task).to be_nil }
+      it { expect(job.current_task).to eq(job.class.tasks.first) }
       it { expect(job.data).to be_instance_of(LittleMonster::Core::Job::Data) }
     end
 
@@ -148,6 +148,38 @@ describe LittleMonster::Core::Job do
         it 'returns data' do
           job.run
           expect(job.data).to eq({ task_b: "task_b_finished" })
+        end
+
+        context 'if job run is from rebuild' do
+          context 'and it already ran task_a' do
+            before :each do
+              job.instance_variable_set '@current_task', :task_b
+              job.run
+            end
+
+            it 'does not build task_a' do
+              expect(MockJob::TaskA).not_to have_received(:new)
+            end
+
+            it 'builds task_b' do
+              expect(MockJob::TaskB).to have_received(:new)
+            end
+          end
+
+          context 'if it does not have any current_task' do
+            before :each do
+              job.instance_variable_set '@current_task', nil
+              job.run
+            end
+
+            it 'does not build task_a' do
+              expect(MockJob::TaskA).not_to have_received(:new)
+            end
+
+            it 'does not build task_b' do
+              expect(MockJob::TaskB).not_to have_received(:new)
+            end
+          end
         end
       end
 
@@ -265,26 +297,43 @@ describe LittleMonster::Core::Job do
       allow(job).to receive(:do_retry)
     end
 
-    it 'does not abort if it did not receive a FatalTaskError' do
-      allow(job).to receive(:abort_job)
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job).not_to have_received(:abort_job).with LittleMonster::FatalTaskError
+    context 'if env is development' do
+      before :each do
+        allow(LittleMonster.env).to receive(:development?).and_return(true)
+      end
+
+      it 'raises passed exception' do
+        e = StandardError.new
+        expect { job.send(:error, e) }.to raise_error(e)
+      end
     end
 
-    it 'aborts if received a FatalTaskError' do
-      allow(job).to receive(:abort_job)
-      job.send(:error, LittleMonster::FatalTaskError.new)
-      expect(job).to have_received(:abort_job).with LittleMonster::FatalTaskError
-    end
+    context 'if env is not development' do
+      before :each do
+        allow(LittleMonster.env).to receive(:development?).and_return(false)
+      end
 
-    it 'calls do_retry if non FatalTaskError' do
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job).to have_received(:do_retry).with no_args
-    end
+      it 'does not abort if it did not receive a FatalTaskError' do
+        allow(job).to receive(:abort_job)
+        job.send(:error, LittleMonster::TaskError.new)
+        expect(job).not_to have_received(:abort_job).with LittleMonster::FatalTaskError
+      end
 
-    it 'calls on_error' do
-      job.send(:error, LittleMonster::TaskError.new)
-      expect(job).to have_received(:on_error).with(LittleMonster::TaskError)
+      it 'aborts if received a FatalTaskError' do
+        allow(job).to receive(:abort_job)
+        job.send(:error, LittleMonster::FatalTaskError.new)
+        expect(job).to have_received(:abort_job).with LittleMonster::FatalTaskError
+      end
+
+      it 'calls do_retry if non FatalTaskError' do
+        job.send(:error, LittleMonster::TaskError.new)
+        expect(job).to have_received(:do_retry).with no_args
+      end
+
+      it 'calls on_error' do
+        job.send(:error, LittleMonster::TaskError.new)
+        expect(job).to have_received(:on_error).with(LittleMonster::TaskError)
+      end
     end
   end
 
@@ -582,6 +631,28 @@ describe LittleMonster::Core::Job do
       allow(job).to receive(:mock?).and_return(false)
       allow(LittleMonster).to receive(:env).and_return('stage')
       expect(job.send(:should_request?)).to be true
+    end
+  end
+
+  describe '#tasks_to_run' do
+    context 'if job has no current_task' do
+      before :each do
+        job.instance_variable_set('@current_task', nil)
+      end
+
+      it 'returns []' do
+        expect(job.send :tasks_to_run).to eq([])
+      end
+    end
+
+    context 'if job has current_task' do
+      before :each do
+        job.instance_variable_set('@current_task', :task_b)
+      end
+
+      it 'returns array sliced from current task to end' do
+        expect(job.send :tasks_to_run).to eq([:task_b])
+      end
     end
   end
 end

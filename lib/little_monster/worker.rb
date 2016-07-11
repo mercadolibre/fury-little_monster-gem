@@ -14,13 +14,6 @@ module LittleMonster
 
     toiler_options parser: MultiJson
 
-    toiler_options on_visibility_extend: (proc do |_, _body|
-      logger.debug 'sending heartbeat'
-      # message = MultiJson.load body['Message'], symbolize_keys: true
-      # send heartbeat
-      # LittleMonster::Job.send_api_heartbeat message[:job_id]
-    end)
-
     def initialize
     end
 
@@ -31,10 +24,26 @@ module LittleMonster
       message = MultiJson.load body['Message'], symbolize_keys: true
       message[:params] = MultiJson.load message[:params], symbolize_keys: true
 
+      begin
+        send_heartbeat! message[:id]
+      rescue LittleMonster::JobAlreadyLockedError => e
+        logger.error e.message
+        return
+      end
+
       on_message
 
       job = LittleMonster::Job::Factory.new(message).build
       job.run unless job.nil?
+    end
+
+    def send_heartbeat!(id)
+      resp = LittleMonster::API.put "/jobs/#{id}/worker", critical: true, body: {
+        ip: Addrinfo.ip(Socket.gethostname).ip_address,
+        worker: Process.pid
+      }
+
+      raise LittleMonster::JobAlreadyLockedError, "job [id:#{id}] is already locked, discarding" if resp.code == 401
     end
   end
 end

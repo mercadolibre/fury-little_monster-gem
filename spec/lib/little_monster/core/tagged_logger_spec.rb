@@ -82,6 +82,10 @@ describe LittleMonster::Core::TaggedLogger do
     end
   end
 
+  describe '#default_tags' do
+    specify { expect(subject.default_tags).to eq(subject.tags[:default]) }
+  end
+
   describe '#method_missing' do
     context 'if method ends with tags=' do
       before :each do
@@ -140,4 +144,3 @@ describe LittleMonster::Core::TaggedLogger do
     end
   end
 end
-

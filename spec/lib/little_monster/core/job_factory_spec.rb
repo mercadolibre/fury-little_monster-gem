@@ -35,7 +35,7 @@ describe LittleMonster::Core::Job::Factory do
       allow(MockJob).to receive(:new).and_call_original
       factory.build
       expect(MockJob).to have_received(:new)
-        .with(id: message[:id], params: message[:params], tags: message[:tags])
+        .with(hash_including(:id, :params, :tags, :data, :current_task, :retries))
     end
   end
 
@@ -113,8 +113,13 @@ describe LittleMonster::Core::Job::Factory do
       expect(factory.find_current_task.keys).to eq([:name, :retries])
     end
 
-    it 'returns the first task with status pending from api attributes' do
-      expect(factory.find_current_task[:name]).to eq('b')
+    it 'returns the first task with status pending from api attributes with symbolized name' do
+      expect(factory.find_current_task[:name]).to eq(:b)
+    end
+
+    it 'returns empty hash if no task is pending' do
+      api_attributes[:tasks].last[:status] = 'finished'
+      expect(factory.find_current_task).to eq({})
     end
   end
 end

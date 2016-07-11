@@ -1,5 +1,6 @@
 require 'active_support/all'
 require 'multi_json'
+require 'toiler'
 require 'little_monster/config'
 require 'little_monster/core'
 
@@ -12,6 +13,8 @@ module LittleMonster
     @@config = Config.new default_config_values
 
     @@env = ActiveSupport::StringInquirer.new(ENV['LITTLE_MONSTER_ENV'] || ENV['RUBY_ENV'] || 'development')
+
+    @@logger = @@env.test? ? Logger.new('/dev/null') : Toiler.logger
   end
 
   def env
@@ -35,6 +38,10 @@ module LittleMonster
       job_requests_retries: 4,
       job_requests_retry_wait: 1
     }
+  end
+
+  def logger
+    @@logger
   end
 
   def method_missing(method, *args, &block)

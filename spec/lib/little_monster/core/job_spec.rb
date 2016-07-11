@@ -625,4 +625,26 @@ describe LittleMonster::Core::Job do
       expect(job.send(:should_request?)).to be true
     end
   end
+
+  describe '#tasks_to_run' do
+    context 'if job has no current_task' do
+      before :each do
+        job.instance_variable_set('@current_task', nil)
+      end
+
+      it 'returns []' do
+        expect(job.send :tasks_to_run).to eq([])
+      end
+    end
+
+    context 'if job has current_task' do
+      before :each do
+        job.instance_variable_set('@current_task', :task_b)
+      end
+
+      it 'returns array sliced from current task to end' do
+        expect(job.send :tasks_to_run).to eq([:task_b])
+      end
+    end
+  end
 end

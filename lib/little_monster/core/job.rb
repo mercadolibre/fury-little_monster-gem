@@ -68,7 +68,7 @@ module LittleMonster::Core
     def run
       notify_status :running
 
-      self.class.tasks[(self.class.tasks.find_index(current_task) || self.class.tasks.length)..-1].each do |task_name|
+      tasks_to_run.each do |task_name|
         logger.debug "running #{task_name}"
 
         notify_current_task task_name, :running
@@ -234,6 +234,15 @@ module LittleMonster::Core
 
     def task_class_for(task_name)
       self.class.task_class_for task_name
+    end
+
+
+    #returns the tasks that will be runned for this instance
+    def tasks_to_run
+      task_index = self.class.tasks.find_index(current_task)
+
+      return [] if task_index.nil?
+      self.class.tasks.slice(task_index..-1)
     end
   end
 end

@@ -7,8 +7,8 @@ module LittleMonster
     class_option :environment, 
       default: 'development', 
       type: :string,
-      desc: 'environment'
-    aliases: '-e','e'
+      desc: 'environment',
+      aliases: '-e'
 
     desc 'version','shows version'
     map %w[-v --version] => :version
@@ -29,7 +29,14 @@ module LittleMonster
       default: '{}',
       desc: 'Message that will be send as parameter (must be a JSON format)'
 
+    method_option :record_mode,
+      aliases: '-r',
+      type: :string,
+      default: 'new_episodes',
+      desc: 'Recording mocks mode  none|only_new|reload'
+
     def exec(job)
+      ENV['LITTLE_MONSTER_ENV'] = option[:environment]
       require 'vcr'
       require 'little_monster'
       require_relative "#{Dir.pwd}/config/application.rb"
@@ -41,7 +48,12 @@ module LittleMonster
         config.cassette_library_dir = "mocks/vcr_cassettes"
         config.hook_into :webmock # or :fakeweb
       end
-      VCR.use_cassette("testing") do 
+
+      vcr_mode = { 'none' => :none,
+                   'only_new' => :new_episodes,
+                   'reload' => :all }.fetch(option[:record_mode],:none)
+
+      VCR.use_cassette(job.to_s, record: vcr_mode) do 
         msg=JSON.parse(options[:message])
         message={params:msg ,name: job}
         job = LittleMonster::Job::Factory.new(message).build

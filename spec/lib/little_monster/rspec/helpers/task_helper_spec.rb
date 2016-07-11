@@ -38,10 +38,20 @@ describe LittleMonster::RSpec::TaskHelper do
 
   describe '::run_task' do
     context 'given a task and an options hash' do
-      it 'builds an instance from task_class' do
-        allow(task_class).to receive(:new).and_call_original
-        run_task task_class
-        expect(task_class).to have_received(:new)
+      context 'when task is class' do
+        it 'builds an instance from task_class' do
+          allow(task_class).to receive(:new).and_call_original
+          run_task task_class
+          expect(task_class).to have_received(:new)
+        end
+      end
+
+      context 'when task is symbol' do
+        it 'builds an instance from task_class' do
+          allow(task_class).to receive(:new).and_call_original
+          run_task task_class.to_s.underscore.to_sym
+          expect(task_class).to have_received(:new)
+        end
       end
 
       it 'returns a task result instance' do

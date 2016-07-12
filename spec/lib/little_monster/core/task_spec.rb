@@ -68,16 +68,15 @@ describe LittleMonster::Core::Task do
       expect(mock_task.data).to eq(data)
     end
 
-    it 'sets logger if logger is not nil' do
+    it 'sets parent_logger if logger is not nil' do
       mock_task.logger
       mock_task.send(:set_default_values, params, data, logger)
-      expect(mock_task.instance_variable_get('@logger')).to eq(logger)
+      expect(mock_task.logger.parent_logger).to eq(logger)
     end
 
-    it 'does not set logger if logger is nil' do
-      mock_task.logger #call logger to get it initialized
+    it 'does not set parent_logger if logger is nil' do
       mock_task.send(:set_default_values, params, output, nil)
-      expect(mock_task.instance_variable_get('@logger')).not_to be_nil
+      expect(mock_task.logger.parent_logger).to be_nil
     end
 
     it 'sets cancelled_callback' do

@@ -6,12 +6,12 @@ require 'little_monster/version'
 Gem::Specification.new do |spec|
   spec.name          = 'little_monster'
   spec.version       = LittleMonster::VERSION
-  spec.authors       = ['Sebastian Sujarchuk']
-  spec.email         = ['sebastian.sujarchuk@mercadolibre.com']
+  spec.authors       = ['arq']
+  spec.email         = ['arquitectura@mercadolibre.com']
 
   spec.summary       = 'Write a short summary, because Rubygems requires one.'
   spec.description   = 'Write a longer description or delete this line.'
-  spec.homepage      = 'http://github.com/mercadolibre/fury-little_monster'
+  spec.homepage      = 'http://github.com/mercadolibre/fury-little_monster-gem'
   spec.license       = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
@@ -24,7 +24,7 @@ Gem::Specification.new do |spec|
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = 'exe'
-  spec.executables   = ['little_monster']
+  spec.executables   = ['lm']
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'activesupport'

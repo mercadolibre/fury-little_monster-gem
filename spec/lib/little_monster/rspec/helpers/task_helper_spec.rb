@@ -38,10 +38,26 @@ describe LittleMonster::RSpec::TaskHelper do
 
   describe '::run_task' do
     context 'given a task and an options hash' do
+      it 'calls generate_task' do
+        allow(described_class).to receive(:generate_task)
+        allow(described_class::Result).to receive(:new)
+        options = { a: :b , c: :d }
+        run_task task_class, options
+        expect(described_class).to have_received(:generate_task).with(task_class, options).once
+      end
+
+      it 'returns result' do
+        expect(run_task(task_class, options).class).to eq described_class::Result
+      end
+    end
+  end
+
+  describe '::generate_task' do
+    context 'given a task and an options hash' do
       context 'when task is class' do
         it 'builds an instance from task_class' do
           allow(task_class).to receive(:new).and_call_original
-          run_task task_class
+          generate_task task_class
           expect(task_class).to have_received(:new)
         end
       end
@@ -49,17 +65,17 @@ describe LittleMonster::RSpec::TaskHelper do
       context 'when task is symbol' do
         it 'builds an instance from task_class' do
           allow(task_class).to receive(:new).and_call_original
-          run_task task_class.to_s.underscore.to_sym
+          generate_task task_class.to_s.underscore.to_sym
           expect(task_class).to have_received(:new)
         end
       end
 
       it 'returns a task result instance' do
-        expect(run_task(task_class).class).to eq(described_class::Result)
+        expect(generate_task(task_class).class).to eq(task_class)
       end
 
-      context 'returned task instance' do
-        let(:task) { run_task(task_class, options).instance }
+      context 'returns task instance' do
+        let(:task) { generate_task(task_class, options) }
 
         it 'has params key from options' do
           expect(task.params).to eq(options[:params])

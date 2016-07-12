@@ -27,8 +27,6 @@ module LittleMonster
     def exec(job)
       require 'little_monster'
       require_relative "#{Dir.pwd}/config/application.rb"
-      require_relative "#{Dir.pwd}/jobs/#{job}.rb"
-      Dir["#{Dir.pwd}/tasks/#{job}/*.rb"].each {|file| require_relative file }
 
       msg = MultiJson.load(options[:message], symbolize_keys: true)
       message = {params:msg ,name: job}

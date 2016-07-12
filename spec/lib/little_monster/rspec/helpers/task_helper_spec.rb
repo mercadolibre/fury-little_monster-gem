@@ -18,6 +18,12 @@ describe LittleMonster::RSpec::TaskHelper do
     }
   end
 
+  let(:task_helper) do
+    class Dummy
+      extend LittleMonster::RSpec::TaskHelper
+    end
+  end
+
   describe described_class::Result do
     let(:task_instance) { double(run: double, data: options[:data]) }
     let!(:result) { described_class.new task_instance }
@@ -39,11 +45,11 @@ describe LittleMonster::RSpec::TaskHelper do
   describe '::run_task' do
     context 'given a task and an options hash' do
       it 'calls generate_task' do
-        allow(described_class).to receive(:generate_task)
+        allow(task_helper).to receive(:generate_task)
         allow(described_class::Result).to receive(:new)
         options = { a: :b , c: :d }
-        run_task task_class, options
-        expect(described_class).to have_received(:generate_task).with(task_class, options).once
+        task_helper.run_task task_class, options
+        expect(task_helper).to have_received(:generate_task).with(task_class, options).once
       end
 
       it 'returns result' do

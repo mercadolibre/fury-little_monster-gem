@@ -15,17 +15,13 @@ module LittleMonster::RSpec
       end
     end
 
-    module_function
-
     def run_task(task, options = {})
-      task_instance = LittleMonster::RSpec::TaskHelper.generate_task(task, options)
+      task_instance = generate_task(task, options)
 
       Result.new(task_instance)
     end
 
     def generate_task(task, options = {})
-      require 'rspec'
-      
       task_class = if task.class != Class
                      task.to_s.camelcase.constantize
                    else

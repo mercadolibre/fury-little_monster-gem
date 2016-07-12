@@ -9,7 +9,7 @@ module LittleMonster
     map %w[-v --version] => :version
 
     def version
-      say '0.0.0'
+      say LittleMonster::VERSION
     end
 
     desc 'exec <job>','runs a job'
@@ -25,13 +25,26 @@ module LittleMonster
       desc: 'Message that will be send as parameter (must be a JSON format)'
 
     def exec(job)
-      require 'little_monster'
       require_relative "#{Dir.pwd}/config/application.rb"
 
       msg = MultiJson.load(options[:message], symbolize_keys: true)
       message = {params:msg ,name: job}
       job = LittleMonster::Job::Factory.new(message).build
       job.run unless job.nil?
+    end
+
+    desc 'start','starts the little monster worker'
+    option :daemonize,
+      type: :boolean,
+      default: false,
+      aliases: :d
+
+    def start
+      require_relative "#{Dir.pwd}/config/application.rb"
+
+      toiler_args = ['-C', "#{Dir.pwd}/config/toiler.yml"]
+      toiler_args << '-d' if options[:daemonize]
+      Toiler::CLI.instance.run(toiler_args)
     end
 
     register(LittleMonster::ConfGen, 'init', 'init','Creates new Little Monster Schema app')

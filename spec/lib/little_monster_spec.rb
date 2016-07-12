@@ -61,7 +61,7 @@ describe LittleMonster do
     end
 
     describe '::configure' do
-      let(:config) { instance_double LittleMonster::Config }
+      let(:config) { LittleMonster::Config.new }
 
       before :each do
         LittleMonster.class_variable_set '@@config', config

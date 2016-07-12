@@ -12,7 +12,6 @@ module LittleMonster::Core
 
       return if @api_attributes.fetch(:status, 'pending') != 'pending'
 
-
       job_class = @name.to_s.camelcase.constantize
       job_class.new job_attributes
     end
@@ -39,21 +38,20 @@ module LittleMonster::Core
     end
 
     def job_attributes
-      current_task = find_current_task
-
       attributes = {
         id: @id,
         params: @params,
         tags: @tags,
-        data: @api_attributes[:data],
-        current_task: current_task[:name],
-        retries: current_task[:retries]
       }
 
       if %w(development test).include? LittleMonster.env
-        attributes.delete_if { |_, value| value.nil? }
-      else
         attributes
+      else
+        current_task = find_current_task
+        attributes.merge(data: @api_attributes[:data],
+                         current_task: current_task[:name],
+                         retries: current_task[:retries])
+
       end
     end
   end

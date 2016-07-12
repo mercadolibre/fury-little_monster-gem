@@ -35,7 +35,7 @@ describe LittleMonster::Core::Job::Factory do
       allow(MockJob).to receive(:new).and_call_original
       factory.build
       expect(MockJob).to have_received(:new)
-        .with(hash_including(:id, :params, :tags, :data, :current_task, :retries))
+        .with(factory.job_attributes)
     end
   end
 
@@ -120,6 +120,25 @@ describe LittleMonster::Core::Job::Factory do
     it 'returns empty hash if no task is pending' do
       api_attributes[:tasks].last[:status] = 'finished'
       expect(factory.find_current_task).to eq({})
+    end
+  end
+
+  describe '#job_attributes' do
+    context 'when env is development or test' do
+      it 'returns hash with id params and tags' do
+        expect(factory.job_attributes.keys).to eq([:id, :params, :tags])
+      end
+    end
+
+    context 'when env is not development or test' do
+      before :each do
+        allow(LittleMonster).to receive(:env).and_return('production')
+        factory.instance_variable_set('@api_attributes', {})
+      end
+
+      it 'returns hash with id params tags data current_task and retries' do
+        expect(factory.job_attributes.keys).to eq([:id, :params, :tags, :data, :current_task, :retries])
+      end
     end
   end
 end

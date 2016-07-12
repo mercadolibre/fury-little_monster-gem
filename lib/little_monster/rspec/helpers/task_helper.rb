@@ -16,6 +16,12 @@ module LittleMonster::RSpec
     end
 
     def run_task(task, options = {})
+      task_instance = generate_task(task, options)
+
+      Result.new(task_instance)
+    end
+
+    def generate_task(task, options = {})
       task_class = if task.class != Class
                      task.to_s.camelcase.constantize
                    else
@@ -28,14 +34,13 @@ module LittleMonster::RSpec
              else
                LittleMonster::Job::Data.new(double(current_task: task_symbol),
                                             outputs: options.fetch(:data, {}))
-             end
+              end
 
       task_instance = task_class.new(options[:params], data)
-
       task_instance.send(:set_default_values, options[:params], data)
       task_instance.instance_variable_set('@cancelled_callback', (proc { true })) if options[:cancelled]
 
-      Result.new(task_instance)
+      task_instance
     end
   end
 end

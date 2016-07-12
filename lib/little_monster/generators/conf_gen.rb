@@ -17,6 +17,10 @@ module LittleMonster
       directory('./templates/lib','lib')
     end
 
+    def create_log_files
+      directory('./templates/log','log')
+    end
+
     def create_specs_files
       template 'templates/spec_helper_temp.erb',"spec/spec_helper.rb"
     end

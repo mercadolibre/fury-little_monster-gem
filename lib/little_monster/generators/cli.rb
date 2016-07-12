@@ -43,7 +43,7 @@ module LittleMonster
       require_relative "#{Dir.pwd}/config/application.rb"
 
       toiler_args = ['-C', "#{Dir.pwd}/config/toiler.yml"]
-      toiler_args << '-d' if options[:daemonize]
+      toiler_args += ['-d', '-L', 'log/little_monster.log'] if options[:daemonize]
       Toiler::CLI.instance.run(toiler_args)
     end
 

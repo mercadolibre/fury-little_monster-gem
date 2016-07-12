@@ -33,7 +33,7 @@ module LittleMonster::Core
       @cancelled_callback = cancelled_callback
       @params = params
       @data = data
-      @logger = job_logger if job_logger
+      logger.parent_logger = job_logger if job_logger
     end
   end
 end

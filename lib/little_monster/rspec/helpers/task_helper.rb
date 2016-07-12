@@ -1,5 +1,7 @@
 module LittleMonster::RSpec
   module TaskHelper
+    require 'rspec'
+
     class Result
       def initialize(task)
         @task = task

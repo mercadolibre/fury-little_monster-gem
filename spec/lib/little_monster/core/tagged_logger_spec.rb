@@ -144,4 +144,3 @@ describe LittleMonster::Core::TaggedLogger do
     end
   end
 end
-

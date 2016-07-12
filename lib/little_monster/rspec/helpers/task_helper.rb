@@ -1,7 +1,5 @@
 module LittleMonster::RSpec
   module TaskHelper
-    require 'rspec'
-
     class Result
       def initialize(task)
         @task = task
@@ -26,6 +24,8 @@ module LittleMonster::RSpec
     end
 
     def generate_task(task, options = {})
+      require 'rspec'
+      
       task_class = if task.class != Class
                      task.to_s.camelcase.constantize
                    else

@@ -12,6 +12,15 @@ describe LittleMonster::Worker do
   let(:job) { double(run: nil) }
   let(:factory) { double(build: job) }
 
+  describe '::update_attributes' do
+    it 'calls toiler options with queue and concurrency' do
+      allow(described_class).to receive(:toiler_options)
+      described_class.update_attributes
+      expect(described_class).to have_received(:toiler_options).with(queue: LittleMonster.worker_queue,
+                                                                     concurrency: LittleMonster.worker_concurrency)
+    end
+  end
+
   describe '#perform' do
     before :each do
       allow(LittleMonster::Job::Factory).to receive(:new).and_return(factory)
@@ -23,12 +32,6 @@ describe LittleMonster::Worker do
         allow(worker).to receive(:send_heartbeat!).and_raise(LittleMonster::JobAlreadyLockedError)
       end
 
-      it 'does not call on_message' do
-        allow(worker).to receive(:on_message)
-        worker.perform(nil, 'Message' => MultiJson.dump(message))
-        expect(worker).not_to have_received(:on_message)
-      end
-
       it 'does not run job' do
         worker.perform(nil, 'Message' => MultiJson.dump(message))
         expect(job).not_to have_received(:run)
@@ -36,12 +39,6 @@ describe LittleMonster::Worker do
     end
 
     context ' when heartbeat passes' do
-      it 'calls on_message' do
-        allow(worker).to receive(:on_message)
-        worker.perform(nil, 'Message' => MultiJson.dump(message))
-        expect(worker).to have_received(:on_message).once
-      end
-
       it 'builds job instance from factory' do
         worker.perform(nil, 'Message' => MultiJson.dump(message))
         expect(factory).to have_received(:build).once

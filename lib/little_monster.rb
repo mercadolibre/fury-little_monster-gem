@@ -23,8 +23,8 @@ module LittleMonster
 
   def configure
     yield @@config
-    #it reloads worker so it can refresh and concurrency
-    load 'little_monster/worker.rb'
+    #it calls update_attributes so it can refresh and concurrency
+    Worker.update_attributes
   end
 
   def default_config_values

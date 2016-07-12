@@ -70,6 +70,12 @@ describe LittleMonster do
       it 'yields the config from the module' do
         expect { |b| LittleMonster.configure(&b) }.to yield_with_args(config)
       end
+
+      it 'calls Worker::update_attributes' do
+        allow(LittleMonster::Worker).to receive(:update_attributes)
+        LittleMonster.configure { }
+        expect(LittleMonster::Worker).to have_received(:update_attributes)
+      end
     end
 
     describe 'logger' do

@@ -5,19 +5,20 @@ module LittleMonster
     include LittleMonster::Loggable
     include ::Toiler::Worker
 
-    toiler_options queue: LittleMonster.worker_queue
-
-    toiler_options concurrency: LittleMonster.worker_concurrency
+    toiler_options queue: LittleMonster.worker_queue,
+                   concurrency: LittleMonster.worker_concurrency
 
     toiler_options auto_visibility_timeout: true,
                    auto_delete: true
 
     toiler_options parser: MultiJson
 
-    def initialize
+    def self.update_attributes
+      toiler_options queue: LittleMonster.worker_queue,
+                     concurrency: LittleMonster.worker_concurrency
     end
 
-    def on_message
+    def initialize
     end
 
     def perform(_sqs_msg, body)
@@ -30,8 +31,6 @@ module LittleMonster
         logger.error e.message
         return
       end
-
-      on_message
 
       job = LittleMonster::Job::Factory.new(message).build
       job.run unless job.nil?

@@ -64,8 +64,22 @@ describe LittleMonster::Core::TaggedLogger do
           subject.tags_for :info, info_tags
         end
 
-        it 'returns default tags merged with tags and message' do
-          expect(subject.tag_message key, message).to eq("#{subject.tags_to_string resulting_tags} -- #{message}")
+        context 'if parent_logger is nil' do
+          it 'returns default tags merged with tags and message' do
+            expect(subject.tag_message key, message).to eq("#{subject.tags_to_string resulting_tags} -- #{message}")
+          end
+        end
+
+        context 'if parent_logger is not nil' do
+          let(:parent_logger) { double(tag_message: 'parent_retagged_message') }
+
+          before :each do
+            subject.parent_logger = parent_logger
+          end
+
+          it 'returns default tags merged with tags and message' do
+            expect(subject.tag_message key, message).to eq("#{parent_logger.tag_message}#{message}")
+          end
         end
       end
     end

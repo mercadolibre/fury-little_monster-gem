@@ -1,5 +1,6 @@
 module LittleMonster::Core
   class TaggedLogger
+    attr_accessor :parent_logger
     attr_reader :tags
 
     LEVELS = [:unknown, :fatal, :error, :warn, :info, :debug]
@@ -10,6 +11,7 @@ module LittleMonster::Core
 
     def initialize
       @tags = Hash.new({})
+      @parent_logger = nil
     end
 
     def method_missing(method, *args, &block)
@@ -45,6 +47,11 @@ module LittleMonster::Core
     def tag_message(level, message='')
       prefix_string =  tags_to_string @tags[:default].merge(@tags[level])
       prefix_string << ' -- ' unless prefix_string.blank?
+
+      unless @parent_logger.nil?
+        prefix_string = @parent_logger.tag_message level, prefix_string
+      end
+
       [prefix_string, message].join
     end
 

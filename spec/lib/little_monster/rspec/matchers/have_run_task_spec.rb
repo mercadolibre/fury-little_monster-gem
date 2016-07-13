@@ -36,7 +36,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
 
       before :each do
         allow(subject).to receive(:check_task_run).and_return(true)
-        allow(subject).to receive(:check_params).and_return(true)
         allow(subject).to receive(:check_data).and_return(true)
       end
 
@@ -59,10 +58,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
           allow(subject).to receive(:check_task_run).and_return(false)
         end
 
-        it 'fails checking params' do
-          allow(subject).to receive(:check_params).and_return(false)
-        end
-
         it 'fails checking data' do
           allow(subject).to receive(:check_data).and_return(false)
         end
@@ -71,19 +66,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
           expect(subject.matches? job_result).to be false
         end
       end
-    end
-  end
-
-  describe 'with_params' do
-    let(:params) { double }
-
-    it 'sets expected_params' do
-      subject.with_params params
-      expect(subject.expected_params).to eq(params)
-    end
-
-    it 'returns self' do
-      expect(subject.with_params params).to eq(subject)
     end
   end
 
@@ -108,33 +90,6 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
 
     it 'returns false if task is nil' do
       expect(subject.check_task_run).to be false
-    end
-  end
-
-  describe '#check_params' do
-    context 'when expected_params is defined' do
-      let(:expected_params) { { a: :b } }
-      before :each do
-        subject.instance_variable_set '@expected_params', expected_params
-      end
-
-      it 'returns true if task params match expected params' do
-        task = double(params: expected_params)
-        subject.instance_variable_set '@task', task
-        expect(subject.check_params).to be true
-      end
-
-      it 'returns false if task params dont match expected params' do
-        task = double(params: {})
-        subject.instance_variable_set '@task', task
-        expect(subject.check_params).to be false
-      end
-    end
-
-    context 'when expected_params is not defined' do
-      it 'returns true' do
-        expect(subject.check_params).to be true
-      end
     end
   end
 
@@ -166,27 +121,11 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
   describe 'failure_message' do
     before :each do
       allow(subject).to receive(:check_task_run).and_return(true)
-      allow(subject).to receive(:check_params).and_return(true)
       allow(subject).to receive(:check_data).and_return(true)
     end
 
     specify do
       expect(subject.failure_message).to include("task #{expected_task} was expected to run\n")
-    end
-
-    context 'when check params failed' do
-      let(:expected_params) { { a: :b } }
-      let(:actual_params) { { b: :c } }
-
-      before :each do
-        allow(subject).to receive(:check_params).and_return(false)
-        subject.instance_variable_set '@expected_params', expected_params
-        subject.instance_variable_set '@task', double(params: actual_params)
-      end
-
-      specify do
-        expect(subject.failure_message).to include("\twith params #{expected_params} but received #{actual_params}\n")
-      end
     end
 
     context 'when check data failed' do

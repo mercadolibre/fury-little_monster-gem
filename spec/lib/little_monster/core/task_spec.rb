@@ -4,88 +4,62 @@ describe LittleMonster::Core::Task do
   let(:options) do
     {
       id: 0,
-      params: { a: 'b' }
+      data: { a: 'b' }
     }
   end
 
   let(:job) { MockJob.new options }
 
-  let(:mock_task) { MockJob::Task.new({}, {}) }
+  let(:mock_task) { MockJob::Task.new({}) }
 
   after :each do
     load './spec/mock/mock_job.rb'
   end
 
   describe 'attr_readers' do
-    it 'has params' do
-      expect(mock_task).to respond_to(:params)
-    end
-
     it 'has data' do
       expect(mock_task).to respond_to(:data)
     end
   end
 
   describe '#initialize' do
-    let(:params) { { a: 'b' } }
     let(:data) { LittleMonster::Core::Job::Data.new job }
-    let(:mock_task) { MockJob::Task.new(params, data) }
-
-    before :each do
-      allow_any_instance_of(MockJob::Task).to receive(:set_default_values).and_call_original
-    end
+    let(:mock_task) { MockJob::Task.new(data) }
 
     it 'sets data' do
-      expect(mock_task.instance_variable_get('@data')).to eq(data)
-    end
-
-    it 'sets params' do
-      expect(mock_task.instance_variable_get('@params')).to eq(params)
-    end
-
-    context 'when it is not overriden' do
-      it 'call set_default_values with params and datas' do
-        mock_task
-        expect(mock_task).to have_received(:set_default_values).with(params, data)
-      end
+      expect(mock_task.data).to eq(data)
     end
   end
 
   describe '#set_default_values' do
-    let(:params) { { a: 'b' } }
     let(:data) { LittleMonster::Core::Job::Data.new job }
     let(:cancelled_callback) { double }
     let(:logger) { double }
-    let(:mock_task) { MockJob::Task.new(params, data) }
-
-    it 'sets params' do
-      mock_task.send(:set_default_values, params, data)
-      expect(mock_task.params).to eq(params)
-    end
+    let(:mock_task) { MockJob::Task.new(nil) }
 
     it 'sets data' do
-      mock_task.send(:set_default_values, params, data)
+      mock_task.send(:set_default_values, data)
       expect(mock_task.data).to eq(data)
     end
 
     it 'sets parent_logger if logger is not nil' do
       mock_task.logger
-      mock_task.send(:set_default_values, params, data, logger)
+      mock_task.send(:set_default_values, data, logger)
       expect(mock_task.logger.parent_logger).to eq(logger)
     end
 
     it 'does not set parent_logger if logger is nil' do
-      mock_task.send(:set_default_values, params, output, nil)
+      mock_task.send(:set_default_values, data, nil)
       expect(mock_task.logger.parent_logger).to be_nil
     end
 
     it 'sets cancelled_callback' do
-      mock_task.send(:set_default_values, params, data, logger, cancelled_callback)
+      mock_task.send(:set_default_values, data, logger, cancelled_callback)
       expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(cancelled_callback)
     end
 
     it 'sets cancelled_callback to nil if cancelled_callback is not sent' do
-      mock_task.send(:set_default_values, params, data)
+      mock_task.send(:set_default_values, data)
       expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(nil)
     end
   end
@@ -96,11 +70,11 @@ describe LittleMonster::Core::Task do
     end
 
     it 'raises NotImplementedError if not implemented' do
-      expect { LittleMonster::Task.new(nil, nil).run }.to raise_error(NotImplementedError)
+      expect { LittleMonster::Task.new(nil).run }.to raise_error(NotImplementedError)
     end
 
     it 'executes the code in run if implemented' do
-      expect { MockJob::Task.new(nil, nil).run }.not_to raise_error
+      expect { MockJob::Task.new(nil).run }.not_to raise_error
     end
 
     it 'raises CancelError if is_cancelled!' do

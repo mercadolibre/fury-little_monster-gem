@@ -83,10 +83,6 @@ describe LittleMonster::RSpec::TaskHelper do
       context 'returns task instance' do
         let(:task) { generate_task(task_class, options) }
 
-        it 'has params key from options' do
-          expect(task.params).to eq(options[:params])
-        end
-
         it 'has preveious data key from options' do
           expect(task.data).to eq(options[:data])
         end

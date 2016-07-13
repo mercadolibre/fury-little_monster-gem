@@ -36,8 +36,8 @@ module LittleMonster::RSpec
                                             outputs: options.fetch(:data, {}))
               end
 
-      task_instance = task_class.new(options[:params], data)
-      task_instance.send(:set_default_values, options[:params], data)
+      task_instance = task_class.new(data)
+      task_instance.send(:set_default_values, data)
       task_instance.instance_variable_set('@cancelled_callback', (proc { true })) if options[:cancelled]
 
       task_instance

@@ -1,6 +1,6 @@
 class MockJob::TaskA < LittleMonster::Task
-  def initialize(params, previous_output)
-    super(params, previous_output)
+  def initialize(data)
+    super(data)
     @my_var = 'task_a_finished'
   end
 

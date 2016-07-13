@@ -12,7 +12,7 @@ describe LittleMonster::Core::Job do
   let(:options) do
     {
       id: 0,
-      params: { a: 'b' }
+      tags: { a: :b }
     }
   end
 
@@ -45,7 +45,6 @@ describe LittleMonster::Core::Job do
       let(:options) do
         {
           id: 1,
-          params: { a: :b },
           tags: { tag: 'a tag' },
           retries: 2,
           current_task: :task_a,
@@ -54,7 +53,6 @@ describe LittleMonster::Core::Job do
       end
 
       it { expect(job.id).to eq(options[:id]) }
-      it { expect(job.params).to eq(options[:params]) }
       it { expect(job.tags).to eq(options[:tags]) }
       it { expect(job.retries).to eq(options[:retries]) }
       it { expect(job.current_task).to eq(options[:current_task]) }
@@ -65,7 +63,6 @@ describe LittleMonster::Core::Job do
       let(:options) { {} }
 
       it { expect(job.id).to be_nil }
-      it { expect(job.params).to eq({}) }
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
       it { expect(job.current_task).to eq(job.class.tasks.first) }
@@ -74,10 +71,6 @@ describe LittleMonster::Core::Job do
 
     it 'sets status to pending' do
       expect(job.status).to eq(:pending)
-    end
-
-    it 'freezes the params' do
-      expect(job.params.frozen?).to be true
     end
 
     it 'freezes the tags' do
@@ -108,27 +101,27 @@ describe LittleMonster::Core::Job do
       it 'build the task class based on class parent module and symbol' do
         MockJob.task_list :task_a
         job.run
-        expect(MockJob::TaskA).to have_received(:new)
+        expect(MockJob::TaskA).to have_received(:new).with(job.data)
       end
 
-      it 'calls set_default_values on task with params, output, logger, and is_cancelled method' do
+      it 'calls set_default_values on task with data, logger, and is_cancelled method' do
         MockJob.task_list :task_a
         task = double(set_default_values: nil, run: nil)
         allow(MockJob::TaskA).to receive(:new).and_return(task)
         job.run
-        expect(task).to have_received(:set_default_values).with(job.params, job.data, job.logger, job.method(:is_cancelled?))
+        expect(task).to have_received(:set_default_values).with(job.data, job.logger, job.method(:is_cancelled?))
       end
 
       context 'on mock job' do
         it 'calls the first task with empty data' do
-          expect(MockJob::TaskA).to receive(:new).with(options[:params], job_data_with_hash({}))
+          expect(MockJob::TaskA).to receive(:new).with(job_data_with_hash({}))
           job.run
         end
 
         it 'calls the later task with chained outputs' do
           task_a_output = double
           allow_any_instance_of(MockJob::TaskA).to receive(:run) { job.data[:task_a_output] = task_a_output }
-          expect(MockJob::TaskB).to receive(:new).with(options[:params], job_data_with_hash(task_a_output: task_a_output))
+          expect(MockJob::TaskB).to receive(:new).with(job_data_with_hash(task_a_output: task_a_output))
           job.run
         end
 
@@ -217,7 +210,7 @@ describe LittleMonster::Core::Job do
         end
 
         it 'calls Task.error on TaskError' do
-          mock_task = MockJob::TaskA.new(nil, nil)
+          mock_task = MockJob::TaskA.new({})
           allow(MockJob::TaskA).to receive(:new).and_return(mock_task)
           allow_any_instance_of(MockJob::TaskA).to receive(:run).and_raise(LittleMonster::TaskError)
           allow(mock_task).to receive(:error)

@@ -42,7 +42,7 @@ module LittleMonster::Core
 
     def initialize(options = {})
       @id = options.fetch(:id, nil)
-      @tags = options.fetch(:tags, {}).freeze
+      @tags = (options[:tags] || {}).freeze
 
       @retries = options[:retries] || 0
       @current_task = options.fetch(:current_task, self.class.tasks.first)

@@ -52,7 +52,7 @@ module LittleMonster::RSpec::Matchers
     def failure_message
       message = "task #{@expected_task} was expected to run\n"
       message << "\twith params #{@expected_params} but received #{@task.params || 'nil'}\n" unless check_params
-      message << "\twith data #{@expected_data} but was #{@task.data.instance_variable_get('@datas') || 'nil'}\n" unless check_data
+      message << "\twith data #{@expected_data} but was #{@task_data || 'nil'}\n" unless check_data
       message
     end
   end

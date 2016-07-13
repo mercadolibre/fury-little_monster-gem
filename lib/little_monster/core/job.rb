@@ -87,7 +87,7 @@ module LittleMonster::Core
           if mock?
             @runned_tasks[task_name] = {}
             @runned_tasks[task_name][:instance] = task
-            @runned_tasks[task_name][:data] = @data.dup
+            @runned_tasks[task_name][:data] = @data.to_h[:outputs].to_h.dup
           end
         rescue APIUnreachableError => e
           raise e

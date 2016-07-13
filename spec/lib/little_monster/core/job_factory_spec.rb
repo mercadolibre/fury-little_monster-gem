@@ -5,7 +5,7 @@ describe LittleMonster::Core::Job::Factory do
     {
       id: 0,
       name: :mock_job,
-      params: { a: :b },
+      data: { a: :b },
       tags: { c: :d }
     }
   end
@@ -15,19 +15,18 @@ describe LittleMonster::Core::Job::Factory do
   describe '#initialize' do
     it { expect(factory.instance_variable_get '@id').to eq(message[:id]) }
     it { expect(factory.instance_variable_get '@name').to eq(message[:name]) }
-    it { expect(factory.instance_variable_get '@params').to eq(message[:params]) }
+    it { expect(factory.instance_variable_get '@input_data').to eq(message[:data]) }
     it { expect(factory.instance_variable_get '@tags').to eq(message[:tags]) }
+
+    it 'fetches attributes from api' do
+      allow_any_instance_of(described_class).to receive(:fetch_attributes).and_call_original
+      expect(factory).to have_received(:fetch_attributes).once
+    end
   end
 
   describe '#build' do
-    it 'fetches attributes from api' do
-      allow(factory).to receive(:fetch_attributes).and_call_original
-      factory.build
-      expect(factory).to have_received(:fetch_attributes).once
-    end
-
     it 'returns if fetched attributes have status not pending' do
-      allow(factory).to receive(:fetch_attributes).and_return(status: 'running')
+      factory.instance_variable_set '@api_attributes', status: 'running'
       expect(factory.build).to be_nil
     end
 
@@ -61,6 +60,7 @@ describe LittleMonster::Core::Job::Factory do
 
     context 'when env is not test nor development' do
       before :each do
+        factory #call factory to initialize it
         allow(LittleMonster).to receive(:env).and_return('production')
       end
 
@@ -125,19 +125,29 @@ describe LittleMonster::Core::Job::Factory do
 
   describe '#job_attributes' do
     context 'when env is development or test' do
-      it 'returns hash with id params and tags' do
-        expect(factory.job_attributes.keys).to eq([:id, :params, :tags])
+      it 'returns hash with id tags and input data' do
+        expect(factory.job_attributes).to eq(id: message[:id],
+                                             data: message[:data],
+                                             tags: message[:tags])
       end
     end
 
     context 'when env is not development or test' do
+      let(:current_task) { { name: 'name', retries: 0 } }
+      let(:data) { {} }
+
       before :each do
+        allow(factory).to receive(:find_current_task).and_return(current_task)
+        factory.instance_variable_set('@api_attributes', data: data)
         allow(LittleMonster).to receive(:env).and_return('production')
-        factory.instance_variable_set('@api_attributes', {})
       end
 
       it 'returns hash with id params tags data current_task and retries' do
-        expect(factory.job_attributes.keys).to eq([:id, :params, :tags, :data, :current_task, :retries])
+        expect(factory.job_attributes).to eq(id: message[:id],
+                                             tags: message[:tags],
+                                             data: data,
+                                             current_task: current_task[:name],
+                                             retries: current_task[:retries])
       end
     end
   end

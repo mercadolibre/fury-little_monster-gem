@@ -3,13 +3,15 @@ module LittleMonster::Core
     def initialize(message = {})
       @id = message[:id]
       @name = message[:name]
-      @input_data = message[:data]
       @tags = message[:tags]
+
+      @api_attributes = fetch_attributes
+
+      #this gets saved for development run and debugging purposes
+      @input_data = message[:data]
     end
 
     def build
-      @api_attributes = fetch_attributes
-
       return if @api_attributes.fetch(:status, 'pending') != 'pending'
 
       job_class = @name.to_s.camelcase.constantize
@@ -40,7 +42,7 @@ module LittleMonster::Core
     def job_attributes
       attributes = {
         id: @id,
-        params: @params,
+        data: (@api_attributes[:data] || @input_data),
         tags: @tags,
       }
 
@@ -48,8 +50,7 @@ module LittleMonster::Core
         attributes
       else
         current_task = find_current_task
-        attributes.merge(data: @api_attributes[:data],
-                         current_task: current_task[:name],
+        attributes.merge(current_task: current_task[:name],
                          retries: current_task[:retries])
 
       end

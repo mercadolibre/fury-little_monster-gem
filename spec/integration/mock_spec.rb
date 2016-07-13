@@ -19,7 +19,6 @@ describe MockJob do
 
   it 'runs task_b' do
     expect(run_job(:mock_job, params: { a: :b })).to have_run_task(:task_b)
-      .with_params(a: :b)
       .with_data({ task_b: 'task_b_finished' })
   end
 end

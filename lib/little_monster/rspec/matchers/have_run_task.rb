@@ -1,8 +1,6 @@
 module LittleMonster::RSpec::Matchers
   class HaveRunTask
     attr_reader :expected_task
-    attr_reader :expected_params
-    attr_reader :expected_previous_data
     attr_reader :expected_data
 
     def initialize(expected_task)
@@ -16,19 +14,11 @@ module LittleMonster::RSpec::Matchers
     def matches?(job)
       @task = job.runned_tasks[@expected_task][:instance]
       @task_data = job.runned_tasks[@expected_task][:data]
-      check_task_run && check_params && check_data
+      check_task_run && check_data
     end
 
     def check_task_run
       !@task.nil?
-    end
-
-    def check_params
-      if defined?(@expected_params)
-        @task.params == @expected_params
-      else
-        true
-      end
     end
 
     def check_data
@@ -39,11 +29,6 @@ module LittleMonster::RSpec::Matchers
       end
     end
 
-    def with_params(params)
-      @expected_params = params
-      self
-    end
-
     def with_data(data)
       @expected_data = data
       self
@@ -51,7 +36,6 @@ module LittleMonster::RSpec::Matchers
 
     def failure_message
       message = "task #{@expected_task} was expected to run\n"
-      message << "\twith params #{@expected_params} but received #{@task.params || 'nil'}\n" unless check_params
       message << "\twith data #{@expected_data} but was #{@task_data || 'nil'}\n" unless check_data
       message
     end

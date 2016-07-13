@@ -188,5 +188,20 @@ describe LittleMonster::RSpec::Matchers::HaveRunTask do
         expect(subject.failure_message).to include("\twith params #{expected_params} but received #{actual_params}\n")
       end
     end
+
+    context 'when check data failed' do
+      let(:expected_data) { { a: :b } }
+      let(:actual_data) { { b: :c } }
+
+      before :each do
+        allow(subject).to receive(:check_data).and_return(false)
+        subject.instance_variable_set '@expected_data', expected_data
+        subject.instance_variable_set '@task_data', actual_data
+      end
+
+      specify do
+        expect(subject.failure_message).to include("\twith data #{expected_data} but was #{actual_data}\n")
+      end
+    end
   end
 end

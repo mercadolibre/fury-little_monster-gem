@@ -33,7 +33,6 @@ module LittleMonster::Core
     end
 
     attr_reader :id
-    attr_reader :params
     attr_reader :tags
     attr_reader :status
 
@@ -43,7 +42,6 @@ module LittleMonster::Core
 
     def initialize(options = {})
       @id = options.fetch(:id, nil)
-      @params = options.fetch(:params, {}).freeze
       @tags = options.fetch(:tags, {}).freeze
 
       @retries = options[:retries] || 0
@@ -62,7 +60,6 @@ module LittleMonster::Core
       notify_task_list
 
       # TODO: setup logger
-      logger.debug "Starting with #{params}"
     end
 
     def run
@@ -76,8 +73,8 @@ module LittleMonster::Core
         begin
           raise LittleMonster::CancelError if is_cancelled?
 
-          task = task_class_for(task_name).new(@params, @data)
-          task.send(:set_default_values, @params, @data, logger, method(:is_cancelled?))
+          task = task_class_for(task_name).new(@data)
+          task.send(:set_default_values, @data, logger, method(:is_cancelled?))
 
           task.run
           notify_current_task task_name, :finished, data: data.to_h

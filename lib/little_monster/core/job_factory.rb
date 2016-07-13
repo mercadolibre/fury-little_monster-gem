@@ -3,7 +3,7 @@ module LittleMonster::Core
     def initialize(message = {})
       @id = message[:id]
       @name = message[:name]
-      @params = message[:params]
+      @input_data = message[:data]
       @tags = message[:tags]
     end
 

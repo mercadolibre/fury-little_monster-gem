@@ -58,7 +58,7 @@ describe LittleMonster::RSpec::JobHelper do
       it 'builds an instance of the job' do
         allow(job_class).to receive(:new).and_call_original
         run_job job_class.to_s.underscore, options
-        expect(job_class).to have_received(:new).with(data: options[:data])
+        expect(job_class).to have_received(:new).with(data: { outputs: options[:data] })
       end
 
       context 'instance' do

@@ -23,7 +23,7 @@ module LittleMonster
 
     def perform(_sqs_msg, body)
       message = MultiJson.load body['Message'], symbolize_keys: true
-      message[:params] = MultiJson.load message[:params], symbolize_keys: true
+      message[:data] = MultiJson.load message[:data], symbolize_keys: true
 
       begin
         send_heartbeat! message[:id]

@@ -3,7 +3,7 @@ require 'spec_helper'
 describe LittleMonster::Worker do
   let(:message) do
     {
-      params: '{}',
+      data: '{}',
       name: 'mock_job'
     }
   end

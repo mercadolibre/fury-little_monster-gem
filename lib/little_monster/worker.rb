@@ -18,9 +18,6 @@ module LittleMonster
                      concurrency: LittleMonster.worker_concurrency
     end
 
-    def initialize
-    end
-
     def perform(_sqs_msg, body)
       message = MultiJson.load body['Message'], symbolize_keys: true
       message[:data] = MultiJson.load message[:data], symbolize_keys: true

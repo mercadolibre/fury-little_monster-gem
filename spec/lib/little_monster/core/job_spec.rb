@@ -134,7 +134,7 @@ describe LittleMonster::Core::Job do
           job.run
 
           MockJob.tasks.each do |task|
-            expect(job).to have_received(:notify_current_task).with(task, :finished, data: job.data.to_h)
+            expect(job).to have_received(:notify_current_task).with(task, :finished, data: job.data)
           end
         end
 
@@ -262,7 +262,7 @@ describe LittleMonster::Core::Job do
       it 'notifies status as finished and passes output' do
         allow(job).to receive(:notify_status)
         job.run
-        expect(job).to have_received(:notify_status).with(:finished, data: job.data.to_h).once
+        expect(job).to have_received(:notify_status).with(:finished, data: job.data).once
       end
     end
   end
@@ -593,6 +593,17 @@ describe LittleMonster::Core::Job do
       it 'makes a request to api with params body with data and options merged with critical' do
         job.send(:notify_job, params, options)
         expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", params, options.merge(critical: true)).once
+      end
+
+      context 'if options contains data' do
+        before :each do
+          params[:body][:data] = job.data
+        end
+
+        it 'makes request with data converted to json' do
+          job.send(:notify_job, params, options)
+          expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", { body: hash_including(data: job.data.to_json) } , any_args).once
+        end
       end
 
       it 'returns request success?' do

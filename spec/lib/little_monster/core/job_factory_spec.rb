@@ -67,9 +67,9 @@ describe LittleMonster::Core::Job::Factory do
       it 'makes a request to api' do
         factory.fetch_attributes
         expect(LittleMonster::API).to have_received(:get)
-          .with("/job/#{message[:id]}", retries: LittleMonster.job_requests_retries,
-                                        retry_wait: LittleMonster.job_requests_retry_wait,
-                                        critical: true).once
+          .with("/job/#{message[:id]}", {}, retries: LittleMonster.job_requests_retries,
+                                            retry_wait: LittleMonster.job_requests_retry_wait,
+                                            critical: true).once
       end
 
       context 'when request succeds' do

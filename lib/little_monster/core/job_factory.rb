@@ -20,9 +20,9 @@ module LittleMonster::Core
 
     def fetch_attributes
       return {} if %w(development test).include? LittleMonster.env
-      resp = API.get "/job/#{@id}", retries: LittleMonster.job_requests_retries,
-                                    retry_wait: LittleMonster.job_requests_retry_wait,
-                                    critical: true
+      resp = API.get "/job/#{@id}", {}, retries: LittleMonster.job_requests_retries,
+                                        retry_wait: LittleMonster.job_requests_retry_wait,
+                                        critical: true
 
       resp.success? ? resp.body : {}
     end

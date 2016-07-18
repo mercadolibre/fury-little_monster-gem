@@ -56,9 +56,9 @@ module LittleMonster::Core
 
         res.define_singleton_method(:body) do
           begin
-            MultiJson.load(res.params[:response_body], symbolize_keys: true)
+            MultiJson.load(res.options[:response_body], symbolize_keys: true)
           rescue
-            res.params[:response_body]
+            res.options[:response_body]
           end
         end
 

@@ -158,12 +158,12 @@ describe LittleMonster::Core::API do
 
       context 'returned response' do
         it 'has json body parsed to hash if it is json' do
-          allow(response).to receive(:params).and_return(response_body: '{}')
+          allow(response).to receive(:options).and_return(response_body: '{}')
           expect(subject.request(method, path, params).body.class).to be Hash
         end
 
         it 'has raw body if it is not json' do
-          allow(response).to receive(:params).and_return(response_body: 'something')
+          allow(response).to receive(:options).and_return(response_body: 'something')
           expect(subject.request(method, path, params).body.class).to be String
         end
       end

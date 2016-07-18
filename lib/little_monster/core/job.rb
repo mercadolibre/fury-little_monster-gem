@@ -197,7 +197,7 @@ module LittleMonster::Core
     def notify_current_task(task, status = :running, options = {})
       @current_task = task
 
-      params = { body: { tasks: [{ status: status }] } }
+      params = { body: { tasks: [{ name: task, status: status }] } }
       params[:body][:data] = options[:data] if options[:data]
 
       params[:body][:tasks].first.merge!(options.except(:data))

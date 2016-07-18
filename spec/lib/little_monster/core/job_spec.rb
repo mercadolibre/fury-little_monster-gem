@@ -537,7 +537,7 @@ describe LittleMonster::Core::Job do
         context 'if options does not contain data' do
           it 'makes a request to api with status, options, critical, retries and retry wait' do
             job.send(:notify_current_task, task, status, options)
-            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ status: status }.merge(options)] } },
+            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: task, status: status }.merge(options)] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
@@ -551,7 +551,7 @@ describe LittleMonster::Core::Job do
           it 'makes a request to api with status, options, critical, retries, retry wait and sets data to body' do
             job.send(:notify_current_task, task, status, options)
             expect(job).to have_received(:notify_job).with({ body: { data: options[:data],
-                                                                     tasks: [{ status: status }.merge(options.except(:data))] } },
+                                                                     tasks: [{ name: task, status: status }.merge(options.except(:data))] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end

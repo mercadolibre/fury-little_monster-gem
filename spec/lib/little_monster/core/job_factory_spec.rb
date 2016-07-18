@@ -16,7 +16,7 @@ describe LittleMonster::Core::Job::Factory do
     it { expect(factory.instance_variable_get '@id').to eq(message[:id]) }
     it { expect(factory.instance_variable_get '@name').to eq(message[:name]) }
     it { expect(factory.instance_variable_get '@input_data').to eq(message[:data]) }
-    it { expect(factory.instance_variable_get '@tags').to eq(message[:tags]) }
+    it { expect(factory.instance_variable_get '@job_class').to eq(MockJob) }
 
     it 'fetches attributes from api' do
       allow_any_instance_of(described_class).to receive(:fetch_attributes).and_call_original
@@ -90,37 +90,49 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#find_current_task' do
-    let(:api_attributes) do
-      {
-        tasks: [
-          {
-            name: 'a',
-            retries: 0,
-            status: 'finished'
-          },{
-            name: 'b',
-            retries: 1,
-            status: 'pending'
-          }
-        ]
-      }
+    context 'if api_attributes is blank' do
+      before :each do
+        factory.instance_variable_set '@api_attributes', tasks: []
+      end
+
+      it 'returns a hash with first task and retry at 0' do
+        expect(factory.find_current_task).to eq(name: MockJob.tasks.first, retries: 0)
+      end
     end
 
-    before :each do
-      factory.instance_variable_set '@api_attributes', api_attributes
-    end
+    context 'if api_attributes tasks is not blank' do
+      let(:api_attributes) do
+        {
+          tasks: [
+            {
+              name: 'a',
+              retries: 0,
+              status: 'finished'
+            },{
+              name: 'b',
+              retries: 1,
+              status: 'pending'
+            }
+          ]
+        }
+      end
 
-    it 'returns a hash with name retries' do
-      expect(factory.find_current_task.keys).to eq([:name, :retries])
-    end
+      before :each do
+        factory.instance_variable_set '@api_attributes', api_attributes
+      end
 
-    it 'returns the first task with status pending from api attributes with symbolized name' do
-      expect(factory.find_current_task[:name]).to eq(:b)
-    end
+      it 'returns a hash with name retries' do
+        expect(factory.find_current_task.keys).to eq([:name, :retries])
+      end
 
-    it 'returns empty hash if no task is pending' do
-      api_attributes[:tasks].last[:status] = 'finished'
-      expect(factory.find_current_task).to eq({})
+      it 'returns the first task with status pending from api attributes with symbolized name' do
+        expect(factory.find_current_task[:name]).to eq(:b)
+      end
+
+      it 'returns empty hash if no task is pending' do
+        api_attributes[:tasks].last[:status] = 'finished'
+        expect(factory.find_current_task).to eq({})
+      end
     end
   end
 

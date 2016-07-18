@@ -6,6 +6,7 @@ module LittleMonster::Core
       @tags = message[:tags]
 
       @api_attributes = fetch_attributes
+      @job_class = @name.to_s.camelcase.constantize
 
       #this gets saved for development run and debugging purposes
       @input_data = message[:data]
@@ -14,8 +15,7 @@ module LittleMonster::Core
     def build
       return unless should_build?
 
-      job_class = @name.to_s.camelcase.constantize
-      job_class.new job_attributes
+      @job_class.new job_attributes
     end
 
     def fetch_attributes
@@ -28,6 +28,8 @@ module LittleMonster::Core
     end
 
     def find_current_task
+      return { name: @job_class.tasks.first, retries: 0 } if @api_attributes[:tasks].blank?
+
       task_index = @api_attributes.fetch(:tasks, []).find_index do |task|
         task[:status] == 'pending'
       end

@@ -34,10 +34,11 @@ module LittleMonster
     end
 
     def send_heartbeat!(id)
-      resp = LittleMonster::API.put "/jobs/#{id}/worker", critical: true, body: {
-        ip: Addrinfo.ip(Socket.gethostname).ip_address,
-        worker: Process.pid
-      }
+      resp = LittleMonster::API.put "/jobs/#{id}/worker", { body: {
+          ip: Addrinfo.ip(Socket.gethostname).ip_address,
+          worker: Process.pid
+        }
+      }, critical: true
 
       raise LittleMonster::JobAlreadyLockedError, "job [id:#{id}] is already locked, discarding" if resp.code == 401
     end

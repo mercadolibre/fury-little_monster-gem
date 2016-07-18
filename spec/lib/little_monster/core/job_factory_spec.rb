@@ -25,12 +25,13 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#build' do
-    it 'returns if fetched attributes have status not pending' do
-      factory.instance_variable_set '@api_attributes', status: 'running'
+    it 'returns if should_build? is false' do
+      allow(factory).to receive(:should_build?).and_return(false)
       expect(factory.build).to be_nil
     end
 
-    it 'builds job class out of name' do
+    it 'builds job class out of name if should_build? is true' do
+      allow(factory).to receive(:should_build?).and_return(true)
       allow(MockJob).to receive(:new).and_call_original
       factory.build
       expect(MockJob).to have_received(:new)
@@ -67,7 +68,7 @@ describe LittleMonster::Core::Job::Factory do
       it 'makes a request to api' do
         factory.fetch_attributes
         expect(LittleMonster::API).to have_received(:get)
-          .with("/job/#{message[:id]}", {}, retries: LittleMonster.job_requests_retries,
+          .with("/jobs/#{message[:id]}", {}, retries: LittleMonster.job_requests_retries,
                                             retry_wait: LittleMonster.job_requests_retry_wait,
                                             critical: true).once
       end
@@ -83,7 +84,7 @@ describe LittleMonster::Core::Job::Factory do
           allow(response).to receive(:success?).and_return(false)
         end
 
-        it { expect(factory.fetch_attributes).to eq({}) }
+        it { expect(factory.fetch_attributes).to be_nil }
       end
     end
   end
@@ -148,6 +149,30 @@ describe LittleMonster::Core::Job::Factory do
                                              data: data,
                                              current_task: current_task[:name],
                                              retries: current_task[:retries])
+      end
+    end
+  end
+
+  describe '#should_build?' do
+    context 'if @api_attributes is nil' do
+      before :each do
+        factory.instance_variable_set '@api_attributes', nil
+      end
+
+      it 'returns false' do
+        expect(factory.should_build?).to be false
+      end
+    end
+
+    context 'if @api_attributes is not nil' do
+      it 'returns true if api_attributes[status] is pending' do
+        factory.instance_variable_set '@api_attributes', { status: 'pending' }
+        expect(factory.should_build?).to be true
+      end
+
+      it 'returns false if api_attributes[status] is not pending' do
+        factory.instance_variable_set '@api_attributes', { status: 'running' }
+        expect(factory.should_build?).to be false
       end
     end
   end

@@ -12,7 +12,7 @@ module LittleMonster::Core
     end
 
     def build
-      return if @api_attributes.fetch(:status, 'pending') != 'pending'
+      return unless should_build?
 
       job_class = @name.to_s.camelcase.constantize
       job_class.new job_attributes
@@ -20,11 +20,11 @@ module LittleMonster::Core
 
     def fetch_attributes
       return {} if %w(development test).include? LittleMonster.env
-      resp = API.get "/job/#{@id}", {}, retries: LittleMonster.job_requests_retries,
-                                        retry_wait: LittleMonster.job_requests_retry_wait,
-                                        critical: true
+      resp = API.get "/jobs/#{@id}", {}, retries: LittleMonster.job_requests_retries,
+                                         retry_wait: LittleMonster.job_requests_retry_wait,
+                                         critical: true
 
-      resp.success? ? resp.body : {}
+      resp.success? ? resp.body : nil
     end
 
     def find_current_task
@@ -54,6 +54,10 @@ module LittleMonster::Core
                          retries: current_task[:retries])
 
       end
+    end
+
+    def should_build?
+      !@api_attributes.nil? && @api_attributes.fetch(:status, 'pending') == 'pending'
     end
   end
 end

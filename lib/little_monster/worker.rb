@@ -36,7 +36,7 @@ module LittleMonster
     def send_heartbeat!(id)
       resp = LittleMonster::API.put "/jobs/#{id}/worker", { body: {
           ip: Addrinfo.ip(Socket.gethostname).ip_address,
-          worker: Process.pid
+          pid: Process.pid
         }
       }, critical: true
 

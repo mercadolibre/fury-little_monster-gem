@@ -68,7 +68,7 @@ describe LittleMonster::Worker do
 
       it 'makes a request to api with critical: true , ip and pid' do
         worker.send_heartbeat! id
-        expect(LittleMonster::API).to have_received(:put).with("/jobs/#{id}/worker", { body: hash_including(:ip, :worker) },
+        expect(LittleMonster::API).to have_received(:put).with("/jobs/#{id}/worker", { body: hash_including(:ip, :pid) },
                                                                { critical: true} )
       end
 

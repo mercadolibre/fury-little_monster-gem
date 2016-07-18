@@ -42,9 +42,15 @@ module LittleMonster::Core
     end
 
     def job_attributes
+      data = if !@api_attributes[:data].nil?
+               MultiJson.load @api_attributes[:data], symbolize_keys: true
+             else
+               @input_data
+             end
+
       attributes = {
         id: @id,
-        data: (@api_attributes[:data] || @input_data),
+        data: data,
         tags: @tags,
       }
 

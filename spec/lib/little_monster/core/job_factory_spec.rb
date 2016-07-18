@@ -147,11 +147,11 @@ describe LittleMonster::Core::Job::Factory do
 
     context 'when env is not development or test' do
       let(:current_task) { { name: 'name', retries: 0 } }
-      let(:data) { {} }
+      let(:data) { { a: 'b' } }
 
       before :each do
         allow(factory).to receive(:find_current_task).and_return(current_task)
-        factory.instance_variable_set('@api_attributes', data: data)
+        factory.instance_variable_set('@api_attributes', data: MultiJson.dump(data))
         allow(LittleMonster).to receive(:env).and_return('production')
       end
 

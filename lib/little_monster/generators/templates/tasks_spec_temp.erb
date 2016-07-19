@@ -1,6 +1,10 @@
 require_relative '../../spec_helper.rb'
 
 describe <%= "#{@job_name.camelize}::#{@current_task_name.camelize}" %> do
+  before :each do
+    @<%=@current_task_name%>.new({data:'mydata'})
+  end
+
   describe '.run' do
   it 'tell me how to run <%=@current_task_name.underscore%>!' 
   end

@@ -3,7 +3,7 @@ require_relative '../spec_helper'
 describe '<%=@job_name.camelize%>' do
   context '.run' do
     it 'runs this tasks <%=@task_names.join(" ")%>' do
-    expect(run_job(:<%=job_name%>).to have_run(<%@task_names.map{|v|":#{v}"}.join(", ")%>)
+    expect(run_job(:<%=job_name%>)).to have_run(<%=@task_names.map{|v|":#{v}"}.join(", ")%>)
     end
 
     it 'has to run' 

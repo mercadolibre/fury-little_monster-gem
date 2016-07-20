@@ -46,9 +46,9 @@ describe LittleMonster::Core::Job::Factory do
       allow(LittleMonster::API).to receive(:get).and_return(response)
     end
 
-    context 'when env is test or development' do
+    context 'when should_request is false' do
       before :each do
-        allow(LittleMonster).to receive(:env).and_return('test')
+        allow(factory).to receive(:should_request?).and_return(false)
       end
 
       it 'does not make a request' do
@@ -61,8 +61,7 @@ describe LittleMonster::Core::Job::Factory do
 
     context 'when env is not test nor development' do
       before :each do
-        factory #call factory to initialize it
-        allow(LittleMonster).to receive(:env).and_return('production')
+        allow(factory).to receive(:should_request?).and_return(true)
       end
 
       it 'makes a request to api' do
@@ -85,6 +84,70 @@ describe LittleMonster::Core::Job::Factory do
         end
 
         it { expect(factory.fetch_attributes).to be_nil }
+      end
+    end
+  end
+
+  describe '#notify_job_task_list' do
+    let(:response) { double(success?: true) }
+
+    before :each do
+      allow(LittleMonster::API).to receive(:post).and_return(response)
+    end
+
+    context 'when should_request is false' do
+      before :each do
+        allow(factory).to receive(:should_request?).and_return(false)
+      end
+
+      it 'returns true' do
+        expect(factory.send(:notify_job_task_list)).to be true
+      end
+
+      it 'does not send any request' do
+        factory.send(:notify_job_task_list)
+        expect(LittleMonster::API).not_to have_received(:post)
+      end
+    end
+
+    context 'when should_request is true' do
+      before :each do
+        allow(factory).to receive(:should_request?).and_return(true)
+      end
+
+      context 'when api_attributes tasks is not blank' do
+        before :each do
+          factory.instance_variable_set '@api_attributes', tasks: [:a, :b, :c]
+        end
+
+        it 'returns true' do
+          expect(factory.send(:notify_job_task_list)).to be true
+        end
+
+        it 'does not send any request' do
+          factory.send(:notify_job_task_list)
+          expect(LittleMonster::API).not_to have_received(:post)
+        end
+      end
+
+      context 'when api_attributes tasks is blank' do
+        before :each do
+          factory.instance_variable_set '@api_attributes', {}
+        end
+
+        it 'makes a request to api with job_class task_list, critical, retries and retry wait' do
+          mockjob_tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
+          factory.send(:notify_job_task_list)
+          expect(LittleMonster::API).to have_received(:post).with("/jobs/#{message[:id]}/tasks",
+                                                                  { body: { tasks: mockjob_tasks_name_with_order } },
+                                                                  retries: LittleMonster.job_requests_retries,
+                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                  critical: true).once
+        end
+
+        it 'returns request success?' do
+          expect(factory.send(:notify_job_task_list)).to eq(response.success?)
+        end
       end
     end
   end
@@ -193,6 +256,24 @@ describe LittleMonster::Core::Job::Factory do
         factory.instance_variable_set '@api_attributes', { status: 'running' }
         expect(factory.should_build?).to be false
       end
+    end
+  end
+
+  describe '#should_request?' do
+    it 'returns false if env is development' do
+      allow(LittleMonster).to receive(:env).and_return('development')
+      expect(factory.should_request?).to be false
+    end
+
+    it 'returns false if env is test' do
+      allow(LittleMonster).to receive(:env).and_return('test')
+      expect(factory.should_request?).to be false
+    end
+
+    it 'returns true if env is anything else' do
+      factory #init factory
+      allow(LittleMonster).to receive(:env).and_return('another env')
+      expect(factory.should_request?).to be true
     end
   end
 end

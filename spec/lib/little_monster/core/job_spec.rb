@@ -76,11 +76,6 @@ describe LittleMonster::Core::Job do
     it 'freezes the tags' do
       expect(job.tags.frozen?).to be true
     end
-
-    it 'notifies task list' do
-      allow_any_instance_of(MockJob).to receive(:notify_task_list)
-      expect(job).to have_received(:notify_task_list).once
-    end
   end
 
   describe '#run' do
@@ -415,39 +410,6 @@ describe LittleMonster::Core::Job do
       allow(LittleMonster::API).to receive(:post).and_return(response)
       allow(LittleMonster::API).to receive(:get).and_return(response)
       allow(LittleMonster::API).to receive(:put).and_return(response)
-    end
-
-    describe '#notify_task_list' do
-      context 'when should_request is false' do
-        it 'returns true' do
-          expect(job.send(:notify_task_list)).to be true
-        end
-
-        it 'does not send any request' do
-          job.send(:notify_task_list)
-          expect(LittleMonster::API).not_to have_received(:post)
-        end
-      end
-
-      context 'when should_request is true' do
-        before :each do
-          allow(job).to receive(:should_request?).and_return(true)
-        end
-
-        it 'makes a request to api with task list, critical, retries and retry wait' do
-          tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
-          job.send(:notify_task_list)
-          expect(LittleMonster::API).to have_received(:post).with("/jobs/#{job.id}/tasks",
-                                                                  { body: { tasks: tasks_name_with_order } },
-                                                                  retries: LittleMonster.job_requests_retries,
-                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
-                                                                  critical: true).once
-        end
-
-        it 'returns request success?' do
-          expect(job.send(:notify_task_list)).to eq(response.success?)
-        end
-      end
     end
 
     describe '#is_cancelled?' do

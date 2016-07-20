@@ -57,8 +57,6 @@ module LittleMonster::Core
 
       @runned_tasks = {} if mock?
 
-      notify_task_list
-
       # TODO: setup logger
     end
 
@@ -167,21 +165,6 @@ module LittleMonster::Core
 
       on_error e
       do_retry
-    end
-
-    def notify_task_list
-      return true unless should_request?
-
-      options = {
-        body: {
-          tasks: self.class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
-        },
-      }
-
-      res = LittleMonster::API.post "/jobs/#{id}/tasks", options, retries: LittleMonster.job_requests_retries,
-                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
-                                                                  critical: true
-      res.success?
     end
 
     def notify_status(next_status, options = {})

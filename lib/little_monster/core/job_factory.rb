@@ -15,11 +15,28 @@ module LittleMonster::Core
     def build
       return unless should_build?
 
+      notify_job_task_list
+
       @job_class.new job_attributes
     end
 
+    def notify_job_task_list
+      return true if !(@api_attributes[:tasks].blank? && should_request?)
+
+      params = {
+        body: {
+          tasks: @job_class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
+        },
+      }
+
+      res = LittleMonster::API.post "/jobs/#{@id}/tasks", params, retries: LittleMonster.job_requests_retries,
+                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                   critical: true
+      res.success?
+    end
+
     def fetch_attributes
-      return {} if %w(development test).include? LittleMonster.env
+      return {} unless should_request?
       resp = API.get "/jobs/#{@id}", {}, retries: LittleMonster.job_requests_retries,
                                          retry_wait: LittleMonster.job_requests_retry_wait,
                                          critical: true
@@ -66,6 +83,10 @@ module LittleMonster::Core
 
     def should_build?
       !@api_attributes.nil? && @api_attributes.fetch(:status, 'pending') == 'pending'
+    end
+
+    def should_request?
+      !%w(development test).include?(LittleMonster.env)
     end
   end
 end

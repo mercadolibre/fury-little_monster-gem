@@ -60,8 +60,7 @@ module LittleMonster::Core
       logger.default_tags = tags.merge(
         id: @id,
         job: self.class.to_s,
-        retry: @retries,
-        current_task: @current_task
+        retry: @retries
       )
 
       logger.info "[type:start_job] Starting job with [data:#{data.to_h[:outputs]}]"
@@ -71,9 +70,10 @@ module LittleMonster::Core
       notify_status :running
 
       tasks_to_run.each do |task_name|
-        logger.info "[type:start_task] [data:#{data.to_h[:outputs]}]"
 
         notify_current_task task_name, :running
+        logger.default_tags[:current_task] = current_task
+        logger.info "[type:start_task] [data:#{data.to_h[:outputs]}]"
 
         begin
           raise LittleMonster::CancelError if is_cancelled?

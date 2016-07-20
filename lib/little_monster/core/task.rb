@@ -32,6 +32,7 @@ module LittleMonster::Core
       @cancelled_callback = cancelled_callback
       @data = data
       logger.parent_logger = job_logger if job_logger
+      logger.default_tags.merge!(type: 'task_log')
     end
   end
 end

@@ -30,7 +30,7 @@ module LittleMonster::Core
     def find_current_task
       return { name: @job_class.tasks.first, retries: 0 } if @api_attributes[:tasks].blank?
 
-      task_index = @api_attributes.fetch(:tasks, []).find_index do |task|
+      task_index = @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.find_index do |task|
         task[:status] == 'pending'
       end
       return {} if task_index.nil?

@@ -219,7 +219,7 @@ describe LittleMonster::Core::API do
         context 'if request is critical' do
           it 'raises APIUnreachableError after all requests fail' do
             params[:critical] = true
-            expect { subject.request method, path, params }.to raise_error(LittleMonster::APIUnreachableError, "critical request to #{path} has fail, check little monster api")
+            expect { subject.request method, path, params }.to raise_error(LittleMonster::APIUnreachableError)
           end
         end
       end

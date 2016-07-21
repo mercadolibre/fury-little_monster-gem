@@ -108,6 +108,8 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
+      on_finish
+
       notify_status :finished, data: data
 
       logger.info "[type:job_finish] [status:succesful] [data:#{@data.to_h[:outputs]}]"
@@ -122,6 +124,9 @@ module LittleMonster::Core
     end
 
     def on_cancel
+    end
+
+    def on_finish
     end
 
     def mock?

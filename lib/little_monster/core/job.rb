@@ -177,7 +177,7 @@ module LittleMonster::Core
 
     def error(e)
       raise e if LittleMonster.env.development?
-      logger.error "[type:error] #{e.class} -- #{e.message} \n #{e.backtrace}"
+      logger.error "[type:error] [error_type:#{e.class}][message:#{e.message}] \n #{e.backtrace.to_a.join("\n\t")}"
 
       if e.is_a?(FatalTaskError) || e.is_a?(NameError)
         logger.debug 'error is fatal, aborting run'

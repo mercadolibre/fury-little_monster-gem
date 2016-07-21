@@ -259,6 +259,12 @@ describe LittleMonster::Core::Job do
         job.run
         expect(job).to have_received(:notify_status).with(:finished, data: job.data).once
       end
+
+      it 'calls on_finish callback' do
+        allow(job).to receive(:on_finish)
+        job.run
+        expect(job).to have_received(:on_finish)
+      end
     end
   end
 

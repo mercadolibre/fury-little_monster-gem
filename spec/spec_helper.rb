@@ -13,9 +13,6 @@ require 'require_all'
 require 'little_monster'
 require 'little_monster/rspec'
 
-require_rel '../jobs'
-require_rel '../tasks'
-
 require_rel 'mock'
 
 RSpec.configure do |conf|

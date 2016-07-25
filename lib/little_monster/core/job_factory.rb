@@ -82,7 +82,7 @@ module LittleMonster::Core
     end
 
     def should_build?
-      !@api_attributes.nil? && @api_attributes.fetch(:status, 'pending') == 'pending'
+      !@api_attributes.nil?
     end
   end
 end

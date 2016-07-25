@@ -239,24 +239,15 @@ describe LittleMonster::Core::Job::Factory do
 
   describe '#should_build?' do
     context 'if @api_attributes is nil' do
-      before :each do
-        factory.instance_variable_set '@api_attributes', nil
-      end
-
       it 'returns false' do
+        factory.instance_variable_set '@api_attributes', nil
         expect(factory.should_build?).to be false
       end
     end
 
     context 'if @api_attributes is not nil' do
-      it 'returns true if api_attributes[status] is pending' do
-        factory.instance_variable_set '@api_attributes', { status: 'pending' }
+      it 'returns true' do
         expect(factory.should_build?).to be true
-      end
-
-      it 'returns false if api_attributes[status] is not pending' do
-        factory.instance_variable_set '@api_attributes', { status: 'running' }
-        expect(factory.should_build?).to be false
       end
     end
   end

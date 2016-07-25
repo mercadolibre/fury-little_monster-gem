@@ -5,7 +5,7 @@ module LittleMonster::Core
     def initialize(params)
       @params = params
 
-      @heartbeat_task = Concurrent::TimerTask.new(execution_interval: 5) do
+      @heartbeat_task = Concurrent::TimerTask.new(execution_interval: LittleMonster.heartbeat_execution_interval) do
         send_heartbeat!
       end
     end

@@ -43,12 +43,13 @@ describe LittleMonster::Core::Job::Factory do
     let(:response) { double(success?: true, body: double) }
 
     before :each do
+      factory
       allow(LittleMonster::API).to receive(:get).and_return(response)
     end
 
-    context 'when should_request is false' do
+    context 'when requests are disabled' do
       before :each do
-        allow(factory).to receive(:should_request?).and_return(false)
+        allow(LittleMonster).to receive(:disable_requests?).and_return(true)
       end
 
       it 'does not make a request' do
@@ -59,9 +60,9 @@ describe LittleMonster::Core::Job::Factory do
       it { expect(factory.fetch_attributes).to eq({}) }
     end
 
-    context 'when env is not test nor development' do
+    context 'when requests are enabled' do
       before :each do
-        allow(factory).to receive(:should_request?).and_return(true)
+        allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       end
 
       it 'makes a request to api' do
@@ -95,9 +96,9 @@ describe LittleMonster::Core::Job::Factory do
       allow(LittleMonster::API).to receive(:post).and_return(response)
     end
 
-    context 'when should_request is false' do
+    context 'when requests are disabled' do
       before :each do
-        allow(factory).to receive(:should_request?).and_return(false)
+        allow(LittleMonster).to receive(:disable_requests?).and_return(true)
       end
 
       it 'returns true' do
@@ -110,9 +111,10 @@ describe LittleMonster::Core::Job::Factory do
       end
     end
 
-    context 'when should_request is true' do
+    context 'when requests are enabled' do
       before :each do
-        allow(factory).to receive(:should_request?).and_return(true)
+        factory
+        allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       end
 
       context 'when api_attributes tasks is not blank' do
@@ -207,7 +209,7 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#job_attributes' do
-    context 'when env is development or test' do
+    context 'when requests are disabled' do
       it 'returns hash with id tags and input data' do
         expect(factory.job_attributes).to eq(id: message[:id],
                                              data: message[:data],
@@ -215,14 +217,14 @@ describe LittleMonster::Core::Job::Factory do
       end
     end
 
-    context 'when env is not development or test' do
+    context 'when requests are enabled' do
       let(:current_task) { { name: 'name', retries: 0 } }
       let(:data) { { a: 'b' } }
 
       before :each do
         allow(factory).to receive(:find_current_task).and_return(current_task)
         factory.instance_variable_set('@api_attributes', data: MultiJson.dump(data))
-        allow(LittleMonster).to receive(:env).and_return('production')
+        allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       end
 
       it 'returns hash with id params tags data current_task and retries' do
@@ -256,24 +258,6 @@ describe LittleMonster::Core::Job::Factory do
         factory.instance_variable_set '@api_attributes', { status: 'running' }
         expect(factory.should_build?).to be false
       end
-    end
-  end
-
-  describe '#should_request?' do
-    it 'returns false if env is development' do
-      allow(LittleMonster).to receive(:env).and_return('development')
-      expect(factory.should_request?).to be false
-    end
-
-    it 'returns false if env is test' do
-      allow(LittleMonster).to receive(:env).and_return('test')
-      expect(factory.should_request?).to be false
-    end
-
-    it 'returns true if env is anything else' do
-      factory #init factory
-      allow(LittleMonster).to receive(:env).and_return('another env')
-      expect(factory.should_request?).to be true
     end
   end
 end

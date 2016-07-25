@@ -21,7 +21,7 @@ module LittleMonster::Core
     end
 
     def notify_job_task_list
-      return true if !(@api_attributes[:tasks].blank? && should_request?)
+      return true if !@api_attributes[:tasks].blank? || LittleMonster.disable_requests?
 
       params = {
         body: {
@@ -36,7 +36,7 @@ module LittleMonster::Core
     end
 
     def fetch_attributes
-      return {} unless should_request?
+      return {} if LittleMonster.disable_requests?
       resp = API.get "/jobs/#{@id}", {}, retries: LittleMonster.job_requests_retries,
                                          retry_wait: LittleMonster.job_requests_retry_wait,
                                          critical: true
@@ -71,7 +71,7 @@ module LittleMonster::Core
         tags: @tags,
       }
 
-      if %w(development test).include? LittleMonster.env
+      if LittleMonster.disable_requests?
         attributes
       else
         current_task = find_current_task
@@ -83,10 +83,6 @@ module LittleMonster::Core
 
     def should_build?
       !@api_attributes.nil? && @api_attributes.fetch(:status, 'pending') == 'pending'
-    end
-
-    def should_request?
-      !%w(development test).include?(LittleMonster.env)
     end
   end
 end

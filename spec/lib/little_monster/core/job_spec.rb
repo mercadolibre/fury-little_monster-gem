@@ -581,27 +581,27 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#should_request?' do
-    it 'returns false if class is mock and env is test or development' do
+    it 'returns false if class is mock and disable_requests is true' do
       allow(job).to receive(:mock?).and_return(true)
-      allow(LittleMonster).to receive(:env).and_return('test')
+      allow(LittleMonster).to receive(:disable_requests?).and_return(true)
       expect(job.send(:should_request?)).to be false
     end
 
-    it 'returns false if class is not mock and env is test or development' do
+    it 'returns false if class is not mock and disable_requests is true' do
       allow(job).to receive(:mock?).and_return(false)
-      allow(LittleMonster).to receive(:env).and_return('development')
+      allow(LittleMonster).to receive(:disable_requests?).and_return(true)
       expect(job.send(:should_request?)).to be false
     end
 
-    it 'returns false if class is mock and env is not test nor development' do
+    it 'returns false if class is mock and disable_requests is false' do
       allow(job).to receive(:mock?).and_return(true)
-      allow(LittleMonster).to receive(:env).and_return('stage')
+      allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       expect(job.send(:should_request?)).to be false
     end
 
-    it 'returns true if class is not mock and env is not test nor development' do
+    it 'returns true if class is not mock and disable_requests is false' do
       allow(job).to receive(:mock?).and_return(false)
-      allow(LittleMonster).to receive(:env).and_return('stage')
+      allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       expect(job.send(:should_request?)).to be true
     end
   end

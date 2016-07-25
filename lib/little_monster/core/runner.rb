@@ -1,0 +1,39 @@
+module LittleMonster::Core
+  class Runner
+    include Loggable
+
+    def initialize(params)
+      @params = params
+
+      @heartbeat_task = Concurrent::TimerTask.new(execution_interval: 5) do
+        send_heartbeat!
+      end
+    end
+
+    def run
+      send_heartbeat!
+
+      @heartbeat_task.execute unless LittleMonster.disable_requests?
+
+      job = LittleMonster::Job::Factory.new(@params).build
+      job.run unless job.nil?
+    rescue LittleMonster::JobAlreadyLockedError => e
+      logger.error e.message
+    ensure
+      @heartbeat_task.shutdown
+    end
+
+    def send_heartbeat!
+      return if LittleMonster.disable_requests?
+
+      res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", { body: {
+          ip: Addrinfo.ip(Socket.gethostname).ip_address,
+          pid: Process.pid
+        }
+      }
+
+      raise LittleMonster::JobAlreadyLockedError, "job [id:#{@params[:id]}] is already locked, discarding" if res.code == 401
+      res.success?
+    end
+  end
+end

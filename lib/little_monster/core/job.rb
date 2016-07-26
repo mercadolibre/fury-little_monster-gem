@@ -2,6 +2,8 @@ module LittleMonster::Core
   class Job
     include Loggable
 
+    ENDED_STATUS = %w(finished error cancelled)
+
     class << self
       def task_list(*tasks)
         @tasks = *tasks

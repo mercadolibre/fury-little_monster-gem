@@ -17,8 +17,6 @@ module LittleMonster::Core
 
       job = LittleMonster::Job::Factory.new(@params).build
       job.run unless job.nil?
-    rescue LittleMonster::JobAlreadyLockedError => e
-      logger.error e.message
     ensure
       @heartbeat_task.shutdown
     end

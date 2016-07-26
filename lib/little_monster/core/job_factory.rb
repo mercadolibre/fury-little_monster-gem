@@ -1,19 +1,32 @@
 module LittleMonster::Core
   class Job::Factory
+    include Loggable
+
     def initialize(message = {})
+
       @id = message[:id]
       @name = message[:name]
       @tags = message[:tags]
 
+      logger.default_tags = (@tags || {}).merge(id: @id, name: @name)
+
       @api_attributes = fetch_attributes
-      @job_class = @name.to_s.camelcase.constantize
 
       #this gets saved for development run and debugging purposes
       @input_data = message[:data]
+
+      begin
+        @job_class = @name.to_s.camelcase.constantize
+      rescue NameError
+        raise JobNotFoundError, "[type:error] job [name:#{@name}] does not exists"
+      end
     end
 
     def build
-      return unless should_build?
+      if discard?
+        logger.info "[type:discard] discarding job with [status:#{ (@api_attributes || {}).fetch(:status, 'nil') }]"
+        return
+      end
 
       notify_job_task_list
 
@@ -81,8 +94,8 @@ module LittleMonster::Core
       end
     end
 
-    def should_build?
-      !@api_attributes.nil?
+    def discard?
+      @api_attributes.nil? || Job::ENDED_STATUS.include?(@api_attributes.fetch(:status, 'pending'))
     end
   end
 end

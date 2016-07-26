@@ -22,16 +22,21 @@ describe LittleMonster::Core::Job::Factory do
       allow_any_instance_of(described_class).to receive(:fetch_attributes).and_call_original
       expect(factory).to have_received(:fetch_attributes).once
     end
+
+    it 'raises JobNotFoundError if job class does not exists' do
+      message[:name] = 'not_existing_class'
+      expect { factory }.to raise_error(LittleMonster::JobNotFoundError)
+    end
   end
 
   describe '#build' do
-    it 'returns if should_build? is false' do
-      allow(factory).to receive(:should_build?).and_return(false)
+    it 'returns if discard? is true' do
+      allow(factory).to receive(:discard?).and_return(true)
       expect(factory.build).to be_nil
     end
 
-    it 'builds job class out of name if should_build? is true' do
-      allow(factory).to receive(:should_build?).and_return(true)
+    it 'builds job class instance if discard? is false' do
+      allow(factory).to receive(:discard?).and_return(false)
       allow(MockJob).to receive(:new).and_call_original
       factory.build
       expect(MockJob).to have_received(:new)
@@ -237,17 +242,23 @@ describe LittleMonster::Core::Job::Factory do
     end
   end
 
-  describe '#should_build?' do
+  describe '#discard?' do
     context 'if @api_attributes is nil' do
-      it 'returns false' do
+      it 'returns true' do
         factory.instance_variable_set '@api_attributes', nil
-        expect(factory.should_build?).to be false
+        expect(factory.discard?).to be true
       end
     end
 
     context 'if @api_attributes is not nil' do
-      it 'returns true' do
-        expect(factory.should_build?).to be true
+      it 'returns true if status is included in ENDED_STATUS' do
+        factory.instance_variable_set '@api_attributes', { status: 'error' }
+        expect(factory.discard?).to be true
+      end
+
+      it 'returns false if status is not included in ENDED_STATUS' do
+        factory.instance_variable_set '@api_attributes', { status: 'pending' }
+        expect(factory.discard?).to be false
       end
     end
   end

@@ -43,7 +43,7 @@ module LittleMonster
       task_requests_retry_wait: 1,
       job_requests_retries: 4,
       job_requests_retry_wait: 1,
-      heartbeat_execution_interval: 30
+      heartbeat_execution_interval: 10
     }
   end
 

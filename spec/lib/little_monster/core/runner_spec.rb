@@ -37,7 +37,7 @@ describe LittleMonster::Core::Runner do
       end
 
       it 'does not run job' do
-        runner.run
+        runner.run rescue nil rescue nil
         expect(job).not_to have_received(:run)
       end
     end

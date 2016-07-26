@@ -250,7 +250,7 @@ describe LittleMonster::Core::Job::Factory do
               name: 'b',
               retries: 1,
               order: 1,
-              status: 'pending'
+              status: 'running'
             }
           ]
         }
@@ -264,11 +264,11 @@ describe LittleMonster::Core::Job::Factory do
         expect(factory.find_current_task.keys).to eq([:name, :retries])
       end
 
-      it 'returns the first task with status pending from sorted api attributes with symbolized name' do
+      it 'returns the first task with not ending status from sorted api attributes with symbolized name' do
         expect(factory.find_current_task[:name]).to eq(:b)
       end
 
-      it 'returns empty hash if no task is pending' do
+      it 'returns empty hash if all tasks ended' do
         api_attributes[:tasks].each { |t| t[:status] = 'finished' }
         expect(factory.find_current_task).to eq({})
       end

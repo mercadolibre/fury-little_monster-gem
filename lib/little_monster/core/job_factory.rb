@@ -76,7 +76,7 @@ module LittleMonster::Core
       return { name: @job_class.tasks.first, retries: 0 } if @api_attributes[:tasks].blank?
 
       task_index = @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.find_index do |task|
-        task[:status] == 'pending'
+        !Job::ENDED_STATUS.include? task[:status]
       end
       return {} if task_index.nil?
 

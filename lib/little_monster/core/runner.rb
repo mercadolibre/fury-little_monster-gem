@@ -17,6 +17,8 @@ module LittleMonster::Core
 
       job = LittleMonster::Job::Factory.new(@params).build
       job.run unless job.nil?
+    rescue JobNotFoundError => e
+      logger.error "[type:job_not_found] [message:#{e.message}] \n #{e.backtrace.to_a.join("\n\t")}"
     ensure
       @heartbeat_task.shutdown
     end

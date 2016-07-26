@@ -28,13 +28,16 @@ module LittleMonster::Core
         return
       end
 
-      notify_job_task_list
+      unless LittleMonster.disable_requests?
+        notify_job_task_list
+        notify_job_max_retries
+      end
 
       @job_class.new job_attributes
     end
 
     def notify_job_task_list
-      return true if !@api_attributes[:tasks].blank? || LittleMonster.disable_requests?
+      return true unless @api_attributes[:tasks].blank?
 
       params = {
         body: {
@@ -45,6 +48,18 @@ module LittleMonster::Core
       res = LittleMonster::API.post "/jobs/#{@id}/tasks", params, retries: LittleMonster.job_requests_retries,
                                                                    retry_wait: LittleMonster.job_requests_retry_wait,
                                                                    critical: true
+      res.success?
+    end
+
+    def notify_job_max_retries
+      return true unless @api_attributes[:max_retries].blank?
+
+      params = {
+        body: { max_retries: @job_class.max_retries }
+      }
+
+      res = LittleMonster::API.put "/jobs/#{@id}", params, retries: LittleMonster.job_requests_retries,
+                                                           retry_wait: LittleMonster.job_requests_retry_wait
       res.success?
     end
 

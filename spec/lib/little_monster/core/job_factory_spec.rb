@@ -30,6 +30,11 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#build' do
+    before :each do
+      allow(factory).to receive(:notify_job_task_list)
+      allow(factory).to receive(:notify_job_max_retries)
+    end
+
     it 'returns if discard? is true' do
       allow(factory).to receive(:discard?).and_return(true)
       expect(factory.build).to be_nil
@@ -41,6 +46,36 @@ describe LittleMonster::Core::Job::Factory do
       factory.build
       expect(MockJob).to have_received(:new)
         .with(factory.job_attributes)
+    end
+
+    context 'when requests are enabled' do
+      before :each do
+        allow(LittleMonster).to receive(:disable_requests?).and_return(false)
+        factory.build
+      end
+
+      it 'calls notify_job_max_retries' do
+        expect(factory).to have_received(:notify_job_max_retries).once
+      end
+
+      it 'calls notify_job_task_list' do
+        expect(factory).to have_received(:notify_job_task_list).once
+      end
+    end
+
+    context 'when requests are disabled' do
+      before :each do
+        allow(LittleMonster).to receive(:disable_requests?).and_return(true)
+        factory.build
+      end
+
+      it 'does not call notify_job_max_retries' do
+        expect(factory).not_to have_received(:notify_job_max_retries)
+      end
+
+      it 'does not call notify_job_task_list' do
+        expect(factory).not_to have_received(:notify_job_task_list)
+      end
     end
   end
 
@@ -101,60 +136,87 @@ describe LittleMonster::Core::Job::Factory do
       allow(LittleMonster::API).to receive(:post).and_return(response)
     end
 
-    context 'when requests are disabled' do
+    before :each do
+      factory
+    end
+
+    context 'when api_attributes tasks is not blank' do
       before :each do
-        allow(LittleMonster).to receive(:disable_requests?).and_return(true)
+        factory.instance_variable_set '@api_attributes', tasks: [:a, :b, :c]
       end
 
       it 'returns true' do
-        expect(factory.send(:notify_job_task_list)).to be true
+        expect(factory.notify_job_task_list).to be true
       end
 
       it 'does not send any request' do
-        factory.send(:notify_job_task_list)
+        factory.notify_job_task_list
         expect(LittleMonster::API).not_to have_received(:post)
       end
     end
 
-    context 'when requests are enabled' do
+    context 'when api_attributes tasks is blank' do
       before :each do
-        factory
-        allow(LittleMonster).to receive(:disable_requests?).and_return(false)
+        factory.instance_variable_set '@api_attributes', {}
       end
 
-      context 'when api_attributes tasks is not blank' do
-        before :each do
-          factory.instance_variable_set '@api_attributes', tasks: [:a, :b, :c]
-        end
-
-        it 'returns true' do
-          expect(factory.send(:notify_job_task_list)).to be true
-        end
-
-        it 'does not send any request' do
-          factory.send(:notify_job_task_list)
-          expect(LittleMonster::API).not_to have_received(:post)
-        end
+      it 'makes a request to api with job_class task_list, critical, retries and retry wait' do
+        mockjob_tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
+        factory.notify_job_task_list
+        expect(LittleMonster::API).to have_received(:post).with("/jobs/#{message[:id]}/tasks",
+                                                                { body: { tasks: mockjob_tasks_name_with_order } },
+                                                                retries: LittleMonster.job_requests_retries,
+                                                                retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                critical: true).once
       end
 
-      context 'when api_attributes tasks is blank' do
-        before :each do
-          factory.instance_variable_set '@api_attributes', {}
-        end
+      it 'returns request success?' do
+        expect(factory.notify_job_task_list).to eq(response.success?)
+      end
+    end
+  end
 
-        it 'makes a request to api with job_class task_list, critical, retries and retry wait' do
-          mockjob_tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
-          factory.send(:notify_job_task_list)
-          expect(LittleMonster::API).to have_received(:post).with("/jobs/#{message[:id]}/tasks",
-                                                                  { body: { tasks: mockjob_tasks_name_with_order } },
-                                                                  retries: LittleMonster.job_requests_retries,
-                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
-                                                                  critical: true).once
-        end
+  describe '#notify_job_max_retries' do
+    let(:response) { double(success?: true) }
 
-        it 'returns request success?' do
-          expect(factory.send(:notify_job_task_list)).to eq(response.success?)
-        end
+    before :each do
+      allow(LittleMonster::API).to receive(:put).and_return(response)
+    end
+
+    before :each do
+      factory
+    end
+
+    context 'when api_attributes max_retries is not blank' do
+      before :each do
+        factory.instance_variable_set '@api_attributes', max_retries: 3
+      end
+
+      it 'returns true' do
+        expect(factory.notify_job_max_retries).to be true
+      end
+
+      it 'does not send any request' do
+        factory.notify_job_max_retries
+        expect(LittleMonster::API).not_to have_received(:put)
+      end
+    end
+
+    context 'when api_attributes max_retries is blank' do
+      before :each do
+        factory.instance_variable_set '@api_attributes', {}
+      end
+
+      it 'makes a request to api with job_class max_retries' do
+        factory.notify_job_max_retries
+        expect(LittleMonster::API).to have_received(:put).with("/jobs/#{message[:id]}",
+                                                               { body: { max_retries: MockJob.max_retries } },
+                                                                retries: LittleMonster.job_requests_retries,
+                                                                retry_wait: LittleMonster.job_requests_retry_wait).once
+      end
+
+      it 'returns request success?' do
+        expect(factory.notify_job_max_retries).to eq(response.success?)
       end
     end
   end

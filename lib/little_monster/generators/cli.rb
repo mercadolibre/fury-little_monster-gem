@@ -28,9 +28,9 @@ module LittleMonster
       require_relative "#{Dir.pwd}/config/application.rb"
 
       msg = MultiJson.load(options[:message], symbolize_keys: true)
-      message = { data: { outputs: msg }, name: job }
-      job = LittleMonster::Job::Factory.new(message).build
-      job.run unless job.nil?
+      params = { data: { outputs: msg }, name: job }
+
+      LittleMonster::Runner.new(params).run
     end
 
     desc 'start','starts the little monster worker'

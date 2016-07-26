@@ -1,27 +1,43 @@
 module LittleMonster::Core
   class Job::Factory
+    include Loggable
+
     def initialize(message = {})
+
       @id = message[:id]
       @name = message[:name]
       @tags = message[:tags]
 
+      logger.default_tags = (@tags || {}).merge(id: @id, name: @name)
+
       @api_attributes = fetch_attributes
-      @job_class = @name.to_s.camelcase.constantize
 
       #this gets saved for development run and debugging purposes
       @input_data = message[:data]
+
+      begin
+        @job_class = @name.to_s.camelcase.constantize
+      rescue NameError
+        raise JobNotFoundError, "[type:error] job [name:#{@name}] does not exists"
+      end
     end
 
     def build
-      return unless should_build?
+      if discard?
+        logger.info "[type:discard] discarding job with [status:#{ (@api_attributes || {}).fetch(:status, 'nil') }]"
+        return
+      end
 
-      notify_job_task_list
+      unless LittleMonster.disable_requests?
+        notify_job_task_list
+        notify_job_max_retries
+      end
 
       @job_class.new job_attributes
     end
 
     def notify_job_task_list
-      return true if !(@api_attributes[:tasks].blank? && should_request?)
+      return true unless @api_attributes[:tasks].blank?
 
       params = {
         body: {
@@ -35,8 +51,20 @@ module LittleMonster::Core
       res.success?
     end
 
+    def notify_job_max_retries
+      return true unless @api_attributes[:max_retries].blank?
+
+      params = {
+        body: { max_retries: @job_class.max_retries }
+      }
+
+      res = LittleMonster::API.put "/jobs/#{@id}", params, retries: LittleMonster.job_requests_retries,
+                                                           retry_wait: LittleMonster.job_requests_retry_wait
+      res.success?
+    end
+
     def fetch_attributes
-      return {} unless should_request?
+      return {} if LittleMonster.disable_requests?
       resp = API.get "/jobs/#{@id}", {}, retries: LittleMonster.job_requests_retries,
                                          retry_wait: LittleMonster.job_requests_retry_wait,
                                          critical: true
@@ -71,7 +99,7 @@ module LittleMonster::Core
         tags: @tags,
       }
 
-      if %w(development test).include? LittleMonster.env
+      if LittleMonster.disable_requests?
         attributes
       else
         current_task = find_current_task
@@ -81,12 +109,8 @@ module LittleMonster::Core
       end
     end
 
-    def should_build?
-      !@api_attributes.nil? && @api_attributes.fetch(:status, 'pending') == 'pending'
-    end
-
-    def should_request?
-      !%w(development test).include?(LittleMonster.env)
+    def discard?
+      @api_attributes.nil? || Job::ENDED_STATUS.include?(@api_attributes.fetch(:status, 'pending'))
     end
   end
 end

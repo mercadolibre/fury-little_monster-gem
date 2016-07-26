@@ -2,6 +2,8 @@ module LittleMonster::Core
   class Job
     include Loggable
 
+    ENDED_STATUS = %w(finished error cancelled)
+
     class << self
       def task_list(*tasks)
         @tasks = *tasks
@@ -237,13 +239,12 @@ module LittleMonster::Core
     end
 
     def should_request?
-      !(mock? || %w(development test).include?(LittleMonster.env))
+      !(mock? || LittleMonster.disable_requests?)
     end
 
     def task_class_for(task_name)
       self.class.task_class_for task_name
     end
-
 
     #returns the tasks that will be runned for this instance
     def tasks_to_run

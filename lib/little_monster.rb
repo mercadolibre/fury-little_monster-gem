@@ -21,6 +21,10 @@ module LittleMonster
     @@env
   end
 
+  def disable_requests?
+    %w(development test).include?(@@env)
+  end
+
   def configure
     yield @@config
     #it calls update_attributes so it can refresh and concurrency
@@ -38,7 +42,8 @@ module LittleMonster
       task_requests_retries: 4,
       task_requests_retry_wait: 1,
       job_requests_retries: 4,
-      job_requests_retry_wait: 1
+      job_requests_retry_wait: 1,
+      heartbeat_execution_interval: 10
     }
   end
 

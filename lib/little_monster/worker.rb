@@ -22,25 +22,7 @@ module LittleMonster
       message = MultiJson.load body['Message'], symbolize_keys: true
       message[:data] = MultiJson.load message[:data], symbolize_keys: true
 
-      begin
-        send_heartbeat! message[:id]
-      rescue LittleMonster::JobAlreadyLockedError => e
-        logger.error e.message
-        return
-      end
-
-      job = LittleMonster::Job::Factory.new(message).build
-      job.run unless job.nil?
-    end
-
-    def send_heartbeat!(id)
-      resp = LittleMonster::API.put "/jobs/#{id}/worker", { body: {
-          ip: Addrinfo.ip(Socket.gethostname).ip_address,
-          pid: Process.pid
-        }
-      }, critical: true
-
-      raise LittleMonster::JobAlreadyLockedError, "job [id:#{id}] is already locked, discarding" if resp.code == 401
+      LittleMonster::Runner.new(message).run
     end
   end
 end

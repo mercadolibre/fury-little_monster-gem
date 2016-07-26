@@ -78,7 +78,24 @@ describe LittleMonster do
       end
     end
 
-    describe 'logger' do
+    describe '::disable_requests?' do
+      it 'returns true if env is development' do
+        LittleMonster.class_variable_set '@@env', 'development'
+        expect(LittleMonster.disable_requests?).to be true
+      end
+
+      it 'returns true if env is test' do
+        LittleMonster.class_variable_set '@@env', 'test'
+        expect(LittleMonster.disable_requests?).to be true
+      end
+
+      it 'returns false if env is anything else' do
+        LittleMonster.class_variable_set '@@env', 'something else'
+        expect(LittleMonster.disable_requests?).to be false
+      end
+    end
+
+    describe '::logger' do
       it 'returns logger' do
         expect(LittleMonster.logger).to eq(LittleMonster.class_variable_get('@@logger'))
       end

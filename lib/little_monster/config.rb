@@ -18,6 +18,8 @@ module LittleMonster
     attr_accessor :job_requests_retries
     attr_accessor :job_requests_retry_wait
 
+    attr_accessor :heartbeat_execution_interval
+
     def initialize(params = {})
       params.to_hash.each do |key, value|
         instance_variable_set("@#{key}", value)

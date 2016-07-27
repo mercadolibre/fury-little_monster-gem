@@ -86,7 +86,7 @@ module LittleMonster::Core
           task.run
           notify_current_task task_name, :finished, data: data
 
-          logger.info "[type:finish_task] [status:succesful] [data:#{data.to_h[:outputs]}]"
+          logger.info "[type:finish_task] [status:success] [data:#{data.to_h[:outputs]}]"
 
           if mock?
             @runned_tasks[task_name] = {}

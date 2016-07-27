@@ -110,6 +110,8 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
+      @current_task = nil
+
       on_success
 
       notify_status :success, data: data

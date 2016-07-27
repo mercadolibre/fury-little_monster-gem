@@ -2,7 +2,7 @@ module LittleMonster::Core
   class Job
     include Loggable
 
-    ENDED_STATUS = %w(finished error cancelled)
+    ENDED_STATUS = %w(success error cancelled)
 
     class << self
       def task_list(*tasks)
@@ -84,7 +84,7 @@ module LittleMonster::Core
           task.send(:set_default_values, @data, logger, method(:is_cancelled?))
 
           task.run
-          notify_current_task task_name, :finished, data: data
+          notify_current_task task_name, :success, data: data
 
           logger.info "[type:finish_task] [status:succesful] [data:#{data.to_h[:outputs]}]"
 
@@ -110,25 +110,22 @@ module LittleMonster::Core
         @retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      on_finish
+      on_success
 
-      notify_status :finished, data: data
+      notify_status :success, data: data
 
-      logger.info "[type:job_finish] [status:succesful] [data:#{@data.to_h[:outputs]}]"
-      logger.debug 'job was succesfuly finished'
+      logger.info "[type:job_finish] [status:success] [data:#{@data.to_h[:outputs]}]"
+      logger.debug 'job has succesfuly ended'
       @data
     end
 
     def on_error(error)
     end
 
-    def on_abort(error)
-    end
-
     def on_cancel
     end
 
-    def on_finish
+    def on_success
     end
 
     def mock?
@@ -166,7 +163,7 @@ module LittleMonster::Core
       notify_status :error
       notify_current_task current_task, :error
 
-      on_abort e
+      on_error e
 
       logger.info "[type:job_finish] [status:error] [data:#{@data.to_h[:outputs]}]"
     end
@@ -191,7 +188,6 @@ module LittleMonster::Core
         return abort_job(e)
       end
 
-      on_error e
       do_retry
     end
 

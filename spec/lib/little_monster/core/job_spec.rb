@@ -120,7 +120,7 @@ describe LittleMonster::Core::Job do
           job.run
         end
 
-        it 'notifies api task a finished with output' do
+        it 'notifies api task a ended with status success and data' do
           MockJob.tasks.each do |task|
             allow_any_instance_of(MockJob.task_class_for task).to receive(:run)
           end
@@ -129,7 +129,7 @@ describe LittleMonster::Core::Job do
           job.run
 
           MockJob.tasks.each do |task|
-            expect(job).to have_received(:notify_current_task).with(task, :finished, data: job.data)
+            expect(job).to have_received(:notify_current_task).with(task, :success, data: job.data)
           end
         end
 
@@ -253,24 +253,24 @@ describe LittleMonster::Core::Job do
       end
     end
 
-    context 'on finish' do
-      it 'notifies status as finished and passes output' do
+    context 'after running all tasks successfuly' do
+      it 'notifies status as success and passes output' do
         allow(job).to receive(:notify_status)
         job.run
-        expect(job).to have_received(:notify_status).with(:finished, data: job.data).once
+        expect(job).to have_received(:notify_status).with(:success, data: job.data).once
       end
 
-      it 'calls on_finish callback' do
-        allow(job).to receive(:on_finish)
+      it 'calls on_success callback' do
+        allow(job).to receive(:on_success)
         job.run
-        expect(job).to have_received(:on_finish)
+        expect(job).to have_received(:on_success)
       end
     end
   end
 
   describe '#abort_job' do
     before :each do
-      allow(job).to receive(:abort_job).and_call_original
+      allow(job).to receive(:on_error).and_call_original
       allow(job).to receive(:notify_status)
       job.send(:abort_job, LittleMonster::FatalTaskError.new)
     end
@@ -279,8 +279,8 @@ describe LittleMonster::Core::Job do
       expect(job).to have_received(:notify_status).with(:error).once
     end
 
-    it 'calls on_abort' do
-      expect(job).to have_received(:abort_job).with(LittleMonster::FatalTaskError)
+    it 'calls on_error' do
+      expect(job).to have_received(:on_error).with(LittleMonster::FatalTaskError)
     end
   end
 
@@ -322,11 +322,6 @@ describe LittleMonster::Core::Job do
       it 'calls do_retry if non FatalTaskError' do
         job.send(:error, LittleMonster::TaskError.new)
         expect(job).to have_received(:do_retry).with no_args
-      end
-
-      it 'calls on_error' do
-        job.send(:error, LittleMonster::TaskError.new)
-        expect(job).to have_received(:on_error).with(LittleMonster::TaskError)
       end
     end
   end
@@ -470,7 +465,7 @@ describe LittleMonster::Core::Job do
 
     describe '#notify_status' do
       context 'given a status and options' do
-        let(:status) { :finished }
+        let(:status) { :success }
         let(:options) { { cancel: true } }
         let(:response) { double }
 
@@ -494,7 +489,7 @@ describe LittleMonster::Core::Job do
     describe '#notify_current_task' do
       context 'given a task, status and options' do
         let(:task) { :task }
-        let(:status) { :finished }
+        let(:status) { :success }
         let(:options) { { retries: 5 } }
         let(:response) { double }
 

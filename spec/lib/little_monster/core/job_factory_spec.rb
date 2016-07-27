@@ -240,7 +240,7 @@ describe LittleMonster::Core::Job::Factory do
               name: 'a',
               retries: 0,
               order: 0,
-              status: 'finished'
+              status: 'success'
             },{
               name: 'c',
               retries: 1,
@@ -269,7 +269,7 @@ describe LittleMonster::Core::Job::Factory do
       end
 
       it 'returns empty hash if all tasks ended' do
-        api_attributes[:tasks].each { |t| t[:status] = 'finished' }
+        api_attributes[:tasks].each { |t| t[:status] = 'success' }
         expect(factory.find_current_task).to eq({})
       end
     end

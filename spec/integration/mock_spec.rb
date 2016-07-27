@@ -5,8 +5,8 @@ describe MockJob do
     expect(run_job(:mock_job, data: { a: :b })).to have_run(:task_a, :task_b)
   end
 
-  it 'ends with status finished' do
-    expect(run_job(:mock_job)).to have_ended_with_status :finished
+  it 'ends with status success' do
+    expect(run_job(:mock_job)).to have_ended_with_status :success
   end
 
   it 'outputs the data of task_b' do

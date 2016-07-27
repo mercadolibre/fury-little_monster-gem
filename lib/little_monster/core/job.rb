@@ -162,10 +162,10 @@ module LittleMonster::Core
     def abort_job(e)
       logger.debug 'notifiying abort...'
 
-      on_error e
-
       notify_status :error
       notify_current_task current_task, :error
+
+      on_error e
 
       logger.info "[type:job_finish] [status:error] [data:#{@data.to_h[:outputs]}]"
     end
@@ -173,10 +173,10 @@ module LittleMonster::Core
     def cancel(e)
       logger.debug 'notifiying cancel...'
 
-      on_cancel
-
       notify_status :cancelled
       notify_current_task current_task, :cancelled
+
+      on_cancel
 
       logger.info "[type:job_finish] [status:cancelled] [data:#{@data.to_h[:outputs]}]"
     end

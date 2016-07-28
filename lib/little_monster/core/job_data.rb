@@ -28,7 +28,7 @@ module LittleMonster::Core
     end
 
     def to_h
-      return {} if @key_owners.empty?
+      return {} if @outputs.empty?
       { outputs: @outputs, owners: @key_owners }
     end
 

@@ -34,13 +34,15 @@ module LittleMonster::Core
       end
     end
 
-    attr_reader :id
-    attr_reader :tags
-    attr_reader :status
+    attr_accessor :id
+    attr_accessor :tags
+    attr_accessor :status
 
-    attr_reader :retries
-    attr_reader :current_task
-    attr_reader :data
+    attr_accessor :retries
+    attr_accessor :current_task
+    attr_accessor :data
+
+    attr_reader :orchrestator
 
     def initialize(options = {})
       @id = options.fetch(:id, nil)
@@ -55,7 +57,9 @@ module LittleMonster::Core
                 Data.new(self)
               end
 
-      @status = :pending
+      @status = options.fetch(:status, :pending)
+
+      @orchrestator = Job::Orchrestator.new(self)
 
       @runned_tasks = {} if mock?
 
@@ -69,64 +73,7 @@ module LittleMonster::Core
     end
 
     def run
-      notify_status :running
-
-      tasks_to_run.each do |task_name|
-        notify_current_task task_name, :running
-        logger.default_tags[:current_task] = current_task
-        logger.info "[type:start_task] [data:#{data.to_h[:outputs]}]"
-
-        begin
-          raise LittleMonster::CancelError if is_cancelled?
-
-          task = task_class_for(task_name).new(@data)
-          task.send(:set_default_values, @data, @id, logger, method(:is_cancelled?))
-
-          task.run
-          notify_current_task task_name, :success, data: data
-
-          logger.info "[type:finish_task] [status:success] [data:#{data.to_h[:outputs]}]"
-
-          if mock?
-            @runned_tasks[task_name] = {}
-            @runned_tasks[task_name][:instance] = task
-            @runned_tasks[task_name][:data] = @data.to_h[:outputs].to_h.dup
-          end
-        rescue APIUnreachableError => e
-          logger.error "[type:api_unreachable] [message:#{e.message}]"
-          raise e
-        rescue CancelError => e
-          logger.info '[type:cancel] job was cancelled'
-          cancel e
-          return
-        rescue StandardError => e
-          logger.debug "[type:standard_error] an error was catched with [message:#{e.message}]"
-          task.error e unless e.is_a? NameError
-          error e
-          return
-        end
-
-        @retries = 0 # Hago esto para que despues de succesful un task resete retries
-      end
-
-      @current_task = nil
-
-      on_success
-
-      notify_status :success, data: data
-
-      logger.info "[type:job_finish] [status:success] [data:#{@data.to_h[:outputs]}]"
-      logger.debug 'job has succesfuly ended'
-      @data
-    end
-
-    def on_error(error)
-    end
-
-    def on_cancel
-    end
-
-    def on_success
+      @orchrestator.run
     end
 
     def mock?
@@ -192,7 +139,7 @@ module LittleMonster::Core
       do_retry
     end
 
-    def notify_status(next_status, options = {})
+    def notify_status(next_status = self.status, options = {})
       @status = next_status
 
       params = { body: { status: @status } }
@@ -214,7 +161,18 @@ module LittleMonster::Core
                          retry_wait: LittleMonster.task_requests_retry_wait
     end
 
-    def notify_job(params = {}, options = {})
+    def notify_callback(callback, status, options = {})
+      return true unless should_request?
+      params = { body: { name: callback, status: status } }
+      params[:body].merge!(options)
+
+      resp = LittleMonster::API.put "/jobs/#{id}/job_callbacks/#{callback}", params, options,
+        retries: LittleMonster.task_requests_retries,
+        retry_wait: LittleMonster.task_requests_retry_wait
+      resp.success?
+    end
+
+    def notify_job(params={}, options={})
       return true unless should_request?
       options[:critical] = true
 
@@ -243,12 +201,40 @@ module LittleMonster::Core
       self.class.task_class_for task_name
     end
 
-    # returns the tasks that will be runned for this instance
+    def retry?
+      self.class.max_retries == -1 || self.class.max_retries > @retries
+    end
+
+    def max_retries
+      self.class.max_retries
+    end
+
+    def callback_to_run
+      case @status
+      when :success
+        :on_success
+      when :error
+        :on_error
+      when :cancelled
+        :on_cancel
+      end
+    end
+
+    #returns the tasks that will be runned for this instance
     def tasks_to_run
-      task_index = self.class.tasks.find_index(current_task)
+      task_index = self.class.tasks.find_index(@current_task)
 
       return [] if task_index.nil?
       self.class.tasks.slice(task_index..-1)
+    end
+
+    def on_error
+    end
+
+    def on_cancel
+    end
+
+    def on_success
     end
   end
 end

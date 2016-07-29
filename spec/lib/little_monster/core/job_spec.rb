@@ -104,7 +104,7 @@ describe LittleMonster::Core::Job do
         task = double(set_default_values: nil, run: nil)
         allow(MockJob::TaskA).to receive(:new).and_return(task)
         job.run
-        expect(task).to have_received(:set_default_values).with(job.data, job.id, job.logger, job.method(:is_cancelled?))
+        expect(task).to have_received(:set_default_values).with(job.data, job.id, job.orchrestator.logger, job.method(:is_cancelled?))
       end
 
       context 'on mock job' do
@@ -181,8 +181,8 @@ describe LittleMonster::Core::Job do
 
       context 'when a task fails' do
         before :each do
-          allow(job).to receive(:error).and_call_original
-          allow(job).to receive(:abort_job)
+          #allow(job).to receive(:error).and_call_original
+          #allow(job).to receive(:abort_job)
         end
 
         context 'and job is not on retry limit' do

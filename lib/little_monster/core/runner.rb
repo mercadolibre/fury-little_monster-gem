@@ -26,7 +26,8 @@ module LittleMonster::Core
     def send_heartbeat!
       return if LittleMonster.disable_requests?
 
-      res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", { body: {
+      res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", { 
+        body: {
           ip: Addrinfo.ip(Socket.gethostname).ip_address,
           pid: Process.pid
         }

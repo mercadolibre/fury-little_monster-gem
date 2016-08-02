@@ -3,7 +3,7 @@ module LittleMonster::Core
     attr_accessor :parent_logger
     attr_reader :tags
 
-    LEVELS = [:unknown, :fatal, :error, :warn, :info, :debug]
+    LEVELS = [:unknown, :fatal, :error, :warn, :info, :debug].freeze
 
     def self.tags_to_string(hash)
       hash.map { |k, v| "[#{k}:#{v}]" }.join
@@ -32,7 +32,7 @@ module LittleMonster::Core
       super method, *args, &block
     end
 
-    def tags_for(key, t={})
+    def tags_for(key, t = {})
       @tags[key] = t
     end
 
@@ -44,7 +44,7 @@ module LittleMonster::Core
       tags_for(:default, t)
     end
 
-    def tag_message(level, message='')
+    def tag_message(level, message = '')
       prefix_string =  tags_to_string @tags[:default].merge(@tags[level])
       prefix_string << ' -- ' unless prefix_string.blank?
 

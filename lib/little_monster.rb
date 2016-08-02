@@ -27,7 +27,7 @@ module LittleMonster
 
   def configure
     yield @@config
-    #it calls update_attributes so it can refresh and concurrency
+    # it calls update_attributes so it can refresh and concurrency
     Worker.update_attributes
   end
 

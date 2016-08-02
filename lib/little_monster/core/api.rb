@@ -27,8 +27,8 @@ module LittleMonster::Core
       end
 
       def request(method, path, params = {}, retries: LittleMonster.default_request_retries,
-                                             retry_wait: LittleMonster.default_request_retry_wait,
-                                             critical: false)
+                  retry_wait: LittleMonster.default_request_retry_wait,
+                  critical: false)
         ret = 0
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
@@ -41,7 +41,7 @@ module LittleMonster::Core
 
         begin
           res = Typhoeus.public_send method, url, params
-          raise FuryHttpApiError, "request to #{res.effective_url} failed with status #{res.code} retry #{ret}" if res.code >= 500 || res.code == 0
+          raise FuryHttpApiError, "request to #{res.effective_url} failed with status #{res.code} retry #{ret}" if res.code >= 500 || res.code.zero?
         rescue StandardError => e
           logger.error e.message
           if ret < retries
@@ -54,7 +54,7 @@ module LittleMonster::Core
 
           if critical
             logger.error "[type:critical_request_failed][url:#{url}][retries:#{ret}] request has reached max retries"
-            raise APIUnreachableError, "critical request to #{url} has fail, check little monster api" 
+            raise APIUnreachableError, "critical request to #{url} has fail, check little monster api"
           end
         end
 

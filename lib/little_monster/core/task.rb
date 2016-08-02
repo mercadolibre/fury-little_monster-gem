@@ -28,7 +28,7 @@ module LittleMonster::Core
 
     private
 
-    def set_default_values(data, job_logger=nil, cancelled_callback=nil)
+    def set_default_values(data, job_logger = nil, cancelled_callback = nil)
       @cancelled_callback = cancelled_callback
       @data = data
       logger.parent_logger = job_logger if job_logger

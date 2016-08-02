@@ -47,7 +47,8 @@ describe LittleMonster::Counters do
       .with('/jobs/1/counters/my_counter',{ type: 'fail',output: ''})
       .and_return(ret)
 
-      expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::Counters::DuplicateError
+      expect { dummy_class.increase_counter('my_counter','fail')}
+      .to raise_error LittleMonster::Counters::DuplicatedCounterError
     end
 
 

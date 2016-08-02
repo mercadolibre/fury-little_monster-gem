@@ -9,11 +9,11 @@ module LittleMonster::Counters
     rescue StandardError
       raise ApiError
     end
-    raise DuplicateError if resp.code == 412
+    raise DuplicatedCounterError if resp.code == 412
     true
   end
 
-  class DuplicateError < StandardError
+  class DuplicatedCounterError < StandardError
   end
 
   class ApiError < StandardError

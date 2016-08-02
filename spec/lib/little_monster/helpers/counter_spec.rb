@@ -54,7 +54,7 @@ describe LittleMonster::Counters do
 
     it 'fails if couldn\'t send counter to the api' do 
       expect(LittleMonster::Core::API).to(receive(:put))
-      .and_raise(StandardError)
+      .and_raise(LittleMonster::Core::API::FuryHttpApiError)
       expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::Counters::ApiError
     end
   end

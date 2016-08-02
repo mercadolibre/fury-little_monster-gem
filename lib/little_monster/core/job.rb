@@ -2,7 +2,7 @@ module LittleMonster::Core
   class Job
     include Loggable
 
-    ENDED_STATUS = %w(success error cancelled)
+    ENDED_STATUS = %w(success error cancelled).freeze
 
     class << self
       def task_list(*tasks)
@@ -72,7 +72,6 @@ module LittleMonster::Core
       notify_status :running
 
       tasks_to_run.each do |task_name|
-
         notify_current_task task_name, :running
         logger.default_tags[:current_task] = current_task
         logger.info "[type:start_task] [data:#{data.to_h[:outputs]}]"
@@ -97,7 +96,7 @@ module LittleMonster::Core
           logger.error "[type:api_unreachable] [message:#{e.message}]"
           raise e
         rescue CancelError => e
-          logger.info "[type:cancel] job was cancelled"
+          logger.info '[type:cancel] job was cancelled'
           cancel e
           return
         rescue StandardError => e
@@ -170,7 +169,7 @@ module LittleMonster::Core
       logger.info "[type:job_finish] [status:error] [data:#{@data.to_h[:outputs]}]"
     end
 
-    def cancel(e)
+    def cancel(_e)
       logger.debug 'notifiying cancel...'
 
       notify_status :cancelled
@@ -215,7 +214,7 @@ module LittleMonster::Core
                          retry_wait: LittleMonster.task_requests_retry_wait
     end
 
-    def notify_job(params={}, options={})
+    def notify_job(params = {}, options = {})
       return true unless should_request?
       options[:critical] = true
 
@@ -244,7 +243,7 @@ module LittleMonster::Core
       self.class.task_class_for task_name
     end
 
-    #returns the tasks that will be runned for this instance
+    # returns the tasks that will be runned for this instance
     def tasks_to_run
       task_index = self.class.tasks.find_index(current_task)
 

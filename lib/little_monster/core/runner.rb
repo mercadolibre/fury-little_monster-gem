@@ -26,11 +26,10 @@ module LittleMonster::Core
     def send_heartbeat!
       return if LittleMonster.disable_requests?
 
-      res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", { body: {
-          ip: Addrinfo.ip(Socket.gethostname).ip_address,
+      res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", body: {
+        ip: Addrinfo.ip(Socket.gethostname).ip_address,
           pid: Process.pid
-        }
-      }
+      }}
 
       raise LittleMonster::JobAlreadyLockedError, "job [id:#{@params[:id]}] is already locked, discarding" if res.code == 401
       res.success?

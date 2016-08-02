@@ -12,7 +12,7 @@ PATH
       webmock
 
 GEM
-  remote: http://rubygems.org/
+  remote: https://rubygems.org/
   specs:
     activesupport (5.0.0)
       concurrent-ruby (~> 1.0, >= 1.0.2)

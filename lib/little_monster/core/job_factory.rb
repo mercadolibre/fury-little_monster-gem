@@ -3,7 +3,6 @@ module LittleMonster::Core
     include Loggable
 
     def initialize(message = {})
-
       @id = message[:id]
       @name = message[:name]
       @tags = message[:tags]
@@ -12,7 +11,7 @@ module LittleMonster::Core
 
       @api_attributes = fetch_attributes
 
-      #this gets saved for development run and debugging purposes
+      # this gets saved for development run and debugging purposes
       @input_data = message[:data]
 
       begin
@@ -24,7 +23,7 @@ module LittleMonster::Core
 
     def build
       if discard?
-        logger.info "[type:discard] discarding job with [status:#{ (@api_attributes || {}).fetch(:status, 'nil') }]"
+        logger.info "[type:discard] discarding job with [status:#{(@api_attributes || {}).fetch(:status, 'nil')}]"
         return
       end
 
@@ -42,12 +41,12 @@ module LittleMonster::Core
       params = {
         body: {
           tasks: @job_class.tasks.each_with_index.map { |task, index| { name: task, order: index } }
-        },
+        }
       }
 
       res = LittleMonster::API.post "/jobs/#{@id}/tasks", params, retries: LittleMonster.job_requests_retries,
-                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
-                                                                   critical: true
+                                                                  retry_wait: LittleMonster.job_requests_retry_wait,
+                                                                  critical: true
       res.success?
     end
 
@@ -96,7 +95,7 @@ module LittleMonster::Core
       attributes = {
         id: @id,
         data: data,
-        tags: @tags,
+        tags: @tags
       }
 
       if LittleMonster.disable_requests?

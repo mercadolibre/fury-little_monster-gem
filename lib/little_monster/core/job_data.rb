@@ -1,6 +1,6 @@
 module LittleMonster::Core
   class Job::Data
-    def initialize(job, input={})
+    def initialize(job, input = {})
       @outputs = input.fetch(:outputs, {})
       @key_owners = input.fetch(:owners, {})
       @job = job

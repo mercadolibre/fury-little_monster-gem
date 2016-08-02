@@ -21,22 +21,13 @@ module LittleMonster
 
     def create_job_file
       template('templates/jobs_temp.erb', "jobs/#{job_name}.rb")
+      template 'templates/jobs_spec_temp.erb',"spec/jobs/#{job_name}_spec.rb"
     end
 
     def create_tasks_file
       task_names.each do |task|
         @current_task_name=task
         template('templates/tasks_temp.erb', "tasks/#{job_name}/#{task}.rb")
-      end
-    end
-
-    def create_job_test_file
-      template 'templates/jobs_spec_temp.erb',"spec/jobs/#{job_name}_spec.rb"
-    end
-
-    def create_tasks_test_file
-      task_names.each do |task|
-        @current_task_name=task
         template 'templates/tasks_spec_temp.erb',"spec/tasks/#{job_name}/#{task}_spec.rb"
       end
     end

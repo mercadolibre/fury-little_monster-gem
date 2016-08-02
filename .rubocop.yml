@@ -13,8 +13,8 @@ Style/ClassAndModuleChildren:
 Metrics/LineLength:
   Max: 110
 
-#MethodLength:
-#  Max: 15
+MethodLength:
+  Max: 20
 
 AllCops:
   Exclude:

@@ -1,10 +1,10 @@
 require_relative '../core/loggable'
 require_relative '../core/api'
 
-module LittleMonster::Counters
+module LittleMonster::Core::Counters
   def increase_counter(counter_name, type, output = '')
     begin
-      resp = LittleMonster::Core::API.put("/jobs/#{@job_id}/counters/#{counter_name}",
+      resp = LittleMonster::Core::API.put("/jobs/#{id}/counters/#{counter_name}",
                                           type: type, output: output)
     rescue LittleMonster::Core::API::FuryHttpApiError => e
       # logger.error "[counter:#{counter_name}][type:#{type}][output:#[output]]: #{e.message}"
@@ -15,7 +15,7 @@ module LittleMonster::Counters
   end
 
   def counter(counter_name)
-    resp = LittleMonster::Core::API.get("/jobs/#{@job_id}/counters/#{counter_name}")
+    resp = LittleMonster::Core::API.get("/jobs/#{id}/counters/#{counter_name}")
     raise MissedCounterError if resp.code == 404
     resp.body
   end

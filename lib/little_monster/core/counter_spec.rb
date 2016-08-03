@@ -1,10 +1,11 @@
 require_relative '../../../../lib/little_monster/helpers/counters'
-describe LittleMonster::Counters do 
+describe LittleMonster::Core::Counters do 
   let(:dummy_class) do 
     Class.new do 
-      include LittleMonster::Counters
+      include LittleMonster::Core::Counters
+      attr_reader :id
       def initialize
-        @job_id=1
+        @id=1
       end
     end.new
   end
@@ -48,14 +49,14 @@ describe LittleMonster::Counters do
       .and_return(ret)
 
       expect { dummy_class.increase_counter('my_counter','fail')}
-      .to raise_error LittleMonster::Counters::DuplicatedCounterError
+      .to raise_error LittleMonster::Core::Counters::DuplicatedCounterError
     end
 
 
     it 'fails if couldn\'t send counter to the api' do 
       expect(LittleMonster::Core::API).to(receive(:put))
       .and_raise(LittleMonster::Core::API::FuryHttpApiError)
-      expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::Counters::ApiError
+      expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::Core::Counters::ApiError
     end
   end
 
@@ -97,7 +98,7 @@ describe LittleMonster::Counters do
     it 'fails if counter doesnt exist' do 
         expect(LittleMonster::Core::API).to receive(:get)
         .with('/jobs/1/counters/my_fake_counter').and_return Typhoeus::Response.new(code:404)
-        expect { dummy_class.counter('my_fake_counter') }.to raise_error LittleMonster::Counters::MissedCounterError
+        expect { dummy_class.counter('my_fake_counter') }.to raise_error LittleMonster::Core::Counters::MissedCounterError
     end
   end
 end

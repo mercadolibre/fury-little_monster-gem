@@ -3,9 +3,11 @@ module LittleMonster::Core
     include Loggable
 
     attr_reader :data
+    attr_reader :job_id
 
-    def initialize(data)
+    def initialize(data, job_id=nil)
       @data = data
+      @job_id = job_id
     end
 
     def run
@@ -28,8 +30,9 @@ module LittleMonster::Core
 
     private
 
-    def set_default_values(data, job_logger = nil, cancelled_callback = nil)
+    def set_default_values(data, job_id = nil, job_logger = nil, cancelled_callback = nil)
       @cancelled_callback = cancelled_callback
+      @job_id = job_id
       @data = data
       logger.parent_logger = job_logger if job_logger
       logger.default_tags.merge!(type: 'task_log')

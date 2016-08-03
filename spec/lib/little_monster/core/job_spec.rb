@@ -104,7 +104,7 @@ describe LittleMonster::Core::Job do
         task = double(set_default_values: nil, run: nil)
         allow(MockJob::TaskA).to receive(:new).and_return(task)
         job.run
-        expect(task).to have_received(:set_default_values).with(job.data, job.logger, job.method(:is_cancelled?))
+        expect(task).to have_received(:set_default_values).with(job.data, job.id, job.logger, job.method(:is_cancelled?))
       end
 
       context 'on mock job' do

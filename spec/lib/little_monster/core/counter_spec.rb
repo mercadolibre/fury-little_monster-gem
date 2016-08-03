@@ -1,13 +1,16 @@
-require_relative '../../../../lib/little_monster/core/counters'
+require 'spec_helper'
+
 describe LittleMonster::Core::Counters do 
   let(:dummy_class) do 
-    Class.new do 
+    class DummyClass < LittleMonster::Task
       include LittleMonster::Counters
-      attr_reader :id
+
       def initialize
-        @id=1
+        @job_id=1
       end
-    end.new
+    end
+
+    DummyClass.new
   end
 
   context '.increase_count' do
@@ -56,7 +59,7 @@ describe LittleMonster::Core::Counters do
     it 'fails if couldn\'t send counter to the api' do 
       expect(LittleMonster::Core::API).to(receive(:put))
       .and_raise(LittleMonster::APIUnreachableError)
-      expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::Core::Counters::ApiError
+      expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::APIUnreachableError
     end
   end
 

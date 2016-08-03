@@ -34,6 +34,7 @@ describe LittleMonster::Core::Task do
   describe '#set_default_values' do
     let(:data) { LittleMonster::Core::Job::Data.new job }
     let(:cancelled_callback) { double }
+    let(:job_id) { 0 }
     let(:logger) { double }
     let(:mock_task) { MockJob::Task.new(nil) }
 
@@ -44,18 +45,23 @@ describe LittleMonster::Core::Task do
 
     it 'sets parent_logger if logger is not nil' do
       mock_task.logger
-      mock_task.send(:set_default_values, data, logger)
+      mock_task.send(:set_default_values, data, job_id, logger)
       expect(mock_task.logger.parent_logger).to eq(logger)
     end
 
     it 'does not set parent_logger if logger is nil' do
-      mock_task.send(:set_default_values, data, nil)
+      mock_task.send(:set_default_values, data, job_id, nil)
       expect(mock_task.logger.parent_logger).to be_nil
     end
 
     it 'sets cancelled_callback' do
-      mock_task.send(:set_default_values, data, logger, cancelled_callback)
+      mock_task.send(:set_default_values, data, job_id, logger, cancelled_callback)
       expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(cancelled_callback)
+    end
+
+    it 'sets job_id' do
+      mock_task.send(:set_default_values, data, job_id)
+      expect(mock_task.instance_variable_get('@job_id')).to eq(job_id)
     end
 
     it 'sets cancelled_callback to nil if cancelled_callback is not sent' do

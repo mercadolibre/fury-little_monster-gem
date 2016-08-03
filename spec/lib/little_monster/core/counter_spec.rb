@@ -17,7 +17,7 @@ describe LittleMonster::Core::Counters do
     context 'success' do 
       def success_mock(status='success', output='')
         expect(LittleMonster::Core::API).to receive(:put)
-        .with('/jobs/1/counters/my_counter',{body: { type: status, output: output}}, critical:true)
+        .with('/jobs/1/counters/my_counter',{ body: { type: status, output: output} }, critical:true)
         .and_return(Typhoeus::Response.new(code:200)).once
       end
 
@@ -81,7 +81,7 @@ describe LittleMonster::Core::Counters do
     context :success do 
       before :each do 
         expect(LittleMonster::Core::API).to receive(:get)
-        .with('/jobs/1/counters/my_counter', critical:true)
+        .with('/jobs/1/counters/my_counter', {}, critical:true)
         .and_return(Typhoeus::Response.new(body:response,code:200))
       end
 

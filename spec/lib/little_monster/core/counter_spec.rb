@@ -17,30 +17,30 @@ describe LittleMonster::Core::Counters do
     context 'success' do 
       def success_mock(status='success', output='')
         expect(LittleMonster::Core::API).to receive(:put)
-        .with('/jobs/1/counters/my_counter',{ body: { type: status, output: output} }, critical:true)
+        .with('/jobs/1/counters/my_counter',{ body: { unique_id: "my_unique_id",type: status, output: output} }, critical:true)
         .and_return(Typhoeus::Response.new(code:200)).once
       end
 
       it 'Put to LM api' do
         success_mock
-        dummy_class.increase_counter('my_counter','success')
+        dummy_class.increase_counter('my_counter',"my_unique_id",'success')
       end
 
       it 'add 1 when succeded' do
         success_mock
-        dummy_class.increase_counter('my_counter','success')
+        dummy_class.increase_counter('my_counter',"my_unique_id",'success')
         #resp = 
       end
 
       it 'add 1 when status fail' do 
         success_mock('fail')
-        dummy_class.increase_counter('my_counter','fail')
+        dummy_class.increase_counter('my_counter',"my_unique_id",'fail')
       end
 
       it 'allows send output' do 
         output="my fake output"
         success_mock('fail',output)
-        dummy_class.increase_counter('my_counter','fail', output)
+        dummy_class.increase_counter('my_counter',"my_unique_id",'fail', output)
       end
     end
 
@@ -48,10 +48,10 @@ describe LittleMonster::Core::Counters do
       ret = Typhoeus::Response.new(code:412)
 
       expect(LittleMonster::Core::API).to(receive(:put))
-      .with('/jobs/1/counters/my_counter',{body: { type: 'fail',output: ''}}, critical:true)
+      .with('/jobs/1/counters/my_counter',{body: { type: 'fail',unique_id:"my_unique_id",output: ''}}, critical:true)
       .and_return(ret)
 
-      expect { dummy_class.increase_counter('my_counter','fail')}
+      expect { dummy_class.increase_counter('my_counter',"my_unique_id",'fail')}
       .to raise_error LittleMonster::Core::Counters::DuplicatedCounterError
     end
 
@@ -59,7 +59,7 @@ describe LittleMonster::Core::Counters do
     it 'fails if couldn\'t send counter to the api' do 
       expect(LittleMonster::Core::API).to(receive(:put))
       .and_raise(LittleMonster::APIUnreachableError)
-      expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::APIUnreachableError
+      expect { dummy_class.increase_counter('my_counter',"my_unique_id",'fail')}.to raise_error LittleMonster::APIUnreachableError
     end
   end
 

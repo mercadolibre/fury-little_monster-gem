@@ -2,10 +2,10 @@ require_relative '../core/loggable'
 require_relative '../core/api'
 
 module LittleMonster::Core::Counters
-  def increase_counter(counter_name, type, output = '')
+  def increase_counter(counter_name, unique_id,type, output = '')
     begin
       resp = LittleMonster::Core::API.put("/jobs/#{job_id}/counters/#{counter_name}",
-                                          { body: {type: type, output: output} }, critical: true)
+                                          { body: {type: type, unique_id: unique_id,output: output} }, critical: true)
     rescue LittleMonster::APIUnreachableError => e
       raise e
     end

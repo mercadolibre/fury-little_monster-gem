@@ -2,7 +2,7 @@ require_relative '../../../../lib/little_monster/core/counters'
 describe LittleMonster::Core::Counters do 
   let(:dummy_class) do 
     Class.new do 
-      include LittleMonster::Core::Counters
+      include LittleMonster::Counters
       attr_reader :id
       def initialize
         @id=1

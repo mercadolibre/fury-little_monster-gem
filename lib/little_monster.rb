@@ -15,6 +15,10 @@ module LittleMonster
     @@env = ActiveSupport::StringInquirer.new(ENV['LITTLE_MONSTER_ENV'] || ENV['RUBY_ENV'] || 'development')
 
     @@logger = @@env.test? ? Logger.new('/dev/null') : Toiler.logger
+
+    @@logger.formatter = proc do |severity, datetime, _progname, msg|
+      "[severity:#{severity}][origin_datetime:#{datetime}] : #{msg}\n"
+    end
   end
 
   def env
@@ -29,6 +33,7 @@ module LittleMonster
     yield @@config
     # it calls update_attributes so it can refresh and concurrency
     Worker.update_attributes
+    @@logger.formatter = @@config.formatter
   end
 
   def default_config_values

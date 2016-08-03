@@ -65,7 +65,6 @@ module LittleMonster::Core
             res.options[:response_body]
           end
         end
-
         res
       end
     end

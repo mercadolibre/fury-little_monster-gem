@@ -1,4 +1,4 @@
-require_relative '../../../../lib/little_monster/helpers/counters'
+require_relative '../../../../lib/little_monster/core/counters'
 describe LittleMonster::Core::Counters do 
   let(:dummy_class) do 
     Class.new do 
@@ -14,7 +14,7 @@ describe LittleMonster::Core::Counters do
     context 'success' do 
       def success_mock(status='success', output='')
         expect(LittleMonster::Core::API).to receive(:put)
-        .with('/jobs/1/counters/my_counter',{ type: status, output: output})
+        .with('/jobs/1/counters/my_counter',{body: { type: status, output: output}}, critical:true)
         .and_return(Typhoeus::Response.new(code:200)).once
       end
 
@@ -45,7 +45,7 @@ describe LittleMonster::Core::Counters do
       ret = Typhoeus::Response.new(code:412)
 
       expect(LittleMonster::Core::API).to(receive(:put))
-      .with('/jobs/1/counters/my_counter',{ type: 'fail',output: ''})
+      .with('/jobs/1/counters/my_counter',{body: { type: 'fail',output: ''}}, critical:true)
       .and_return(ret)
 
       expect { dummy_class.increase_counter('my_counter','fail')}
@@ -55,7 +55,7 @@ describe LittleMonster::Core::Counters do
 
     it 'fails if couldn\'t send counter to the api' do 
       expect(LittleMonster::Core::API).to(receive(:put))
-      .and_raise(LittleMonster::Core::API::FuryHttpApiError)
+      .and_raise(LittleMonster::APIUnreachableError)
       expect { dummy_class.increase_counter('my_counter','fail')}.to raise_error LittleMonster::Core::Counters::ApiError
     end
   end
@@ -78,7 +78,7 @@ describe LittleMonster::Core::Counters do
     context :success do 
       before :each do 
         expect(LittleMonster::Core::API).to receive(:get)
-        .with('/jobs/1/counters/my_counter')
+        .with('/jobs/1/counters/my_counter', critical:true)
         .and_return(Typhoeus::Response.new(body:response,code:200))
       end
 
@@ -95,10 +95,5 @@ describe LittleMonster::Core::Counters do
       end
     end
 
-    it 'fails if counter doesnt exist' do 
-        expect(LittleMonster::Core::API).to receive(:get)
-        .with('/jobs/1/counters/my_fake_counter').and_return Typhoeus::Response.new(code:404)
-        expect { dummy_class.counter('my_fake_counter') }.to raise_error LittleMonster::Core::Counters::MissedCounterError
-    end
   end
 end

@@ -5,7 +5,7 @@ module LittleMonster
     attr_accessor :worker_concurrency
     attr_accessor :worker_queue
 
-    attr_accessor :default_formatter
+    attr_accessor :formatter
 
     attr_accessor :request_timeout
 

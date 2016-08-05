@@ -25,7 +25,7 @@ end
 
 RSpec.configure do |conf|
   conf.color = true
-  conf.formatter = :documentation
+  # conf.formatter = :documentation
 
   conf.mock_with :rspec do |mocks|
     mocks.verify_partial_doubles = true
@@ -35,4 +35,3 @@ RSpec.configure do |conf|
     allow_any_instance_of(Kernel).to receive(:sleep)
   end
 end
-

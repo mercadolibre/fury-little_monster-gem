@@ -33,7 +33,6 @@ module LittleMonster
     yield @@config
     # it calls update_attributes so it can refresh and concurrency
     Worker.update_attributes
-    @@logger.formatter = @@config.formatter
   end
 
   def default_config_values

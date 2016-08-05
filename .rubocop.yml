@@ -11,10 +11,17 @@ Style/ClassAndModuleChildren:
   Enabled: false
 
 Metrics/LineLength:
-  Max: 110
+  Max: 120
 
 MethodLength:
   Max: 20
+
+Metrics/AbcSize:
+  Max: 40
+
+Metrics/ClassLength:
+  CountComments: false
+  Max: 200
 
 AllCops:
   Exclude:
@@ -23,5 +30,5 @@ AllCops:
     - 'tmp/**/*'
     - 'config/**/*'
     - 'bin/**'
-    - 'db/**/*' 
+    - 'db/**/*'
   TargetRubyVersion: 2.3

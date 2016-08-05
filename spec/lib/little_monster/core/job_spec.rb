@@ -82,64 +82,6 @@ describe LittleMonster::Core::Job do
     it 'calls run on orchrestator'
   end
 
-  describe '#abort_job' do
-    before :each do
-      allow(job).to receive(:on_error).and_call_original
-      allow(job).to receive(:notify_status)
-      job.send(:abort_job, LittleMonster::FatalTaskError.new)
-    end
-
-    it 'notifies status as error' do
-      expect(job).to have_received(:notify_status).with(:error).once
-    end
-
-    it 'calls on_error' do
-      expect(job).to have_received(:on_error).with(LittleMonster::FatalTaskError)
-    end
-  end
-
-  describe '#error' do
-    before :each do
-      allow(job).to receive(:error).and_call_original
-      allow(job).to receive(:on_error).and_call_original
-      allow(job).to receive(:do_retry)
-    end
-
-    context 'if env is development' do
-      before :each do
-        allow(LittleMonster.env).to receive(:development?).and_return(true)
-      end
-
-      it 'raises passed exception' do
-        e = StandardError.new
-        expect { job.send(:error, e) }.to raise_error(e)
-      end
-    end
-
-    context 'if env is not development' do
-      before :each do
-        allow(LittleMonster.env).to receive(:development?).and_return(false)
-      end
-
-      it 'does not abort if it did not receive a FatalTaskError' do
-        allow(job).to receive(:abort_job)
-        job.send(:error, LittleMonster::TaskError.new)
-        expect(job).not_to have_received(:abort_job).with LittleMonster::FatalTaskError
-      end
-
-      it 'aborts if received a FatalTaskError' do
-        allow(job).to receive(:abort_job)
-        job.send(:error, LittleMonster::FatalTaskError.new)
-        expect(job).to have_received(:abort_job).with LittleMonster::FatalTaskError
-      end
-
-      it 'calls do_retry if non FatalTaskError' do
-        job.send(:error, LittleMonster::TaskError.new)
-        expect(job).to have_received(:do_retry).with no_args
-      end
-    end
-  end
-
   describe '#cancel' do
     before :each do
       allow(job).to receive(:cancel).and_call_original
@@ -154,67 +96,6 @@ describe LittleMonster::Core::Job do
     it 'calls on_cancel' do
       job.send(:cancel, LittleMonster::CancelError.new)
       expect(job).to have_received(:on_cancel).with(no_args)
-    end
-  end
-
-  describe '#do_retry' do
-    after :each do
-      MockJob.retries(-1)
-    end
-
-    context 'if max retries is -1' do
-      it 'raises JobRetryError'  do
-        expect { job.send :do_retry }.to raise_error(LittleMonster::JobRetryError)
-      end
-    end
-
-    context 'if max retries is not reached' do
-      before :each do
-        MockJob.retries 5
-        job.instance_variable_set '@current_task', :task_a
-        job.instance_variable_set '@retries', 4
-      end
-
-      it 'increases retries by 1' do
-        job.send :do_retry rescue nil
-        expect(job.instance_variable_get('@retries')).to eq(5)
-      end
-
-      it 'raises JobRetryError'  do
-        expect { job.send :do_retry }.to raise_error(LittleMonster::JobRetryError)
-      end
-
-      it 'notifies status to pending' do
-        allow(job).to receive(:notify_status)
-        job.send :do_retry rescue nil
-        expect(job).to have_received(:notify_status).with(:pending)
-      end
-
-      it 'notifies current task to pending and set retries' do
-        allow(job).to receive(:notify_current_task)
-        job.send :do_retry rescue nil
-        expect(job).to have_received(:notify_current_task).with(job.current_task, :pending, retries: job.retries)
-      end
-    end
-
-
-    context 'if max retries is reached' do
-      before :each do
-        allow(job).to receive(:abort_job)
-        MockJob.retries 5
-        job.instance_variable_set '@retries', 5
-      end
-
-      it 'aborts job' do
-        job.send :do_retry
-        expect(job).to have_received(:abort_job).with(LittleMonster::MaxRetriesError)
-      end
-
-      it 'does not retry' do
-        allow(LittleMonster::JobRetryError).to receive(:new)
-        job.send :do_retry
-        expect(LittleMonster::JobRetryError).not_to have_received(:new)
-      end
     end
   end
 

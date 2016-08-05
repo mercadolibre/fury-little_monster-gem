@@ -44,13 +44,13 @@ describe LittleMonster::Core::Job::Orchrestator do
             subject.run_tasks
             expect(task_dummy).to have_received(:run)
           end
+        end
 
-          context 'if task ended successfully' do
-            it 'notifies api task ended with status success and data' do
-              allow(subject.job).to receive(:notify_current_task)
-              subject.run_tasks
-              expect(subject.job).to have_received(:notify_current_task).with(task_symbol, :success, data: subject.job.data)
-            end
+        context 'if tasks ended successfully' do
+          it 'notifies api task ended with status success and data for each task' do
+            allow(subject.job).to receive(:notify_current_task)
+            subject.run_tasks
+            expect(subject.job).to have_received(:notify_current_task).with(:success, data: subject.job.data).exactly(MockJob.tasks.count).times
           end
         end
       end
@@ -147,7 +147,7 @@ describe LittleMonster::Core::Job::Orchrestator do
     it 'calls cancel' do
       allow(subject.job).to receive(:is_cancelled?).and_return(true)
       subject.run_tasks
-      expect(subject).to have_received(:cancel).with(LittleMonster::CancelError).once
+      expect(subject).to have_received(:cancel).once
     end
 
     context 'and task is running' do
@@ -155,7 +155,7 @@ describe LittleMonster::Core::Job::Orchrestator do
         allow_any_instance_of(MockJob::TaskA).to receive(:run).and_call_original
         allow_any_instance_of(MockJob::TaskA).to receive(:is_cancelled!).and_raise(LittleMonster::CancelError)
         subject.run_tasks
-        expect(subject).to have_received(:cancel).with(LittleMonster::CancelError).once
+        expect(subject).to have_received(:cancel).once
       end
     end
   end
@@ -251,8 +251,167 @@ describe LittleMonster::Core::Job::Orchrestator do
     end
   end
 
-  describe 'abort_job'
-  describe 'cancel'
-  describe 'handle_error'
-  describe 'do_retry'
+  describe '#abort_job' do
+    context 'if callback is running' do
+      let(:callback) { :callback }
+      before :each do
+        subject.instance_variable_set '@callback', callback
+      end
+
+      it 'calls notify_callback with status error' do
+        allow(subject.job).to receive(:notify_callback)
+        subject.abort_job LittleMonster::FatalTaskError.new
+        expect(subject.job).to have_received(:notify_callback).with(callback, :error)
+      end
+    end
+
+    context 'if task is running' do
+      before :each do
+        subject.job.current_task = :task
+      end
+
+      it 'calls notify_callback with status error' do
+        allow(subject.job).to receive(:notify_current_task)
+        subject.abort_job LittleMonster::FatalTaskError.new
+        expect(subject.job).to have_received(:notify_current_task).with(:error)
+      end
+    end
+
+    it 'sets status as error' do
+      subject.abort_job LittleMonster::FatalTaskError.new
+      expect(subject.job.status).to eq(:error)
+    end
+  end
+
+  describe 'cancel' do
+    it 'notifies current_task status as cancelled' do
+      allow(subject.job).to receive(:notify_current_task)
+      subject.cancel
+      expect(subject.job).to have_received(:notify_current_task).with(:cancelled)
+    end
+
+    it 'sets status as cancelled' do
+      subject.cancel
+      expect(subject.job.status).to eq(:cancelled)
+    end
+  end
+
+  describe '#handle_error' do
+    before :each do
+      allow(subject).to receive(:do_retry)
+      allow(subject).to receive(:abort_job)
+    end
+
+    context 'if env is development' do
+      before :each do
+        allow(LittleMonster.env).to receive(:development?).and_return(true)
+      end
+
+      it 'raises passed exception' do
+        e = StandardError.new
+        expect { subject.handle_error e }.to raise_error(e)
+      end
+    end
+
+    context 'if env is not development' do
+      before :each do
+        allow(LittleMonster.env).to receive(:development?).and_return(false)
+      end
+
+      it 'does not abort if it did not receive a FatalTaskError' do
+        allow(subject).to receive(:abort_job)
+        subject.handle_error LittleMonster::TaskError.new
+        expect(subject).not_to have_received(:abort_job)
+      end
+
+      it 'aborts if received a FatalTaskError' do
+        subject.handle_error LittleMonster::FatalTaskError.new
+        expect(subject).to have_received(:abort_job).with LittleMonster::FatalTaskError
+      end
+
+      it 'aborts if received a name error' do
+        subject.handle_error NameError.new
+        expect(subject).to have_received(:abort_job).with NameError
+      end
+
+      it 'calls do_retry if non FatalTaskError nor NameError' do
+        subject.handle_error LittleMonster::TaskError.new
+        expect(subject).to have_received(:do_retry).with no_args
+      end
+    end
+  end
+
+  describe '#do_retry' do
+    context 'if job retry is true' do
+      before :each do
+        allow(subject.job).to receive(:retry?).and_return(true)
+      end
+
+      it 'increases job retries by 1' do
+        retries = subject.job.retries
+        subject.do_retry rescue nil
+        expect(subject.job.retries).to eq(retries + 1)
+      end
+
+      it 'raises JobRetryError'  do
+        expect { subject.do_retry }.to raise_error(LittleMonster::JobRetryError)
+      end
+
+      it 'sets job status to pending' do
+        subject.do_retry rescue nil
+        expect(subject.job.status).to eq(:pending)
+      end
+
+      context 'if task is running' do
+        it 'notifies current task as pending and set retries' do
+          allow(subject.job).to receive(:notify_current_task)
+          subject.do_retry rescue nil
+          expect(subject.job).to have_received(:notify_current_task).with(:pending, retries: subject.job.retries)
+        end
+      end
+
+      context 'if callback is running' do
+        let(:callback) { :callback }
+        before :each do
+          subject.instance_variable_set '@callback', callback
+        end
+
+        it 'notifies callback as pending and set retries' do
+          allow(subject.job).to receive(:notify_callback)
+          subject.do_retry rescue nil
+          expect(subject.job).to have_received(:notify_callback).with(callback, :pending, retries: subject.job.retries)
+        end
+      end
+    end
+
+    context 'if job retry is false' do
+      before :each do
+        allow(subject).to receive(:abort_job)
+        allow(subject.job).to receive(:retry?).and_return(false)
+      end
+
+      it 'aborts job' do
+        subject.do_retry
+        expect(subject).to have_received(:abort_job).with(LittleMonster::MaxRetriesError)
+      end
+
+      it 'does not retry' do
+        allow(LittleMonster::JobRetryError).to receive(:new)
+        subject.do_retry
+        expect(LittleMonster::JobRetryError).not_to have_received(:new)
+      end
+    end
+  end
+
+  describe 'callback_running?' do
+    it 'returns true if callback varible is not nil' do
+      subject.instance_variable_set '@callback', :on_success
+      expect(subject.callback_running?).to be true
+    end
+
+    it 'returns false if callback varible is nil' do
+      subject.instance_variable_set '@callback', nil
+      expect(subject.callback_running?).to be false
+    end
+  end
 end

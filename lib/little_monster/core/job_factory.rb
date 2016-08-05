@@ -7,7 +7,7 @@ module LittleMonster::Core
       @name = message[:name]
       @tags = message[:tags]
 
-      logger.default_tags = (@tags || {}).merge(id: @id, name: @name)
+      logger.default_tags = {}.merge(id: @id, name: @name)
 
       @api_attributes = fetch_attributes
 

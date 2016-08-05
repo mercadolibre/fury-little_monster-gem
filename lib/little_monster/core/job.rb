@@ -80,10 +80,6 @@ module LittleMonster::Core
       self.class.mock?
     end
 
-    private
-
-    attr_writer :status
-
     def do_retry
       if self.class.max_retries == -1 || self.class.max_retries > @retries
         logger.debug "Retry ##{retries} of #{self.class.max_retries}"

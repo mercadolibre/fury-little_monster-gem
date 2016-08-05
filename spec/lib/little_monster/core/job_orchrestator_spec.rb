@@ -236,12 +236,12 @@ describe LittleMonster::Core::Job::Orchrestator do
       expect(MockJob::TaskA).to have_received(:new).with(subject.job.data)
     end
 
-    it 'calls set_default_values on task with data, logger, and is_cancelled method' do
+    it 'calls set_default_values on task with data, job_id, logger, and is_cancelled method' do
       task = task_class.new({})
       allow(task).to receive(:set_default_values)
       allow(task_class).to receive(:new).and_return(task)
       subject.build_task task_symbol
-      expect(task).to have_received(:set_default_values).with(subject.job.data, subject.logger, subject.job.method(:is_cancelled?))
+      expect(task).to have_received(:set_default_values).with(subject.job.data, subject.job.id, subject.logger, subject.job.method(:is_cancelled?))
     end
 
     it 'returns the built task' do

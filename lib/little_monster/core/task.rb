@@ -5,7 +5,7 @@ module LittleMonster::Core
     attr_reader :data
     attr_reader :job_id
 
-    def initialize(data, job_id=nil)
+    def initialize(data, job_id = nil)
       @data = data
       @job_id = job_id
     end

@@ -36,7 +36,6 @@ module LittleMonster::Core
         params[:body] = MultiJson.dump params.fetch(:body, {}) unless params[:body].is_a? String
         params[:headers] ||= {}
         params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
-
         params[:timeout] = LittleMonster.request_timeout
 
         begin

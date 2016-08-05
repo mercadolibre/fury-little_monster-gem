@@ -30,6 +30,7 @@ module LittleMonster::Core
                   retry_wait: LittleMonster.default_request_retry_wait,
                   critical: false)
         ret = 0
+        res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
 
         params[:body] = MultiJson.dump params.fetch(:body, {}) unless params[:body].is_a? String

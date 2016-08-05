@@ -102,9 +102,10 @@ describe LittleMonster::Core::Counters do
   context '.init_counters' do
     context 'success' do
       def success_mock(status='success', output='')
+        allow_any_instance_of(Typhoeus::Response).to receive(:success?).and_return(true)
         expect(LittleMonster::Core::API).to receive(:post)
-        .with('/jobs/1/counters/my_counter', critical:true)
-        .and_return(Typhoeus::Response.new(code:200))
+        .with('/jobs/1/counters/my_counter', critical: true)
+        .and_return(Typhoeus::Response.new(code: 200))
       end
 
       it 'Post to LM api' do
@@ -113,7 +114,8 @@ describe LittleMonster::Core::Counters do
       end
 
       it 'Post to LM api as many times as counters amount' do
-        allow(LittleMonster::Core::API).to receive(:post)
+        allow_any_instance_of(Typhoeus::Response).to receive(:success?).and_return(true)
+        allow(LittleMonster::Core::API).to receive(:post).and_return(Typhoeus::Response.new(code: 200))
         dummy_class.init_counters('my_counter1', 'my_counter2')
         expect(LittleMonster::Core::API).to have_received(:post).twice
       end
@@ -122,6 +124,16 @@ describe LittleMonster::Core::Counters do
     it 'fails if couldn\'t send counter to the api' do
       allow(LittleMonster::Core::API).to receive(:post).and_raise(LittleMonster::APIUnreachableError)
       expect { dummy_class.init_counters('my_counter1', 'my_counter2') }.to raise_error LittleMonster::APIUnreachableError
+    end
+
+    it 'fails if counter does not exists' do
+      allow(LittleMonster::Core::API).to receive(:post).and_return(Typhoeus::Response.new(code: 404))
+      expect { dummy_class.init_counters('my_counter1', 'my_counter2') }.to raise_error LittleMonster::Core::Counters::MissedCounterError
+    end
+
+    it 'does not fails if counter already exists' do
+      allow(LittleMonster::Core::API).to receive(:post).and_return(Typhoeus::Response.new(code: 409))
+      expect { dummy_class.init_counters('my_counter1', 'my_counter2') }.not_to raise_error
     end
   end
 end

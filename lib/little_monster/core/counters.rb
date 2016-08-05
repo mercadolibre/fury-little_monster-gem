@@ -26,10 +26,11 @@ module LittleMonster::Core::Counters
   def init_counters(*counter_names)
     counter_names.each do |counter_name|
       begin
-        LittleMonster::Core::API.post(
+        res = LittleMonster::Core::API.post(
           "/jobs/#{job_id}/counters/#{counter_name}",
           critical: true
         )
+        raise MissedCounterError if !res.success? && res.code != 409 # counter already exists
       rescue LittleMonster::APIUnreachableError => e
         logger.error "Could not init counter #{counter_name}, Api unreachable"
         raise e

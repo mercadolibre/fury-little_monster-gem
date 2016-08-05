@@ -80,64 +80,7 @@ module LittleMonster::Core
       self.class.mock?
     end
 
-    def do_retry
-      if self.class.max_retries == -1 || self.class.max_retries > @retries
-        logger.debug "Retry ##{retries} of #{self.class.max_retries}"
-
-        @retries += 1
-
-        logger.debug 'notifiying retry'
-
-        notify_status :pending
-        notify_current_task current_task, :pending, retries: retries
-
-        logger.info "[type:job_retry] [data:#{@data.to_h[:outputs]}]"
-        raise JobRetryError, "doing retry #{retries} of #{self.class.max_retries}"
-      else
-        logger.debug 'job has reached max retries'
-
-        logger.info "[type:job_max_retries] [retries:#{self.class.max_retries}]"
-        abort_job(MaxRetriesError.new)
-      end
-    end
-
-    def abort_job(e)
-      logger.debug 'notifiying abort...'
-
-      notify_status :error
-      notify_current_task current_task, :error
-
-      on_error e
-
-      logger.info "[type:job_finish] [status:error] [data:#{@data.to_h[:outputs]}]"
-    end
-
-    def cancel(_e)
-      logger.debug 'notifiying cancel...'
-
-      notify_status :cancelled
-      notify_current_task current_task, :cancelled
-
-      on_cancel
-
-      logger.info "[type:job_finish] [status:cancelled] [data:#{@data.to_h[:outputs]}]"
-    end
-
-    def error(e)
-      raise e if LittleMonster.env.development?
-      logger.error "[type:error] [error_type:#{e.class}][message:#{e.message}] \n #{e.backtrace.to_a.join("\n\t")}"
-
-      if e.is_a?(FatalTaskError) || e.is_a?(NameError)
-        logger.debug 'error is fatal, aborting run'
-        return abort_job(e)
-      end
-
-      do_retry
-    end
-
-    def notify_status(next_status = self.status, options = {})
-      @status = next_status
-
+    def notify_status(options = {})
       params = { body: { status: @status } }
       params[:body].merge!(options)
 
@@ -145,10 +88,8 @@ module LittleMonster::Core
                          retry_wait: LittleMonster.job_requests_retry_wait
     end
 
-    def notify_current_task(task, status = :running, options = {})
-      @current_task = task
-
-      params = { body: { tasks: [{ name: task, status: status }] } }
+    def notify_current_task(status = :running, options = {})
+      params = { body: { tasks: [{ name: @current_task, status: status }] } }
       params[:body][:data] = options[:data] if options[:data]
 
       params[:body][:tasks].first.merge!(options.except(:data))
@@ -197,12 +138,12 @@ module LittleMonster::Core
       self.class.task_class_for task_name
     end
 
-    def retry?
-      self.class.max_retries == -1 || self.class.max_retries > @retries
-    end
-
     def max_retries
       self.class.max_retries
+    end
+
+    def retry?
+      max_retries == -1 || max_retries > @retries
     end
 
     def callback_to_run

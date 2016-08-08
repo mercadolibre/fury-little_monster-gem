@@ -5,11 +5,13 @@ module LittleMonster::Core
     def initialize(message = {})
       @id = message[:id]
       @name = message[:name]
-      @tags = message[:tags]
 
-      logger.default_tags = {}.merge(id: @id, name: @name)
+      #it converts tags from array of hashes to a single hash
+      @tags = Hash[ message.fetch(:tags, []).map { |h| [h.keys.first, h.values.first] } ].freeze
 
-      @api_attributes = fetch_attributes
+      logger.default_tags = @tags.merge(id: @id, name: @name)
+
+      @api_attributes = fetch_attributes.freeze
 
       # this gets saved for development run and debugging purposes
       @input_data = message[:data]

@@ -9,7 +9,8 @@ module LittleMonster::Core
     end
 
     def run
-      @job.notify_status :running
+      @job.status = :running
+      @job.notify_status
 
       run_tasks
       run_callback
@@ -36,12 +37,11 @@ module LittleMonster::Core
 
           logger.info "[type:finish_task] [status:success] [data:#{@job.data.to_h[:outputs]}]"
 
-          # TODO
-          #if @job.mock?
-          #  @job.runned_tasks[task_name] = {}
-          #  @job.runned_tasks[task_name][:instance] = task
-          #  @job.runned_tasks[task_name][:data] = @job.data.to_h[:outputs].to_h.dup
-          #end
+          if @job.mock?
+            @job.runned_tasks[task_name] = {}
+            @job.runned_tasks[task_name][:instance] = task
+            @job.runned_tasks[task_name][:data] = @job.data.to_h[:outputs].to_h.dup
+          end
         rescue APIUnreachableError => e
           logger.error "[type:api_unreachable] [message:#{e.message}]"
           raise e

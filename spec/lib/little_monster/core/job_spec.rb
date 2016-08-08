@@ -76,26 +76,17 @@ describe LittleMonster::Core::Job do
     it 'freezes the tags' do
       expect(job.tags.frozen?).to be true
     end
+
+    it 'creates a new orchrestator' do
+      expect(job.orchrestator).to be_instance_of(LittleMonster::Core::Job::Orchrestator)
+    end
   end
 
   describe '#run' do
-    it 'calls run on orchrestator'
-  end
-
-  describe '#cancel' do
-    before :each do
-      allow(job).to receive(:cancel).and_call_original
-      allow(job).to receive(:on_cancel).and_call_original
-    end
-
-    it 'sets status to :cancelled' do
-      job.send(:cancel, LittleMonster::CancelError.new)
-      expect(job.status).to be(:cancelled)
-    end
-
-    it 'calls on_cancel' do
-      job.send(:cancel, LittleMonster::CancelError.new)
-      expect(job).to have_received(:on_cancel).with(no_args)
+    it 'calls run on orchrestator' do
+      allow(job.orchrestator).to receive(:run)
+      job.run
+      expect(job.orchrestator).to have_received(:run)
     end
   end
 
@@ -160,7 +151,6 @@ describe LittleMonster::Core::Job do
 
     describe '#notify_status' do
       context 'given a status and options' do
-        let(:status) { :success }
         let(:options) { { cancel: true } }
         let(:response) { double }
 
@@ -169,21 +159,50 @@ describe LittleMonster::Core::Job do
         end
 
         it 'calls notify_job with status, params and options' do
-          job.send(:notify_status, status, options)
-          expect(job).to have_received(:notify_job).with({ body: { status: status }.merge(options) },
+          job.notify_status options
+          expect(job).to have_received(:notify_job).with({ body: { status: job.status }.merge(options) },
                                                          retries: LittleMonster.job_requests_retries,
                                                          retry_wait: LittleMonster.job_requests_retry_wait).once
         end
 
-        it 'returns request success?' do
-          expect(job.send(:notify_status, status)).to eq(response)
+        it 'returns notify_job response' do
+          expect(job.send(:notify_status)).to eq(response)
+        end
+      end
+    end
+
+    describe '#notify_callback' do
+      context 'given a callback, status and options' do
+        let(:callback) { :on_success }
+        let(:status) { :pending }
+        let(:options) { { retries: 1 } }
+        let(:response) { double(success?: true) }
+
+        before :each do
+          allow(LittleMonster::API).to receive(:put).and_return(response)
+        end
+
+        context 'if should_request?' do
+          before :each do
+            allow(job).to receive(:should_request?).and_return(true)
+          end
+
+          it 'makes a request to api with callback and status merged with options' do
+            job.notify_callback callback, status, options
+            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/job_callbacks/#{callback}", { body: { name: callback, status: status }.merge(options) },
+                                                                   retries: LittleMonster.job_requests_retries,
+                                                                   retry_wait: LittleMonster.job_requests_retry_wait).once
+          end
+
+          it 'returns request success?' do
+            expect(job.notify_callback callback, status, options).to eq(response.success?)
+          end
         end
       end
     end
 
     describe '#notify_current_task' do
       context 'given a task, status and options' do
-        let(:task) { :task }
         let(:status) { :success }
         let(:options) { { retries: 5 } }
         let(:response) { double }
@@ -193,9 +212,9 @@ describe LittleMonster::Core::Job do
         end
 
         context 'if options does not contain data' do
-          it 'makes a request to api with status, options, critical, retries and retry wait' do
-            job.send(:notify_current_task, task, status, options)
-            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: task, status: status }.merge(options)] } },
+          it 'makes a request to api with current_task, status, options, critical, retries and retry wait' do
+            job.notify_current_task status, options
+            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_task, status: status }.merge(options)] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
@@ -206,17 +225,17 @@ describe LittleMonster::Core::Job do
             options[:data] = double
           end
 
-          it 'makes a request to api with status, options, critical, retries, retry wait and sets data to body' do
-            job.send(:notify_current_task, task, status, options)
+          it 'makes a request to api with current_task, status, options, critical, retries, retry wait and sets data to body' do
+            job.notify_current_task status, options
             expect(job).to have_received(:notify_job).with({ body: { data: options[:data],
-                                                                     tasks: [{ name: task, status: status }.merge(options.except(:data))] } },
+                                                                     tasks: [{ name: job.current_task, status: status }.merge(options.except(:data))] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
         end
 
         it 'returns request success?' do
-          expect(job.send(:notify_current_task, task, status, options)).to eq(response)
+          expect(job.notify_current_task status, options).to eq(response)
         end
       end
     end

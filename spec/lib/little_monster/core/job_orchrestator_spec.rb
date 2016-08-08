@@ -283,7 +283,7 @@ describe LittleMonster::Core::Job::Orchrestator do
     end
   end
 
-  describe 'cancel' do
+  describe '#cancel' do
     it 'notifies current_task status as cancelled' do
       allow(subject.job).to receive(:notify_current_task)
       subject.cancel

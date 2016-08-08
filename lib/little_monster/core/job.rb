@@ -88,7 +88,7 @@ module LittleMonster::Core
                          retry_wait: LittleMonster.job_requests_retry_wait
     end
 
-    def notify_current_task(status = :running, options = {})
+    def notify_current_task(status, options = {})
       params = { body: { tasks: [{ name: @current_task, status: status }] } }
       params[:body][:data] = options[:data] if options[:data]
 
@@ -103,7 +103,7 @@ module LittleMonster::Core
       params = { body: { name: callback, status: status } }
       params[:body].merge!(options)
 
-      resp = LittleMonster::API.put "/jobs/#{id}/job_callbacks/#{callback}", params, options,
+      resp = LittleMonster::API.put "/jobs/#{id}/job_callbacks/#{callback}", params,
         retries: LittleMonster.task_requests_retries,
         retry_wait: LittleMonster.task_requests_retry_wait
       resp.success?

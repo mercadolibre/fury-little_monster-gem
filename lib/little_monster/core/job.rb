@@ -61,7 +61,10 @@ module LittleMonster::Core
 
       @orchrestator = Job::Orchrestator.new(self)
 
-      @runned_tasks = {} if mock?
+      if mock?
+        @runned_tasks = {}
+        self.class.send :attr_reader, :runned_tasks
+      end
 
       logger.default_tags = tags.merge(
         id: @id,

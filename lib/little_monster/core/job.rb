@@ -2,7 +2,7 @@ module LittleMonster::Core
   class Job
     include Loggable
 
-    ENDED_STATUS = %w(success error cancelled).freeze
+    ENDED_STATUS = %i(success error cancelled).freeze
 
     class << self
       def task_list(*tasks)

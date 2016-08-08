@@ -77,7 +77,7 @@ module LittleMonster::Core
       return { name: @job_class.tasks.first, retries: 0 } if @api_attributes[:tasks].blank?
 
       task_index = @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.find_index do |task|
-        !Job::ENDED_STATUS.include? task[:status]
+        !Job::ENDED_STATUS.include? task[:status].to_sym
       end
       return {} if task_index.nil?
 
@@ -85,6 +85,14 @@ module LittleMonster::Core
         name: @api_attributes[:tasks][task_index][:name].to_sym,
         retries: @api_attributes[:tasks][task_index][:retries]
       }
+    end
+
+    def calculate_status
+      return :pending if @api_attributes[:tasks].blank?
+      @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.each do |task|
+        return task[:status].to_sym if task[:status].to_sym != :success
+      end
+      :success
     end
 
     def job_attributes
@@ -100,18 +108,19 @@ module LittleMonster::Core
         tags: @tags
       }
 
-      if LittleMonster.disable_requests?
-        attributes
-      else
-        current_task = find_current_task
-        attributes.merge(current_task: current_task[:name],
+      return attributes if LittleMonster.disable_requests?
+
+        status = calculate_status
+        current_task = !Job::ENDED_STATUS.include?(status) ? find_current_task : {}
+
+        attributes.merge(status: status,
+                         current_task: current_task[:name],
                          retries: current_task[:retries])
 
-      end
     end
 
     def discard?
-      @api_attributes.nil? || Job::ENDED_STATUS.include?(@api_attributes.fetch(:status, 'pending'))
+      @api_attributes.nil? || Job::ENDED_STATUS.include?(@api_attributes.fetch(:status, :pending).to_sym)
     end
   end
 end

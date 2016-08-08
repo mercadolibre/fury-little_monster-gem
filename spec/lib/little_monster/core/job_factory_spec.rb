@@ -5,8 +5,8 @@ describe LittleMonster::Core::Job::Factory do
     {
       id: 0,
       name: :mock_job,
-      data: { a: :b },
-      tags: { c: :d }
+      data: { x: :y },
+      tags: [{ a: :b }, { c: :d }]
     }
   end
 
@@ -26,6 +26,15 @@ describe LittleMonster::Core::Job::Factory do
     it 'raises JobNotFoundError if job class does not exists' do
       message[:name] = 'not_existing_class'
       expect { factory }.to raise_error(LittleMonster::JobNotFoundError)
+    end
+
+    it 'converts tags array to tags hash' do
+      expect(factory.instance_variable_get '@tags').to eq(a: :b, c: :d)
+    end
+
+    it 'sets logger default_tags as @tags merged with id and job name' do
+      tags = factory.instance_variable_get '@tags'
+      expect(factory.logger.default_tags).to eq(tags.merge(id: message[:id], name: message[:name]))
     end
   end
 
@@ -280,7 +289,7 @@ describe LittleMonster::Core::Job::Factory do
       it 'returns hash with id tags and input data' do
         expect(factory.job_attributes).to eq(id: message[:id],
                                              data: message[:data],
-                                             tags: message[:tags])
+                                             tags: factory.instance_variable_get('@tags'))
       end
     end
 
@@ -296,7 +305,7 @@ describe LittleMonster::Core::Job::Factory do
 
       it 'returns hash with id params tags data current_task and retries' do
         expect(factory.job_attributes).to eq(id: message[:id],
-                                             tags: message[:tags],
+                                             tags: factory.instance_variable_get('@tags'),
                                              data: data,
                                              current_task: current_task[:name],
                                              retries: current_task[:retries])

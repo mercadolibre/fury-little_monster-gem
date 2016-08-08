@@ -347,4 +347,26 @@ describe LittleMonster::Core::Job do
       end
     end
   end
+
+  describe '#callback_to_run' do
+    it 'returns on_success if status is success' do
+      job.status = :success
+      expect(job.callback_to_run).to eq(:on_success)
+    end
+
+    it 'returns on_error if status is error' do
+      job.status = :error
+      expect(job.callback_to_run).to eq(:on_error)
+    end
+
+    it 'returns on_cancel if status is cancelled' do
+      job.status = :cancelled
+      expect(job.callback_to_run).to eq(:on_cancel)
+    end
+
+    it 'returns nil if status is anything else' do
+      job.status = :running
+      expect(job.callback_to_run).to be_nil
+    end
+  end
 end

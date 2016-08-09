@@ -299,7 +299,7 @@ describe LittleMonster::Core::Job::Factory do
 
       before :each do
         allow(factory).to receive(:find_current_task).and_return(current_task)
-        factory.instance_variable_set('@api_attributes', data: MultiJson.dump(data))
+        factory.instance_variable_set('@api_attributes', data: data)
         allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       end
 

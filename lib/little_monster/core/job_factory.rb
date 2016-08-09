@@ -88,7 +88,7 @@ module LittleMonster::Core
     end
 
     def job_attributes
-      data = if !@api_attriblutes[:data].nil?
+      data = if !@api_attributes[:data].nil?
                @api_attributes[:data]
              else
                @input_data

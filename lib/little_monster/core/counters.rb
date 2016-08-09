@@ -23,6 +23,10 @@ module LittleMonster::Core::Counters
     resp.body
   end
 
+  def counter_endpoint(name)
+    "#{LittleMonster.api_url.chomp('/')}/jobs/#{job_id}/counters/#{name}"
+  end
+
   def init_counters(*counter_names)
     counter_names.each do |counter_name|
       begin

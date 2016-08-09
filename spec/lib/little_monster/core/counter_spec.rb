@@ -9,7 +9,6 @@ describe LittleMonster::Core::Counters do
         @job_id=1
       end
     end
-
     DummyClass.new
   end
 
@@ -134,6 +133,12 @@ describe LittleMonster::Core::Counters do
     it 'does not fails if counter already exists' do
       allow(LittleMonster::Core::API).to receive(:post).and_return(Typhoeus::Response.new(code: 409))
       expect { dummy_class.init_counters('my_counter1', 'my_counter2') }.not_to raise_error
+    end
+  end
+
+  context '.counter_endpoint' do 
+    it 'have to return api endpoint' do 
+      expect(dummy_class.counter_endpoint('fake')).to eq 'http://little_monster_api_url.com/jobs/1/counters/fake'
     end
   end
 end

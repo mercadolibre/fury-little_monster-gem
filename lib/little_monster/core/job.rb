@@ -79,10 +79,6 @@ module LittleMonster::Core
       @orchrestator.run
     end
 
-    def mock?
-      self.class.mock?
-    end
-
     def notify_status(options = {})
       params = { body: { status: @status } }
       params[:body].merge!(options)
@@ -133,10 +129,6 @@ module LittleMonster::Core
       end
     end
 
-    def should_request?
-      !(mock? || LittleMonster.disable_requests?)
-    end
-
     def task_class_for(task_name)
       self.class.task_class_for task_name
     end
@@ -166,6 +158,18 @@ module LittleMonster::Core
 
       return [] if task_index.nil?
       self.class.tasks.slice(task_index..-1)
+    end
+
+    def ended_status?
+      Job::ENDED_STATUS.include? @status
+    end
+
+    def mock?
+      self.class.mock?
+    end
+
+    def should_request?
+      !(mock? || LittleMonster.disable_requests?)
     end
 
     def on_error

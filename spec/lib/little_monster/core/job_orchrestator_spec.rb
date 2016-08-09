@@ -5,16 +5,104 @@ describe LittleMonster::Core::Job::Orchrestator do
 
   describe '#initialize' do
     context 'given a job instance' do
-      it 'sets job instance variable'
-      it 'sets parent_logger to job logger'
+      it 'sets job instance variable' do
+        expect(subject.job).not_to be_nil
+      end
+
+      it 'sets logger to job logger' do
+        expect(subject.logger).to eq(subject.job.logger)
+      end
     end
   end
 
   describe 'run' do
-    it 'notifies job status as running'
-    it 'runs tasks'
-    it 'runs callbacks'
-    it 'ensures that job status is notified'
+    before :each do
+      allow(subject.job).to receive(:notify_status)
+    end
+
+    context 'before start' do
+      before :each do
+        allow(subject.job).to receive(:status=)
+        allow(subject).to receive(:run_tasks)
+        allow(subject).to receive(:run_callback)
+      end
+
+      it 'sets status as running' do
+        subject.run
+        expect(subject.job).to have_received(:status=).with(:running).once
+      end
+
+      context 'if job has a finishing status' do
+        let(:status) { :error }
+        before :each do
+          subject.job.instance_variable_set '@status', status
+        end
+
+        it 'resets status after setting status running' do
+          subject.run
+          expect(subject.job).to have_received(:status=).with(:running).ordered
+          expect(subject.job).to have_received(:status=).with(status).ordered
+        end
+
+        it 'does not run tasks' do
+          subject.run
+          expect(subject).not_to have_received(:run_tasks)
+        end
+      end
+
+      context 'if job does not have a finishing status' do
+        it 'resets status after setting status running' do
+          subject.run
+          expect(subject.job).to have_received(:status=).once
+        end
+      end
+
+      it 'runs tasks' do
+        subject.run
+        expect(subject).to have_received(:run_tasks).once
+      end
+
+      it 'resets retries after running tasks' do
+        subject.job.retries = 10
+        allow(subject.job).to receive(:retries=).and_call_original
+        subject.run
+        expect(subject).to have_received(:run_tasks).ordered
+        expect(subject.job).to have_received(:retries=).with(0).ordered
+      end
+    end
+
+    it 'runs callback' do
+      allow(subject).to receive(:run_callback)
+      subject.run
+      expect(subject).to have_received(:run_callback).once
+    end
+
+    it 'notifies status twice' do
+      subject.run
+      expect(subject.job).to have_received(:notify_status).twice
+    end
+
+    it 'ensures that job status is notified' do
+      allow(subject).to receive(:run_tasks).and_raise(StandardError, 'boom')
+      subject.run rescue
+      expect(subject.job).to have_received(:notify_status).twice
+    end
+
+    context 'if job has ended status at the end of run' do
+      it 'notifies status with data' do
+        subject.run
+        expect(subject.job).to have_received(:notify_status).with(data: subject.job.data).once
+      end
+    end
+
+    context 'if job does not have ended status at the end of run' do
+      it 'notifies status with data' do
+        allow(subject).to receive(:run_tasks)
+        allow(subject).to receive(:run_callback)
+        subject.run
+        expect(subject.job).to have_received(:notify_status).with({}).once
+      end
+    end
 
     context 'when api is down' do
       it 'raises APIUnreachableError when notify_status raises error' do
@@ -23,7 +111,97 @@ describe LittleMonster::Core::Job::Orchrestator do
       end
     end
 
-    context 'integration'
+    context 'integration' do
+      context 'if all tasks and callbacks pass' do
+        it 'ends with status success' do
+          subject.run
+          expect(subject.job.status).to eq(:success)
+        end
+
+        it 'runs on_success callback' do
+          allow(subject.job).to receive(:on_success)
+          subject.run
+          expect(subject.job).to have_received(:on_success)
+        end
+
+        context 'if job callback fails' do
+          before :each do
+            allow(subject.job).to receive(:on_success).and_raise(StandardError, 'boom')
+          end
+
+          context 'and has retries left' do
+            it 'raises JobRetryError' do
+              expect { subject.run }.to raise_error(LittleMonster::JobRetryError)
+            end
+          end
+
+          context 'and has no retries left' do
+            before :each do
+              allow(subject.job).to receive(:retry?).and_return(false)
+            end
+
+            it 'ends with status error' do
+              subject.run
+              expect(subject.job.status).to eq(:error)
+            end
+          end
+        end
+      end
+
+      context 'if a task fail and has retries left' do
+        before :each do
+          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_raise(LittleMonster::TaskError, 'error')
+        end
+
+        it 'raises a job retry error' do
+          expect { subject.run }.to raise_error(LittleMonster::JobRetryError)
+        end
+
+        it 'does not run any callback' do
+          allow(subject).to receive(:run_callback)
+          subject.run rescue
+          expect(subject).not_to have_received(:run_callback)
+        end
+      end
+
+      context 'if a task fails and has no retries left' do
+        before :each do
+          subject.job.retries = subject.job.max_retries
+          allow_any_instance_of(MockJob::TaskA).to receive(:run).and_raise(LittleMonster::TaskError, 'error')
+        end
+
+        it 'ends with status error' do
+          subject.run
+          expect(subject.job.status).to eq(:error)
+        end
+
+        it 'runs on_error callback' do
+          allow(subject.job).to receive(:on_error)
+          subject.run
+          expect(subject.job).to have_received(:on_error)
+        end
+
+        context 'if on_error fails' do
+          context 'and has retries left' do
+            it 'raises JobRetryError' do
+              allow(subject.job).to receive(:on_error).and_raise(StandardError, 'boom')
+              expect { subject.run }.to raise_error(LittleMonster::JobRetryError)
+            end
+          end
+
+          context 'and has no retries left' do
+            before :each do
+              allow(subject.job).to receive(:retry?).and_return(false)
+            end
+
+            it 'ends with status error' do
+              subject.run
+              expect(subject.job.status).to eq(:error)
+            end
+          end
+        end
+      end
+    end
   end
 
   describe 'run_tasks' do

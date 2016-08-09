@@ -9,13 +9,25 @@ module LittleMonster::Core
     end
 
     def run
+      # notifies status as running and then restores old_status if it is an ending status
+      last_status = @job.status
       @job.status = :running
       @job.notify_status
 
-      run_tasks
+      if @job.ended_status?
+        @job.status = last_status
+      else
+        run_tasks
+
+        # reset retries so retries don't mix between tasks and callbacks
+        @job.retries = 0
+      end
+
       run_callback
     ensure
-      @job.notify_status # TODO: revisar, esto reporta estado cuando falla el callback
+      options = {}
+      options[:data] = @job.data if @job.ended_status?
+      @job.notify_status options
     end
 
     def run_tasks

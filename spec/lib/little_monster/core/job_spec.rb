@@ -563,9 +563,20 @@ describe LittleMonster::Core::Job do
           params[:body][:data] = job.data.to_h
         end
 
-        it 'makes request with data not converted to json' do
+        it 'makes request with data as a hash' do
           job.send(:notify_job, params, options)
           expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", { body: hash_including(data: job.data.to_h) } , any_args).once
+        end
+      end
+
+      context 'if options does not contain data' do
+        before :each do
+          params[:body].delete(:data)
+        end
+
+        it 'makes request without data' do
+          job.send(:notify_job, params, options)
+          expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", params, options).once
         end
       end
 

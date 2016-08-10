@@ -1,7 +1,7 @@
 require 'spec_helper'
 
 describe LittleMonster::Core::Job::Data do
-  let(:job) { double(current_task: 'a_task') }
+  let(:job) { double(current_task: nil, current_action: 'a_task') }
   let(:output_data) { described_class.new(job) }
 
   describe '#initialize' do
@@ -71,7 +71,7 @@ describe LittleMonster::Core::Job::Data do
 
   describe '#to_json' do
     it 'returns a json dump of #to_h' do
-      allow(job).to receive(:current_task).and_return(:a_task)
+      allow(job).to receive(:current_action).and_return(:a_task)
       output_data[:key] = 'value'
       output_data[:lol] = 'some'
       expect(output_data.to_json).to eq(MultiJson.dump(output_data.to_h))
@@ -82,10 +82,10 @@ describe LittleMonster::Core::Job::Data do
     let(:hash_data) { { outputs: { key: 'value', lol: 'some', keys: 'nul' }, owners: { a_task: [:key, :lol], b_task: [:keys] } } }
 
     it 'returns each key owner and each output' do
-      allow(job).to receive(:current_task).and_return(:a_task)
+      allow(job).to receive(:current_action).and_return(:a_task)
       output_data[:key] = 'value'
       output_data[:lol] = 'some'
-      allow(job).to receive(:current_task).and_return(:b_task)
+      allow(job).to receive(:current_action).and_return(:b_task)
       output_data[:keys] = 'nul'
 
       expect(output_data.to_h).to eq(hash_data)

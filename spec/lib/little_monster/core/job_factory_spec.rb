@@ -25,6 +25,7 @@ describe LittleMonster::Core::Job::Factory do
 
     it 'raises JobNotFoundError if job class does not exists' do
       message[:name] = 'not_existing_class'
+      allow(LittleMonster::API).to receive(:put)
       expect { factory }.to raise_error(LittleMonster::JobNotFoundError)
     end
 

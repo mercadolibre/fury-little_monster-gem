@@ -19,7 +19,7 @@ module LittleMonster::Core
       begin
         @job_class = @name.to_s.camelcase.constantize
       rescue NameError
-        raise JobNotFoundError, "[type:error] job [name:#{@name}] does not exists"
+        raise JobNotFoundError.new(@id), "[type:error] job [name:#{@name}] does not exists"
       end
     end
 

@@ -90,12 +90,14 @@ module LittleMonster::Core
       logger.default_tags[:callback] = @callback
       @job.notify_callback @callback, :running
 
+      logger.info "[type:start_callback] [data:#{@job.data.to_h[:outputs]}]"
       begin
         logger.default_tags[:type] = 'callback_log'
         @job.public_send(@callback)
       ensure
         logger.default_tags.delete(:type)
       end
+      logger.info "[type:finish_callback] [status:success] [data:#{@job.data.to_h[:outputs]}]"
 
       @job.notify_callback @callback, :success
 

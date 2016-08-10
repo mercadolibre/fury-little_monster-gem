@@ -24,7 +24,7 @@ module LittleMonster::Core
       end
 
       run_callback
-      logger.info "[type:job_finish] [status:#{@job.status}] [data:#{@data.to_h[:outputs]}]"
+      logger.info "[type:job_finish] [status:#{@job.status}] [data:#{@job.data.to_h[:outputs]}]"
     ensure
       options = {}
       options[:data] = @job.data if @job.ended_status?
@@ -156,15 +156,15 @@ module LittleMonster::Core
         logger.debug 'notifiying retry'
         if callback_running?
           @job.notify_callback @callback, :pending, retries: @job.retries
-          logger.info "[type:callback_retry] [data:#{@data.to_h[:outputs]}]"
+          logger.info "[type:callback_retry] [data:#{@job.data.to_h[:outputs]}]"
         else
           @job.notify_current_task :pending, retries: @job.retries
-          logger.info "[type:task_retry] [data:#{@data.to_h[:outputs]}]"
+          logger.info "[type:task_retry] [data:#{@job.data.to_h[:outputs]}]"
         end
 
         @job.status = :pending
 
-        logger.info "[type:job_retry] [data:#{@data.to_h[:outputs]}]"
+        logger.info "[type:job_retry] [data:#{@job.data.to_h[:outputs]}]"
         raise JobRetryError, "doing retry #{@job.retries} of #{@job.max_retries}"
       else
         logger.debug 'job has reached max retries'

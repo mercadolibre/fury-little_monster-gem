@@ -222,6 +222,18 @@ describe LittleMonster::Core::Job::Orchrestator do
             subject.run_tasks
             expect(task_dummy).to have_received(:run)
           end
+
+          it 'sets current task' do
+            allow(subject.job).to receive(:current_task=).and_call_original
+            subject.run_tasks
+            expect(subject.job).to have_received(:current_task=).with(task_symbol)
+          end
+
+          it 'sets current action' do
+            allow(subject.job).to receive(:current_action=).and_call_original
+            subject.run_tasks
+            expect(subject.job).to have_received(:current_action=).with(task_symbol)
+          end
         end
 
         context 'if tasks ended successfully' do
@@ -344,6 +356,11 @@ describe LittleMonster::Core::Job::Orchrestator do
       expect(subject.job.current_task).to be_nil
     end
 
+    it 'sets current_action to nil' do
+      subject.run_tasks
+      expect(subject.job.current_action).to be_nil
+    end
+
     it 'sets staus as success' do
       subject.run_tasks
       expect(subject.job.status).to eq(:success)
@@ -359,6 +376,12 @@ describe LittleMonster::Core::Job::Orchrestator do
         allow(subject.job).to receive(:notify_callback).and_call_original
       end
 
+      it 'sets current action to callback' do
+        allow(subject.job).to receive(:current_action=).and_call_original
+        subject.run_callback
+        expect(subject.job).to have_received(:current_action=).with(callback)
+      end
+
       it 'notifies callback as running' do
         subject.run_callback
         expect(subject.job).to have_received(:notify_callback).with(callback, :running)
@@ -369,6 +392,7 @@ describe LittleMonster::Core::Job::Orchrestator do
         subject.run_callback
         expect(subject.job).to have_received(callback)
       end
+
       context 'if api is unreachable' do
         it 'raises an APIUnreachableError' do
           allow(subject.job).to receive(:notify_callback).and_raise(LittleMonster::APIUnreachableError)
@@ -399,6 +423,11 @@ describe LittleMonster::Core::Job::Orchrestator do
         it 'notifies callback status as success' do
           subject.run_callback
           expect(subject.job).to have_received(:notify_callback).with(callback, :success)
+        end
+
+        it 'sets current_action to nil' do
+          subject.run_callback
+          expect(subject.job.current_action).to be_nil
         end
       end
     end

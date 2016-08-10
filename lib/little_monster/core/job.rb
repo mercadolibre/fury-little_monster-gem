@@ -52,7 +52,7 @@ module LittleMonster::Core
       @retries = options[:retries] || 0
 
       @current_task = options.fetch(:current_task, self.class.tasks.first)
-      @current_action = options.fetch(:current_task, self.class.tasks.first)
+      @current_action = nil # options.fetch(:current_action, self.class.tasks.first)
 
       @data = if options[:data]
                 Data.new(self, options[:data])

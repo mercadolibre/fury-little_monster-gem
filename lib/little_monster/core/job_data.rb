@@ -19,8 +19,10 @@ module LittleMonster::Core
     def []=(output_key, value)
       raise KeyError, "The key #{output_key} already exists" if @outputs.include? output_key.to_sym
       @outputs[output_key.to_sym] = value
-      @key_owners[@job.current_task.to_sym] = [] unless @key_owners[@job.current_task.to_sym].is_a? Array
-      @key_owners[@job.current_task.to_sym] << output_key.to_sym
+
+      owner = (@job.current_task || @job.current_action).to_sym
+      @key_owners[owner] = [] unless @key_owners[owner].is_a? Array
+      @key_owners[owner] << output_key.to_sym
     end
 
     def to_json

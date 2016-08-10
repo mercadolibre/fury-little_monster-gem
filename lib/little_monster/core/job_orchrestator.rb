@@ -34,6 +34,8 @@ module LittleMonster::Core
     def run_tasks
       @job.tasks_to_run.each do |task_name|
         @job.current_task = task_name
+        @job.current_action = task_name
+
         @job.notify_current_task :running
 
         logger.default_tags[:current_task] = @job.current_task
@@ -74,10 +76,12 @@ module LittleMonster::Core
 
       logger.default_tags.delete(:current_task)
       @job.current_task = nil
+      @job.current_action = nil
       @job.status = :success
     end
 
     def run_callback
+      @job.current_action = @job.callback_to_run
       @callback = @job.callback_to_run
 
       return if @callback.nil?
@@ -94,6 +98,7 @@ module LittleMonster::Core
 
       @job.notify_callback @callback, :success
 
+      @job.current_action = nil
       @job.retries = 0
       logger.default_tags.delete(:callback)
     rescue APIUnreachableError => e

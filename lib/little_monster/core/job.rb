@@ -40,6 +40,7 @@ module LittleMonster::Core
 
     attr_accessor :retries
     attr_accessor :current_task
+    attr_accessor :current_action
     attr_accessor :data
 
     attr_reader :orchrestator
@@ -49,7 +50,9 @@ module LittleMonster::Core
       @tags = (options[:tags] || {}).freeze
 
       @retries = options[:retries] || 0
+
       @current_task = options.fetch(:current_task, self.class.tasks.first)
+      @current_action = options.fetch(:current_task, self.class.tasks.first)
 
       @data = if options[:data]
                 Data.new(self, options[:data])

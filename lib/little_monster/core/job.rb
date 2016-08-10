@@ -102,7 +102,7 @@ module LittleMonster::Core
       params = { body: { name: callback, status: status } }
       params[:body].merge!(options)
 
-      resp = LittleMonster::API.put "/jobs/#{id}/job_callbacks/#{callback}", params,
+      resp = LittleMonster::API.put "/jobs/#{id}/callbacks/#{callback}", params,
         retries: LittleMonster.task_requests_retries,
         retry_wait: LittleMonster.task_requests_retry_wait
       resp.success?

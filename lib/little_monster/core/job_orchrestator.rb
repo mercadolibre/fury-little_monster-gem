@@ -1,3 +1,4 @@
+# TODO : don't send data on callback fail
 module LittleMonster::Core
   class Job::Orchrestator
     attr_reader :logger
@@ -161,10 +162,10 @@ module LittleMonster::Core
         logger.debug 'notifiying retry'
         if callback_running?
           @job.notify_callback @callback, :pending, retries: @job.retries
-          logger.info "[type:callback_retry] [data:#{@job.data.to_h[:outputs]}]"
+          logger.info "[type:callback_retry]"
         else
           @job.notify_current_task :pending, retries: @job.retries
-          logger.info "[type:task_retry] [data:#{@job.data.to_h[:outputs]}]"
+          logger.info "[type:task_retry]"
         end
 
         @job.status = :pending
@@ -173,6 +174,12 @@ module LittleMonster::Core
         raise JobRetryError, "doing retry #{@job.retries} of #{@job.max_retries}"
       else
         logger.debug 'job has reached max retries'
+
+        if callback_running?
+          logger.info "[type:callback_max_retries]"
+        else
+          logger.info "[type:task_max_retries]"
+        end
 
         logger.info "[type:job_max_retries] [retries:#{@job.max_retries}]"
         abort_job(MaxRetriesError.new)

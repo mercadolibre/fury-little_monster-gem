@@ -6,8 +6,8 @@ module LittleMonster::Core
       @id = message[:id]
       @name = message[:name]
 
-      #it converts tags from array of hashes to a single hash
-      @tags = Hash[ message.fetch(:tags, []).map { |h| [h.keys.first, h.values.first] } ].freeze
+      # it converts tags from array of hashes to a single hash
+      @tags = Hash[message.fetch(:tags, []).map { |h| [h.keys.first, h.values.first] }].freeze
 
       logger.default_tags = @tags.merge(id: @id, name: @name)
 

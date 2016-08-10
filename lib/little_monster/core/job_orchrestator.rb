@@ -14,7 +14,7 @@ module LittleMonster::Core
       @job.status = :running
       @job.notify_status
 
-      if @job.ended_status?
+      if Job::ENDED_STATUS.include? last_status
         @job.status = last_status
       else
         run_tasks

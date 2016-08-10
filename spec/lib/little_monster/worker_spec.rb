@@ -3,7 +3,7 @@ require 'spec_helper'
 describe LittleMonster::Worker do
   let(:message) do
     {
-      data: '{}',
+      data: {},
       name: 'mock_job'
     }
   end
@@ -28,7 +28,6 @@ describe LittleMonster::Worker do
     end
 
     it 'creates a runner instance with parsed message and parsed data' do
-      message[:data] = MultiJson.load message[:data]
       expect(LittleMonster::Core::Runner).to have_received(:new).with(message)
     end
 

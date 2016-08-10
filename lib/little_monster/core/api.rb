@@ -40,7 +40,9 @@ module LittleMonster::Core
 
         begin
           res = Typhoeus.public_send method, url, params
-          raise FuryHttpApiError, "request to #{res.effective_url} failed with status #{res.code} retry #{ret}" if res.code >= 500 || res.code.zero?
+          if res.code >= 500 || res.code.zero?
+            raise FuryHttpApiError, "request to #{res.effective_url} failed with status #{res.code} retry #{ret}" 
+          end
         rescue StandardError => e
           logger.error e.message
           if ret < retries

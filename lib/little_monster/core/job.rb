@@ -218,7 +218,7 @@ module LittleMonster::Core
       return true unless should_request?
       options[:critical] = true
 
-      params[:body][:data] = params[:body][:data].to_json if params[:body][:data]
+      params[:body][:data] = params[:body][:data].to_h
 
       resp = LittleMonster::API.put "/jobs/#{id}", params, options
       resp.success?

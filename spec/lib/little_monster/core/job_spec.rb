@@ -560,12 +560,12 @@ describe LittleMonster::Core::Job do
 
       context 'if options contains data' do
         before :each do
-          params[:body][:data] = job.data
+          params[:body][:data] = job.data.to_h
         end
 
-        it 'makes request with data converted to json' do
+        it 'makes request with data not converted to json' do
           job.send(:notify_job, params, options)
-          expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", { body: hash_including(data: job.data.to_json) } , any_args).once
+          expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", { body: hash_including(data: job.data.to_h) } , any_args).once
         end
       end
 

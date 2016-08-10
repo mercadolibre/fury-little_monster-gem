@@ -67,6 +67,9 @@ module LittleMonster
     end
 
     register(LittleMonster::ConfGen, 'init', 'init', 'Creates new Little Monster Schema app')
-    register(LittleMonster::Generate, 'generate', 'generate <job_name> <task_list>...', 'Creates a job with his respective tasks.')
+    register(LittleMonster::Generate, 
+             'generate', 
+             'generate <job_name> <task_list>...', 
+             'Creates a job with his respective tasks.')
   end
 end

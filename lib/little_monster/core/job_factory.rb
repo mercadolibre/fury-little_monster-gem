@@ -87,6 +87,13 @@ module LittleMonster::Core
       }
     end
 
+    def retries_from_callback
+      return 0 if @api_attributes[:callbacks].blank?
+      @api_attributes.fetch(:callbacks, []).each do |callback|
+        return callback[:retries] unless Job::ENDED_STATUS.include? callback[:status].to_sym
+      end
+    end
+
     def calculate_status
       return :pending if @api_attributes[:tasks].blank?
       @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.each do |task|
@@ -111,11 +118,18 @@ module LittleMonster::Core
       return attributes if LittleMonster.disable_requests?
 
         status = calculate_status
-        current_task = !Job::ENDED_STATUS.include?(status) ? find_current_task : {}
+
+        if Job::ENDED_STATUS.include?(status)
+          current_task = {}
+          retries = retries_from_callback
+        else
+          current_task = find_current_task
+          retries = current_task[:retries]
+        end
 
         attributes.merge(status: status,
                          current_task: current_task[:name],
-                         retries: current_task[:retries])
+                         retries: retries)
 
     end
 

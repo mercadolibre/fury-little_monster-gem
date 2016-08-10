@@ -189,7 +189,7 @@ describe LittleMonster::Core::Job do
 
           it 'makes a request to api with callback and status merged with options' do
             job.notify_callback callback, status, options
-            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/job_callbacks/#{callback}", { body: { name: callback, status: status }.merge(options) },
+            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/callbacks/#{callback}", { body: { name: callback, status: status }.merge(options) },
                                                                    retries: LittleMonster.job_requests_retries,
                                                                    retry_wait: LittleMonster.job_requests_retry_wait).once
           end

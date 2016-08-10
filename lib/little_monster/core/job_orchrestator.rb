@@ -59,7 +59,7 @@ module LittleMonster::Core
           logger.error "[type:api_unreachable] [message:#{e.message}]"
           raise e
         rescue CancelError => e
-          logger.info "[type:cancel] job was cancelled"
+          logger.info '[type:cancel] job was cancelled'
           cancel
           return
         rescue StandardError => e
@@ -123,7 +123,7 @@ module LittleMonster::Core
 
     # Methods that work both on tasks and callbacks
 
-    def abort_job(e)
+    def abort_job(_e)
       logger.debug 'notifiying abort...'
 
       if callback_running?

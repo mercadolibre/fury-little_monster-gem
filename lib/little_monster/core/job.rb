@@ -103,12 +103,12 @@ module LittleMonster::Core
       params[:body].merge!(options)
 
       resp = LittleMonster::API.put "/jobs/#{id}/callbacks/#{callback}", params,
-        retries: LittleMonster.task_requests_retries,
-        retry_wait: LittleMonster.task_requests_retry_wait
+                                    retries: LittleMonster.task_requests_retries,
+                                    retry_wait: LittleMonster.task_requests_retry_wait
       resp.success?
     end
 
-    def notify_job(params={}, options={})
+    def notify_job(params = {}, options = {})
       return true unless should_request?
       options[:critical] = true
 
@@ -152,7 +152,7 @@ module LittleMonster::Core
       end
     end
 
-    #returns the tasks that will be runned for this instance
+    # returns the tasks that will be runned for this instance
     def tasks_to_run
       task_index = self.class.tasks.find_index(@current_task)
 

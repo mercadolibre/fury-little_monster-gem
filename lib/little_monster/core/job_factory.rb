@@ -117,20 +117,19 @@ module LittleMonster::Core
 
       return attributes if LittleMonster.disable_requests?
 
-        status = calculate_status
+      status = calculate_status
 
-        if Job::ENDED_STATUS.include?(status)
-          current_task = {}
-          retries = retries_from_callback
-        else
-          current_task = find_current_task
-          retries = current_task[:retries]
-        end
+      if Job::ENDED_STATUS.include?(status)
+        current_task = {}
+        retries = retries_from_callback
+      else
+        current_task = find_current_task
+        retries = current_task[:retries]
+      end
 
-        attributes.merge(status: status,
-                         current_task: current_task[:name],
-                         retries: retries)
-
+      attributes.merge(status: status,
+                       current_task: current_task[:name],
+                       retries: retries)
     end
 
     def discard?

@@ -20,6 +20,7 @@ module LittleMonster::Core
       else
         run_tasks
 
+        logger.default_tags.delete(:current_task)
         # reset retries so retries don't mix between tasks and callbacks
         @job.retries = 0
       end
@@ -75,7 +76,6 @@ module LittleMonster::Core
         @job.retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      logger.default_tags.delete(:current_task)
       @job.current_task = nil
       @job.current_action = nil
       @job.status = :success

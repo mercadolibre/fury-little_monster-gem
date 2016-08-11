@@ -103,7 +103,7 @@ describe LittleMonster::Core::Counters do
       def success_mock(status='success', output='')
         allow_any_instance_of(Typhoeus::Response).to receive(:success?).and_return(true)
         expect(LittleMonster::Core::API).to receive(:post)
-        .with('/jobs/1/counters/my_counter', critical: true)
+        .with('/jobs/1/counters/my_counter', {} ,critical: true)
         .and_return(Typhoeus::Response.new(code: 200))
       end
 

@@ -30,9 +30,9 @@ module LittleMonster::Core::Counters
   def init_counters(*counter_names)
     counter_names.each do |counter_name|
       begin
-        resource = "/jobs/#{job_id}/counters/#{counter_name}"
+        resource = "/jobs/#{job_id}/counters"
         res = LittleMonster::Core::API.post(resource,
-          {},
+          { name: counter_name },
           critical: true )
         raise MissedCounterError, "Could not post to #{resource}" if !res.success? && res.code != 409 # counter already exists
       rescue LittleMonster::APIUnreachableError => e

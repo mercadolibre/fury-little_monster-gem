@@ -285,6 +285,95 @@ describe LittleMonster::Core::Job::Factory do
     end
   end
 
+  describe '#calculate_status' do
+    context 'if api_attributes tasks is blank' do
+      before :each do
+        factory.instance_variable_set '@api_attributes', tasks: []
+      end
+
+      it 'returns pending' do
+        expect(factory.calculate_status).to eq(:pending)
+      end
+    end
+
+    context 'if api_attributes tasks is not blank' do
+      let(:api_attributes) do
+        {
+          tasks: [
+            {
+              order: 0,
+              status: 'success'
+            },{
+              order: 2,
+              status: 'pending'
+            },{
+              order: 1,
+              status: 'error'
+            }
+          ]
+        }
+      end
+
+      before :each do
+        factory.instance_variable_set '@api_attributes', api_attributes
+      end
+
+      context 'on ordered task list' do
+        it 'returns the first status that is not success' do
+          expect(factory.calculate_status).to eq(:error)
+        end
+
+        context 'if all tasks are success' do
+          before :each do
+            api_attributes[:tasks].each { |t| t[:status] = :success }
+          end
+
+          it 'returns success' do
+            expect(factory.calculate_status).to eq(:success)
+          end
+        end
+      end
+    end
+  end
+
+  describe '#retries_from_callback' do
+    context 'if api_attributes[callbacks] is blank' do
+      before :each do
+        factory.instance_variable_set '@api_attributes', callbacks: []
+      end
+
+      it 'returns 0' do
+        expect(factory.retries_from_callback).to eq(0)
+      end
+    end
+
+    context 'if api_attributes[callbacks] is not blank' do
+      let(:api_attributes) do
+        {
+          callbacks: [
+            {
+              name: 'on_success',
+              status: 'error',
+              retries: 3
+            },{
+              name: 'on_error',
+              status: 'pending',
+              retries: 1
+            }
+          ]
+        }
+      end
+
+      before :each do
+        factory.instance_variable_set '@api_attributes', api_attributes
+      end
+
+      it 'returns the amount of retries made by the first callback with a not ended status' do
+        expect(factory.retries_from_callback).to eq(1)
+      end
+    end
+  end
+
   describe '#job_attributes' do
     context 'when requests are disabled' do
       it 'returns hash with id tags and input data' do
@@ -295,21 +384,49 @@ describe LittleMonster::Core::Job::Factory do
     end
 
     context 'when requests are enabled' do
-      let(:current_task) { { name: 'name', retries: 0 } }
       let(:data) { { a: 'b' } }
 
       before :each do
-        allow(factory).to receive(:find_current_task).and_return(current_task)
         factory.instance_variable_set('@api_attributes', data: data)
         allow(LittleMonster).to receive(:disable_requests?).and_return(false)
       end
 
-      it 'returns hash with id params tags data current_task and retries' do
-        expect(factory.job_attributes).to eq(id: message[:id],
-                                             tags: factory.instance_variable_get('@tags'),
-                                             data: data,
-                                             current_task: current_task[:name],
-                                             retries: current_task[:retries])
+      context 'if calculated_status is an ended_status' do
+        let(:status) { :error }
+        let(:retries_from_callback) { 5 }
+
+        before :each do
+          allow(factory).to receive(:retries_from_callback).and_return(retries_from_callback)
+          allow(factory).to receive(:calculate_status).and_return(status)
+        end
+
+        it 'returns hash with id params tags data, status current_task as nil and retries from callback' do
+          expect(factory.job_attributes).to eq(id: message[:id],
+                                               tags: factory.instance_variable_get('@tags'),
+                                               data: data,
+                                               status: status,
+                                               current_task: nil,
+                                               retries: retries_from_callback)
+        end
+      end
+
+      context 'if calculated_status is not an ended_status' do
+        let(:current_task) { { name: 'name', retries: 0 } }
+        let(:status) { :running }
+
+        before :each do
+          allow(factory).to receive(:find_current_task).and_return(current_task)
+          allow(factory).to receive(:calculate_status).and_return(status)
+        end
+
+        it 'returns hash with id params tags data status current_task and retries from current_task' do
+          expect(factory.job_attributes).to eq(id: message[:id],
+                                               tags: factory.instance_variable_get('@tags'),
+                                               data: data,
+                                               status: status,
+                                               current_task: current_task[:name],
+                                               retries: current_task[:retries])
+        end
       end
     end
   end

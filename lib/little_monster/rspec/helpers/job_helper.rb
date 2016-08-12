@@ -38,6 +38,10 @@ module LittleMonster::RSpec
     end
 
     def run_job(job, options = {})
+      Result.new(generate_job job, options)
+    end
+
+    def generate_job(job, options = {})
       job_class = job.class == Class ? job : job.to_s.camelcase.constantize
       job_class.mock!
 
@@ -51,7 +55,7 @@ module LittleMonster::RSpec
         end
       end
 
-      Result.new(job_instance)
+      job_instance
     end
   end
 end

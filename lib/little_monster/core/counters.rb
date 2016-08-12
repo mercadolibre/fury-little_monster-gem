@@ -7,7 +7,7 @@ module LittleMonster::Core::Counters
       resp = LittleMonster::Core::API.put(
         "/jobs/#{job_id}/counters/#{counter_name}",
         { body: { type: type, unique_id: unique_id, output: output } },
-        critical: true
+          critical: true
       )
     rescue LittleMonster::APIUnreachableError => e
       logger.error "Could not increase counter #{counter_name}, Api unreachable"
@@ -29,14 +29,13 @@ module LittleMonster::Core::Counters
 
   def init_counters(*counter_names)
     counter_names.each do |counter_name|
+      resource = "/jobs/#{job_id}/counters"
+      values = { body:{ name: counter_name } }
       begin
-        resource = "/jobs/#{job_id}/counters"
-        res = LittleMonster::Core::API.post(resource,
-          { name: counter_name },
-          critical: true )
+        res = LittleMonster::Core::API.post(resource, values, critical: true )
         raise MissedCounterError, "Could not post to #{resource}" if !res.success? && res.code != 409 # counter already exists
       rescue LittleMonster::APIUnreachableError => e
-        logger.error "Could not init counter #{counter_name}, Api unreachable"
+        logger.error "Could not init counter #{resource} with #{values} , Api unreachable"
         raise e
       end
     end

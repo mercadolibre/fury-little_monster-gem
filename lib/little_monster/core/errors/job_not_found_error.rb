@@ -7,9 +7,9 @@ module LittleMonster::Core
         }
       }
       LittleMonster::API.put "/jobs/#{job_id}", params,
-            retries: LittleMonster.job_requests_retries,
-            retry_wait: LittleMonster.job_requests_retry_wait,
-            critical: true
+                             retries: LittleMonster.job_requests_retries,
+                             retry_wait: LittleMonster.job_requests_retry_wait,
+                             critical: true
     end
   end
 end

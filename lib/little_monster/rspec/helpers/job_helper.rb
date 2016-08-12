@@ -38,7 +38,7 @@ module LittleMonster::RSpec
     end
 
     def run_job(job, options = {})
-      Result.new(generate_job job, options)
+      Result.new(generate_job(job, options))
     end
 
     def generate_job(job, options = {})

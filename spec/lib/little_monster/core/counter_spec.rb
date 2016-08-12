@@ -103,7 +103,7 @@ describe LittleMonster::Core::Counters do
       def success_mock(status='success', output='')
         allow_any_instance_of(Typhoeus::Response).to receive(:success?).and_return(true)
         expect(LittleMonster::Core::API).to receive(:post)
-        .with('/jobs/1/counters', {name:"my_counter"} ,critical: true)
+        .with('/jobs/1/counters', {body: {name:"my_counter"}} ,critical: true)
         .and_return(Typhoeus::Response.new(code: 200))
       end
 
@@ -136,8 +136,8 @@ describe LittleMonster::Core::Counters do
     end
   end
 
-  context '.counter_endpoint' do 
-    it 'have to return api endpoint' do 
+  context '.counter_endpoint' do
+    it 'have to return api endpoint' do
       expect(dummy_class.counter_endpoint('fake')).to eq 'http://little_monster_api_url.com/jobs/1/counters/fake'
     end
   end

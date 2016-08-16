@@ -3,6 +3,7 @@ module LittleMonster::Core
     include Loggable
 
     ENDED_STATUS = %i(success error cancelled).freeze
+    CALLBACKS = %i(on_success on_error on_cancel).freeze
 
     class << self
       def task_list(*tasks)
@@ -39,7 +40,6 @@ module LittleMonster::Core
     attr_accessor :status
 
     attr_accessor :retries
-    attr_accessor :current_task
     attr_accessor :current_action
     attr_accessor :data
 
@@ -51,8 +51,7 @@ module LittleMonster::Core
 
       @retries = options[:retries] || 0
 
-      @current_task = options.fetch(:current_task, self.class.tasks.first)
-      @current_action = nil # options.fetch(:current_action, self.class.tasks.first)
+      @current_action = options.fetch(:current_action, self.class.tasks.first)
 
       @data = if options[:data]
                 Data.new(self, options[:data])
@@ -90,8 +89,8 @@ module LittleMonster::Core
                          retry_wait: LittleMonster.job_requests_retry_wait
     end
 
-    def notify_current_task(status, options = {})
-      params = { body: { tasks: [{ name: @current_task, status: status }] } }
+    def notify_task(status, options = {})
+      params = { body: { tasks: [{ name: @current_action, status: status }] } }
       params[:body][:data] = options[:data] if options[:data]
 
       params[:body][:tasks].first.merge!(options.except(:data))
@@ -100,12 +99,12 @@ module LittleMonster::Core
                          retry_wait: LittleMonster.task_requests_retry_wait
     end
 
-    def notify_callback(callback, status, options = {})
+    def notify_callback(status, options = {})
       return true unless should_request?
-      params = { body: { name: callback, status: status } }
+      params = { body: { name: @current_action, status: status } }
       params[:body].merge!(options)
 
-      resp = LittleMonster::API.put "/jobs/#{id}/callbacks/#{callback}", params,
+      resp = LittleMonster::API.put "/jobs/#{id}/callbacks/#{@current_action}", params,
                                     retries: LittleMonster.task_requests_retries,
                                     retry_wait: LittleMonster.task_requests_retry_wait
       resp.success?
@@ -157,10 +156,16 @@ module LittleMonster::Core
 
     # returns the tasks that will be runned for this instance
     def tasks_to_run
-      task_index = self.class.tasks.find_index(@current_task)
+      return [] if callback_running?
+      task_index = self.class.tasks.find_index(@current_action)
 
       return [] if task_index.nil?
       self.class.tasks.slice(task_index..-1)
+    end
+
+    def callback_running?
+      return false if @current_action.nil? || self.class.tasks.include?(@current_action)
+      CALLBACKS.include? @current_action
     end
 
     def ended_status?
@@ -175,13 +180,9 @@ module LittleMonster::Core
       !(mock? || LittleMonster.disable_requests?)
     end
 
-    def on_error
-    end
-
-    def on_cancel
-    end
-
-    def on_success
-    end
+    # callbacks definition
+    def on_error ; end
+    def on_success ; end
+    def on_cancel ; end
   end
 end

@@ -20,7 +20,7 @@ module LittleMonster::Core
       raise KeyError, "The key #{output_key} already exists" if @outputs.include? output_key.to_sym
       @outputs[output_key.to_sym] = value
 
-      owner = (@job.current_task || @job.current_action).to_sym
+      owner = @job.current_action.to_sym
       @key_owners[owner] = [] unless @key_owners[owner].is_a? Array
       @key_owners[owner] << output_key.to_sym
     end

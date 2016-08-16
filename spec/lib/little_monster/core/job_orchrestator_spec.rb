@@ -140,9 +140,8 @@ describe LittleMonster::Core::Job::Orchrestator do
               allow(subject.job).to receive(:retry?).and_return(false)
             end
 
-            it 'ends with status error' do
-              subject.run
-              expect(subject.job.status).to eq(:error)
+            it 'raises CallbackFailedError' do
+              expect { subject.run }.to raise_error(LittleMonster::CallbackFailedError)
             end
           end
         end
@@ -223,12 +222,6 @@ describe LittleMonster::Core::Job::Orchrestator do
             expect(task_dummy).to have_received(:run)
           end
 
-          it 'sets current task' do
-            allow(subject.job).to receive(:current_task=).and_call_original
-            subject.run_tasks
-            expect(subject.job).to have_received(:current_task=).with(task_symbol)
-          end
-
           it 'sets current action' do
             allow(subject.job).to receive(:current_action=).and_call_original
             subject.run_tasks
@@ -238,9 +231,9 @@ describe LittleMonster::Core::Job::Orchrestator do
 
         context 'if tasks ended successfully' do
           it 'notifies api task ended with status success and data for each task' do
-            allow(subject.job).to receive(:notify_current_task)
+            allow(subject.job).to receive(:notify_task)
             subject.run_tasks
-            expect(subject.job).to have_received(:notify_current_task).with(:success, data: subject.job.data).exactly(MockJob.tasks.count).times
+            expect(subject.job).to have_received(:notify_task).with(:success, data: subject.job.data).exactly(MockJob.tasks.count).times
           end
         end
       end
@@ -254,7 +247,7 @@ describe LittleMonster::Core::Job::Orchrestator do
 
         context 'and it already ran task_a' do
           before :each do
-            subject.job.instance_variable_set '@current_task', :task_b
+            subject.job.current_action = :task_b
             subject.run_tasks
           end
 
@@ -267,9 +260,9 @@ describe LittleMonster::Core::Job::Orchrestator do
           end
         end
 
-        context 'and it does not have any current_task' do
+        context 'and it does not have any current_action' do
           before :each do
-            subject.job.instance_variable_set '@current_task', nil
+            subject.job.current_action = nil
             subject.run_tasks
           end
 
@@ -323,8 +316,8 @@ describe LittleMonster::Core::Job::Orchrestator do
   end
 
   context 'when api is down' do
-    it 'raises APIUnreachableError when notify_current_task raises error' do
-      allow(subject.job).to receive(:notify_current_task).and_raise(LittleMonster::APIUnreachableError, 'api down')
+    it 'raises APIUnreachableError when notify_task raises error' do
+      allow(subject.job).to receive(:notify_task).and_raise(LittleMonster::APIUnreachableError, 'api down')
       expect { subject.run_tasks }.to raise_error(LittleMonster::APIUnreachableError)
     end
   end
@@ -351,9 +344,9 @@ describe LittleMonster::Core::Job::Orchrestator do
   end
 
   context 'after running all tasks successfuly' do
-    it 'sets current_task to nil' do
+    it 'sets current_action to nil' do
       subject.run_tasks
-      expect(subject.job.current_task).to be_nil
+      expect(subject.job.current_action).to be_nil
     end
 
     it 'sets current_action to nil' do
@@ -376,15 +369,15 @@ describe LittleMonster::Core::Job::Orchrestator do
         allow(subject.job).to receive(:notify_callback).and_call_original
       end
 
-      it 'sets current action to callback' do
+      it 'sets current action to job#callback_to_run' do
         allow(subject.job).to receive(:current_action=).and_call_original
         subject.run_callback
-        expect(subject.job).to have_received(:current_action=).with(callback)
+        expect(subject.job).to have_received(:current_action=).with(subject.job.callback_to_run)
       end
 
       it 'notifies callback as running' do
         subject.run_callback
-        expect(subject.job).to have_received(:notify_callback).with(callback, :running)
+        expect(subject.job).to have_received(:notify_callback).with(:running)
       end
 
       it 'runs callback on job' do
@@ -422,7 +415,7 @@ describe LittleMonster::Core::Job::Orchrestator do
       context 'if callback finished succefully' do
         it 'notifies callback status as success' do
           subject.run_callback
-          expect(subject.job).to have_received(:notify_callback).with(callback, :success)
+          expect(subject.job).to have_received(:notify_callback).with(:success)
         end
 
         it 'sets current_action to nil' do
@@ -460,27 +453,34 @@ describe LittleMonster::Core::Job::Orchrestator do
 
   describe '#abort_job' do
     context 'if callback is running' do
-      let(:callback) { :callback }
+      let(:callback) { :on_success }
+
       before :each do
-        subject.instance_variable_set '@callback', callback
+        subject.job.current_action = callback
       end
 
       it 'calls notify_callback with status error' do
         allow(subject.job).to receive(:notify_callback)
-        subject.abort_job LittleMonster::FatalTaskError.new
-        expect(subject.job).to have_received(:notify_callback).with(callback, :error)
+        subject.abort_job LittleMonster::FatalTaskError.new rescue
+        expect(subject.job).to have_received(:notify_callback).with(:error)
+      end
+
+      context 'if current_action is not on_error' do
+        it 'raises error' do
+          expect { subject.abort_job LittleMonster::FatalTaskError.new }.to raise_error(LittleMonster::CallbackFailedError)
+        end
       end
     end
 
     context 'if task is running' do
       before :each do
-        subject.job.current_task = :task
+        subject.job.current_action = :task
       end
 
-      it 'calls notify_callback with status error' do
-        allow(subject.job).to receive(:notify_current_task)
+      it 'calls notify_task with status error' do
+        allow(subject.job).to receive(:notify_task)
         subject.abort_job LittleMonster::FatalTaskError.new
-        expect(subject.job).to have_received(:notify_current_task).with(:error)
+        expect(subject.job).to have_received(:notify_task).with(:error)
       end
     end
 
@@ -491,10 +491,10 @@ describe LittleMonster::Core::Job::Orchrestator do
   end
 
   describe '#cancel' do
-    it 'notifies current_task status as cancelled' do
-      allow(subject.job).to receive(:notify_current_task)
+    it 'notifies current_action status as cancelled' do
+      allow(subject.job).to receive(:notify_task)
       subject.cancel
-      expect(subject.job).to have_received(:notify_current_task).with(:cancelled)
+      expect(subject.job).to have_received(:notify_task).with(:cancelled)
     end
 
     it 'sets status as cancelled' do
@@ -571,22 +571,21 @@ describe LittleMonster::Core::Job::Orchrestator do
 
       context 'if task is running' do
         it 'notifies current task as pending and set retries' do
-          allow(subject.job).to receive(:notify_current_task)
+          allow(subject.job).to receive(:notify_task)
           subject.do_retry rescue nil
-          expect(subject.job).to have_received(:notify_current_task).with(:pending, retries: subject.job.retries)
+          expect(subject.job).to have_received(:notify_task).with(:pending, retries: subject.job.retries)
         end
       end
 
       context 'if callback is running' do
-        let(:callback) { :callback }
         before :each do
-          subject.instance_variable_set '@callback', callback
+          allow(subject.job).to receive(:callback_running?).and_return(true)
         end
 
         it 'notifies callback as pending and set retries' do
           allow(subject.job).to receive(:notify_callback)
           subject.do_retry rescue nil
-          expect(subject.job).to have_received(:notify_callback).with(callback, :pending, retries: subject.job.retries)
+          expect(subject.job).to have_received(:notify_callback).with(:pending, retries: subject.job.retries)
         end
       end
     end
@@ -607,18 +606,6 @@ describe LittleMonster::Core::Job::Orchrestator do
         subject.do_retry
         expect(LittleMonster::JobRetryError).not_to have_received(:new)
       end
-    end
-  end
-
-  describe 'callback_running?' do
-    it 'returns true if callback varible is not nil' do
-      subject.instance_variable_set '@callback', :on_success
-      expect(subject.callback_running?).to be true
-    end
-
-    it 'returns false if callback varible is nil' do
-      subject.instance_variable_set '@callback', nil
-      expect(subject.callback_running?).to be false
     end
   end
 end

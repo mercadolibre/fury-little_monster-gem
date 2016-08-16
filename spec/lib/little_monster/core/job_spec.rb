@@ -47,7 +47,7 @@ describe LittleMonster::Core::Job do
           id: 1,
           tags: { tag: 'a tag' },
           retries: 2,
-          current_task: :task_a,
+          current_action: :task_a,
           data: { outputs: { a: :b }, owners: { c: :d } }
         }
       end
@@ -55,7 +55,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.id).to eq(options[:id]) }
       it { expect(job.tags).to eq(options[:tags]) }
       it { expect(job.retries).to eq(options[:retries]) }
-      it { expect(job.current_task).to eq(options[:current_task]) }
+      it { expect(job.current_action).to eq(options[:current_action]) }
       it { expect(job.data).to eq(LittleMonster::Core::Job::Data.new(nil, options[:data])) }
     end
 
@@ -65,7 +65,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.id).to be_nil }
       it { expect(job.tags).to eq({}) }
       it { expect(job.retries).to eq(0) }
-      it { expect(job.current_task).to eq(job.class.tasks.first) }
+      it { expect(job.current_action).to eq(job.class.tasks.first) }
       it { expect(job.data).to be_instance_of(LittleMonster::Core::Job::Data) }
     end
 
@@ -173,7 +173,6 @@ describe LittleMonster::Core::Job do
 
     describe '#notify_callback' do
       context 'given a callback, status and options' do
-        let(:callback) { :on_success }
         let(:status) { :pending }
         let(:options) { { retries: 1 } }
         let(:response) { double(success?: true) }
@@ -187,21 +186,21 @@ describe LittleMonster::Core::Job do
             allow(job).to receive(:should_request?).and_return(true)
           end
 
-          it 'makes a request to api with callback and status merged with options' do
-            job.notify_callback callback, status, options
-            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/callbacks/#{callback}", { body: { name: callback, status: status }.merge(options) },
+          it 'makes a request to api with current_action and status merged with options' do
+            job.notify_callback status, options
+            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/callbacks/#{job.current_action}", { body: { name: job.current_action, status: status }.merge(options) },
                                                                    retries: LittleMonster.job_requests_retries,
                                                                    retry_wait: LittleMonster.job_requests_retry_wait).once
           end
 
           it 'returns request success?' do
-            expect(job.notify_callback callback, status, options).to eq(response.success?)
+            expect(job.notify_callback  status, options).to eq(response.success?)
           end
         end
       end
     end
 
-    describe '#notify_current_task' do
+    describe '#notify_task' do
       context 'given a task, status and options' do
         let(:status) { :success }
         let(:options) { { retries: 5 } }
@@ -212,9 +211,9 @@ describe LittleMonster::Core::Job do
         end
 
         context 'if options does not contain data' do
-          it 'makes a request to api with current_task, status, options, critical, retries and retry wait' do
-            job.notify_current_task status, options
-            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_task, status: status }.merge(options)] } },
+          it 'makes a request to api with current_action, status, options, critical, retries and retry wait' do
+            job.notify_task status, options
+            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_action, status: status }.merge(options)] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
@@ -225,17 +224,17 @@ describe LittleMonster::Core::Job do
             options[:data] = double
           end
 
-          it 'makes a request to api with current_task, status, options, critical, retries, retry wait and sets data to body' do
-            job.notify_current_task status, options
+          it 'makes a request to api with current_action, status, options, critical, retries, retry wait and sets data to body' do
+            job.notify_task status, options
             expect(job).to have_received(:notify_job).with({ body: { data: options[:data],
-                                                                     tasks: [{ name: job.current_task, status: status }.merge(options.except(:data))] } },
+                                                                     tasks: [{ name: job.current_action, status: status }.merge(options.except(:data))] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
         end
 
         it 'returns request success?' do
-          expect(job.notify_current_task status, options).to eq(response)
+          expect(job.notify_task status, options).to eq(response)
         end
       end
     end
@@ -327,23 +326,35 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#tasks_to_run' do
-    context 'if job has no current_task' do
+    context 'if callback is running' do
       before :each do
-        job.instance_variable_set('@current_task', nil)
+        job.current_action = :on_success
       end
 
       it 'returns []' do
-        expect(job.send :tasks_to_run).to eq([])
+        expect(job.tasks_to_run).to eq([])
       end
     end
 
-    context 'if job has current_task' do
-      before :each do
-        job.instance_variable_set('@current_task', :task_b)
+    context 'if callback is not running' do
+      context 'if job has no current_action' do
+        before :each do
+          job.current_action = nil
+        end
+
+        it 'returns []' do
+          expect(job.tasks_to_run).to eq([])
+        end
       end
 
-      it 'returns array sliced from current task to end' do
-        expect(job.send :tasks_to_run).to eq([:task_b])
+      context 'if job has current_action' do
+        before :each do
+          job.current_action = :task_b
+        end
+
+        it 'returns array sliced from current task to end' do
+          expect(job.tasks_to_run).to eq([:task_b])
+        end
       end
     end
   end
@@ -367,6 +378,30 @@ describe LittleMonster::Core::Job do
     it 'returns nil if status is anything else' do
       job.status = :running
       expect(job.callback_to_run).to be_nil
+    end
+  end
+
+  describe 'callback_running?' do
+    it 'returns false if current_action is nil' do
+      job.current_action = nil
+      expect(job.callback_running?).to be false
+    end
+
+    it 'returns true if current_action is included in task list' do
+      job.current_action = job.class.tasks.first
+      expect(job.callback_running?).to be false
+    end
+
+    it 'return false if current_action neither a task nor callback' do
+      job.current_action = :non_existing_task
+      expect(job.callback_running?).to be false
+    end
+
+    it 'returns true if current_action is included in CALLBACKS' do
+      described_class::CALLBACKS.each do |callback|
+        job.current_action = callback
+        expect(job.callback_running?).to be true
+      end
     end
   end
 end

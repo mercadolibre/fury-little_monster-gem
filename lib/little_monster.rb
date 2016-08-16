@@ -17,7 +17,7 @@ module LittleMonster
     @@logger = @@env.test? ? Logger.new('/dev/null') : Toiler.logger
 
     @@logger.formatter = proc do |severity, datetime, _progname, msg|
-      "[severity:#{severity}][origin_datetime:#{datetime}] : #{msg}\n"
+      "[severity:#{severity}][origin_datetime:#{datetime.strftime('%Y-%m-%d %H:%M:%S:%L %z')}] : #{msg}\n"
     end
   end
 

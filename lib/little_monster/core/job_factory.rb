@@ -73,33 +73,40 @@ module LittleMonster::Core
       resp.success? ? resp.body : nil
     end
 
-    def find_current_task
-      return { name: @job_class.tasks.first, retries: 0 } if @api_attributes[:tasks].blank?
-
-      task_index = @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.find_index do |task|
-        !Job::ENDED_STATUS.include? task[:status].to_sym
-      end
-      return {} if task_index.nil?
-
-      {
-        name: @api_attributes[:tasks][task_index][:name].to_sym,
-        retries: @api_attributes[:tasks][task_index][:retries]
-      }
-    end
-
-    def retries_from_callback
-      return 0 if @api_attributes[:callbacks].blank?
-      @api_attributes.fetch(:callbacks, []).each do |callback|
-        return callback[:retries] unless Job::ENDED_STATUS.include? callback[:status].to_sym
-      end
-    end
-
     def calculate_status
       return :pending if @api_attributes[:tasks].blank?
-      @api_attributes.fetch(:tasks, []).sort_by! { |task| task[:order] }.each do |task|
+
+      @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
         return task[:status].to_sym if task[:status].to_sym != :success
       end
+
+      # check if any callback failed
+      @api_attributes.fetch(:callbacks, []).each do |callback|
+        return :error if callback[:status].to_sym == :error
+      end
+
       :success
+    end
+
+    def find_current_action_and_retries
+      return [@job_class.tasks.first, 0] if @api_attributes[:tasks].blank?
+
+      # callbacks and tasks both have name, retries and status
+      # that means we can search through them with the same block
+
+      search_array = if @api_attributes.fetch(:callbacks, []).blank?
+                       # callbacks have not run yet, so we look for tasks
+                       @api_attributes[:tasks].sort_by { |task| task[:order] }
+                     else
+                       @api_attributes[:callbacks]
+                     end
+
+      current = search_array.find do |x|
+        !Job::ENDED_STATUS.include? x[:status].to_sym
+      end
+      return nil unless current
+
+      [current[:name].to_sym, current[:retries]]
     end
 
     def job_attributes
@@ -118,17 +125,10 @@ module LittleMonster::Core
       return attributes if LittleMonster.disable_requests?
 
       status = calculate_status
-
-      if Job::ENDED_STATUS.include?(status)
-        current_task = {}
-        retries = retries_from_callback
-      else
-        current_task = find_current_task
-        retries = current_task[:retries]
-      end
+      current_action, retries = find_current_action_and_retries
 
       attributes.merge(status: status,
-                       current_task: current_task[:name],
+                       current_action: current_action,
                        retries: retries)
     end
 

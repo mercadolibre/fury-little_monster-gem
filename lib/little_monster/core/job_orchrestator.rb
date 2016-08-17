@@ -35,12 +35,10 @@ module LittleMonster::Core
 
     def run_tasks
       @job.tasks_to_run.each do |task_name|
-        @job.current_task = task_name
         @job.current_action = task_name
+        @job.notify_task :running
 
-        @job.notify_current_task :running
-
-        logger.default_tags[:current_task] = @job.current_task
+        logger.default_tags[:current_task] = @job.current_action
         logger.info "[type:start_task] data: #{@job.data.to_h[:outputs]}"
 
         begin
@@ -50,7 +48,7 @@ module LittleMonster::Core
           task.run
 
           # data is sent only on task success
-          @job.notify_current_task :success, data: @job.data
+          @job.notify_task :success, data: @job.data
 
           logger.info "[type:finish_task] [status:success] data: #{@job.data.to_h[:outputs]}"
 
@@ -76,30 +74,28 @@ module LittleMonster::Core
         @job.retries = 0 # Hago esto para que despues de succesful un task resete retries
       end
 
-      @job.current_task = nil
       @job.current_action = nil
       @job.status = :success
     end
 
     def run_callback
       @job.current_action = @job.callback_to_run
-      @callback = @job.callback_to_run
 
-      return if @callback.nil?
+      return if @job.current_action.nil?
 
-      logger.default_tags[:callback] = @callback
-      @job.notify_callback @callback, :running
+      logger.default_tags[:callback] = @job.current_action
+      @job.notify_callback :running
 
       logger.info "[type:start_callback] data: #{@job.data.to_h[:outputs]}"
       begin
         logger.default_tags[:type] = 'callback_log'
-        @job.public_send(@callback)
+        @job.public_send(@job.current_action)
       ensure
         logger.default_tags.delete(:type)
       end
       logger.info "[type:finish_callback] [status:success] data: #{@job.data.to_h[:outputs]}"
 
-      @job.notify_callback @callback, :success
+      @job.notify_callback :success
 
       @job.current_action = nil
       @job.retries = 0
@@ -121,14 +117,10 @@ module LittleMonster::Core
     def cancel
       logger.debug 'notifiying cancel...'
 
-      @job.notify_current_task :cancelled
+      @job.notify_task :cancelled
       logger.info "[type:finish_task] [status:cancelled] data: #{@job.data.to_h[:outputs]}"
 
       @job.status = :cancelled
-    end
-
-    def callback_running?
-      !@callback.nil?
     end
 
     # Methods that work both on tasks and callbacks
@@ -136,11 +128,18 @@ module LittleMonster::Core
     def abort_job(_e)
       logger.debug 'notifiying abort...'
 
-      if callback_running?
-        @job.notify_callback @callback, :error
+      if @job.callback_running?
         logger.info "[type:finish_callback] [status:error] data: #{@job.data.to_h[:outputs]}"
+        @job.notify_callback :error
+
+        # if callback is not on_error, raise exception to run on_error
+        if @job.current_action != :on_error
+          # set status on pending because we are sending the job back to the queue
+          @job.status = :pending
+          raise CallbackFailedError, '[type:callback_fail_error]'
+        end
       else
-        @job.notify_current_task :error
+        @job.notify_task :error
         logger.info "[type:finish_task] [status:error] data: #{@job.data.to_h[:outputs]}"
       end
 
@@ -166,11 +165,11 @@ module LittleMonster::Core
         @job.retries += 1
 
         logger.debug 'notifiying retry'
-        if callback_running?
-          @job.notify_callback @callback, :pending, retries: @job.retries
+        if @job.callback_running?
+          @job.notify_callback :pending, retries: @job.retries
           logger.info '[type:callback_retry]'
         else
-          @job.notify_current_task :pending, retries: @job.retries
+          @job.notify_task :pending, retries: @job.retries
           logger.info '[type:task_retry]'
         end
 
@@ -181,7 +180,7 @@ module LittleMonster::Core
       else
         logger.debug 'job has reached max retries'
 
-        if callback_running?
+        if @job.callback_running?
           logger.info '[type:callback_max_retries]'
         else
           logger.info '[type:task_max_retries]'

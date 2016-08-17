@@ -32,7 +32,7 @@ module LittleMonster::RSpec
       data = if options[:data].class == LittleMonster::Job::Data
                options[:data]
              else
-               LittleMonster::Job::Data.new(double(current_task: task_symbol),
+               LittleMonster::Job::Data.new(double(current_action: task_symbol),
                                             outputs: options.fetch(:data, {}))
               end
 

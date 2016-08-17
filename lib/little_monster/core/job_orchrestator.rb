@@ -133,7 +133,7 @@ module LittleMonster::Core
         @job.notify_callback :error
 
         # if callback is not on_error, raise exception to run on_error
-        if @current_action != :on_error
+        if @job.current_action != :on_error
           # set status on pending because we are sending the job back to the queue
           @job.status = :pending
           raise CallbackFailedError, '[type:callback_fail_error]'

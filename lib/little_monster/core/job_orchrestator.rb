@@ -1,4 +1,3 @@
-# TODO : don't send data on callback fail
 module LittleMonster::Core
   class Job::Orchrestator
     attr_reader :logger

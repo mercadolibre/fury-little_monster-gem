@@ -91,16 +91,22 @@ module LittleMonster::Core
     def find_current_action_and_retries
       return [@job_class.tasks.first, 0] if @api_attributes[:tasks].blank?
 
-      if @api_attributes.fetch(:callbacks, []).blank?
-        # callbacks have not run yet, so we look for tasks
-        @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
-          return [task[:name].to_sym, task[:retries]] if !Job::ENDED_STATUS.include? task[:status].to_sym
-        end
-      else
-        @api_attributes[:callbacks].each do |callback|
-          return [callback[:name].to_sym, callback[:retries]] if !Job::ENDED_STATUS.include? callback[:status].to_sym
-        end
+      # callbacks and tasks both have name, retries and status
+      # that means we can search through them with the same block
+
+      search_array = if @api_attributes.fetch(:callbacks, []).blank?
+                       # callbacks have not run yet, so we look for tasks
+                       @api_attributes[:tasks].sort_by { |task| task[:order] }
+                     else
+                       @api_attributes[:callbacks]
+                     end
+
+      current = search_array.find do |x|
+        !Job::ENDED_STATUS.include? x[:status].to_sym
       end
+      return nil unless current
+
+      [current[:name].to_sym, current[:retries]]
     end
 
     def job_attributes

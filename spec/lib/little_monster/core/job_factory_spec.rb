@@ -274,6 +274,16 @@ describe LittleMonster::Core::Job::Factory do
         it 'returns the first task with not ending status' do
           expect(factory.find_current_action_and_retries).to eq([:b, 1])
         end
+
+        context 'and all tasks have run' do
+          before :each do
+            api_attributes[:tasks].each { |t| t[:status] = 'success' }
+          end
+
+          it 'returns nil' do
+            expect(factory.find_current_action_and_retries).to eq(nil)
+          end
+        end
       end
 
       context 'if callbacks is not blank' do
@@ -297,6 +307,16 @@ describe LittleMonster::Core::Job::Factory do
 
         it 'returns the first callback with not ending status' do
           expect(factory.find_current_action_and_retries).to eq([:callback, 2])
+        end
+
+        context 'and have ended' do
+          before :each do
+            api_attributes[:callbacks].each { |c| c[:status] = 'success' }
+          end
+
+          it 'returns nil' do
+            expect(factory.find_current_action_and_retries).to eq(nil)
+          end
         end
       end
     end

@@ -128,8 +128,8 @@ module LittleMonster::Core
     def abort_job(_e)
       logger.debug 'notifiying abort...'
 
-      logger.info "[type:finish_callback] [status:error] data: #{@job.data.to_h[:outputs]}"
       if @job.callback_running?
+        logger.info "[type:finish_callback] [status:error] data: #{@job.data.to_h[:outputs]}"
         @job.notify_callback :error
 
         # if callback is not on_error, raise exception to run on_error

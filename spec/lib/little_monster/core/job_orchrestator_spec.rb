@@ -466,6 +466,11 @@ describe LittleMonster::Core::Job::Orchrestator do
       end
 
       context 'if current_action is not on_error' do
+        it 'sets status to pending' do
+          subject.abort_job LittleMonster::FatalTaskError.new rescue
+          expect(subject.job.status).to eq(:pending)
+        end
+
         it 'raises error' do
           expect { subject.abort_job LittleMonster::FatalTaskError.new }.to raise_error(LittleMonster::CallbackFailedError)
         end

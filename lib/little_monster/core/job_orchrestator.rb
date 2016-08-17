@@ -84,7 +84,7 @@ module LittleMonster::Core
       return if @job.current_action.nil?
 
       logger.default_tags[:callback] = @job.current_action
-        @job.notify_callback :running
+      @job.notify_callback :running
 
       logger.info "[type:start_callback] data: #{@job.data.to_h[:outputs]}"
       begin
@@ -134,6 +134,8 @@ module LittleMonster::Core
 
         # if callback is not on_error, raise exception to run on_error
         if @current_action != :on_error
+          # set status on pending because we are sending the job back to the queue
+          @job.status = :pending
           raise CallbackFailedError, '[type:callback_fail_error]'
         end
       else

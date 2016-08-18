@@ -10,6 +10,8 @@ module LittleMonster
   module_function
 
   def init
+    $stdout.sync = true
+
     @@config = Config.new default_config_values
 
     @@env = ActiveSupport::StringInquirer.new(ENV['LITTLE_MONSTER_ENV'] || ENV['RUBY_ENV'] || 'development')

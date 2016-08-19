@@ -29,7 +29,7 @@ module LittleMonster::Core
       res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", body: {
         ip: Socket.gethostname,
         host: Socket.gethostname,
-        pid: Process.pid
+        pid: Process.pid.to_s
       }
 
       raise LittleMonster::JobAlreadyLockedError, "job [id:#{@params[:id]}] is already locked, discarding" if res.code == 401

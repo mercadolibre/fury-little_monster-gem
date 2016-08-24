@@ -19,7 +19,7 @@ module LittleMonster::Core
       end
 
       def max_retries
-        @max_retries ||= -1
+        @max_retries ||= LittleMonster.default_job_retries
       end
 
       def mock!

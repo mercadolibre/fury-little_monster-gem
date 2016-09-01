@@ -6,6 +6,6 @@ describe '<%=@job_name.camelize%>' do
       expect(run_job(:<%=job_name%>)).to have_run(<%=@task_names.map{|v|":#{v}"}.join(", ")%>)
     end
 
-    it 'has to run' 
+    it 'has to run'
   end
 end

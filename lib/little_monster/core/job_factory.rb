@@ -76,11 +76,12 @@ module LittleMonster::Core
     def calculate_status
       return :pending if @api_attributes[:tasks].blank?
 
-      # check if any callback failed
+      #FIRST we check if any callback has fail so set error status if necessary
       @api_attributes.fetch(:callbacks, []).each do |callback|
         return :error if callback[:status].to_sym == :error
       end
 
+      #if no callback has fail we get the status from the tasks
       @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
         return task[:status].to_sym if task[:status].to_sym != :success
       end

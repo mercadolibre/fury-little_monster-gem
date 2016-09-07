@@ -360,6 +360,38 @@ describe LittleMonster::Core::Job::Factory do
           expect(factory.calculate_status).to eq(:error)
         end
 
+        context 'if a task is cancelled' do
+          before :each do
+            api_attributes[:tasks].first[:status] = 'cancelled'
+          end
+
+          context 'and no callback has run' do
+            it 'returns cancelled' do
+              expect(factory.calculate_status).to eq(:cancelled)
+            end
+          end
+
+          context 'and on_cancel is pending' do
+            before :each do
+              api_attributes[:callbacks] = [{ name: 'on_cancel', status: :pending }]
+            end
+
+            it 'returns cancelled' do
+              expect(factory.calculate_status).to eq(:cancelled)
+            end
+          end
+
+          context 'and on_cancel has failed' do
+            before :each do
+              api_attributes[:callbacks] = [{ name: 'on_cancel', status: :error }]
+            end
+
+            it 'returns error' do
+              expect(factory.calculate_status).to eq(:error)
+            end
+          end
+        end
+
         context 'if all tasks are success' do
           before :each do
             api_attributes[:tasks].each { |t| t[:status] = :success }

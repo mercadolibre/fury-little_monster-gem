@@ -4,6 +4,7 @@ describe LittleMonster::RSpec::JobHelper do
   let(:job_class) { MockJob }
   let(:options) do
     {
+      id: '0',
       data: { a: :b }
     }
   end
@@ -74,7 +75,7 @@ describe LittleMonster::RSpec::JobHelper do
       it 'builds an instance of the job' do
         allow(job_class).to receive(:new).and_call_original
         generate_job job_class.to_s.underscore, options
-        expect(job_class).to have_received(:new).with(data: { outputs: options[:data] })
+        expect(job_class).to have_received(:new).with(id: options[:id], data: { outputs: options[:data] })
       end
 
       context 'instance' do

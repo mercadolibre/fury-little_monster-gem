@@ -76,13 +76,13 @@ module LittleMonster::Core
     def calculate_status
       return :pending if @api_attributes[:tasks].blank?
 
-      @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
-        return task[:status].to_sym if task[:status].to_sym != :success
-      end
-
       # check if any callback failed
       @api_attributes.fetch(:callbacks, []).each do |callback|
         return :error if callback[:status].to_sym == :error
+      end
+
+      @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
+        return task[:status].to_sym if task[:status].to_sym != :success
       end
 
       :success

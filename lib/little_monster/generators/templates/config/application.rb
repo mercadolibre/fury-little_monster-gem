@@ -8,7 +8,7 @@ LittleMonster.configure do |conf|
   # conf.worker_queue = 'my_sqs_queue'
 end
 
-require_relative "enviroments/#{LittleMonster.env}"
+require_relative "environments/#{LittleMonster.env}"
 
 Dir["#{Dir.pwd}/lib/**/*.rb"].each { |file| require_relative file }
 Dir["#{Dir.pwd}/jobs/**/*.rb"].each { |file| require_relative file }

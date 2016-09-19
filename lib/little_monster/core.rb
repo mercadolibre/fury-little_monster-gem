@@ -7,6 +7,8 @@ require 'little_monster/core/errors/job_retry_error'
 require 'little_monster/core/errors/api_unreachable_error'
 require 'little_monster/core/errors/job_already_locked_error'
 require 'little_monster/core/errors/callback_failed_error'
+require 'little_monster/core/errors/job_already_finished_error'
+require 'little_monster/core/errors/job_waiting_error'
 
 require 'little_monster/core/tagged_logger'
 require 'little_monster/core/loggable' # must be required first to satisfy job and task dependencies

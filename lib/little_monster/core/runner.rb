@@ -19,6 +19,7 @@ module LittleMonster::Core
       job.run unless job.nil?
     rescue JobNotFoundError => e
       logger.error "[id:#{@params[:id]}][type:job_not_found] [message:#{e.message}] \n #{e.backtrace.to_a.join("\n\t")}"
+    rescue JobAlreadyFinishedError
     ensure
       @heartbeat_task.shutdown
     end
@@ -32,7 +33,9 @@ module LittleMonster::Core
         pid: Process.pid.to_s
       }
 
-      raise LittleMonster::JobAlreadyLockedError, "job [id:#{@params[:id]}] is already locked, discarding" if res.code == 401
+      raise JobWaitingError, "[type:job_waiting_error] job [id:#{@params[:id]}] is waiting" if res.code == 424
+      raise JobAlreadyFinishedError, "[type:job_already_finished_error] job [id:#{@params[:id]}] has already finished, disacarding" if res.code == 403
+      raise JobAlreadyLockedError, "[type:job_already_locked_error] job [id:#{@params[:id]}] is already locked, discarding" if res.code == 423
       res.success?
     end
   end

@@ -36,8 +36,42 @@ describe LittleMonster::Core::Runner do
         allow(runner).to receive(:send_heartbeat!).and_raise(LittleMonster::JobAlreadyLockedError)
       end
 
+      it 'raises the error' do
+        expect { runner.run }.to raise_error(LittleMonster::JobAlreadyLockedError)
+      end
+
       it 'does not run job' do
-        runner.run rescue nil rescue nil
+        runner.run rescue nil
+        expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when heartbeat raises JobWaitingError' do
+      before :each do
+        allow(runner).to receive(:send_heartbeat!).and_raise(LittleMonster::JobWaitingError)
+      end
+
+      it 'raises the error' do
+        expect { runner.run }.to raise_error(LittleMonster::JobWaitingError)
+      end
+
+      it 'does not run job' do
+        runner.run rescue nil
+        expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when heartbeat raises JobAlreadyFinishedError' do
+      before :each do
+        allow(runner).to receive(:send_heartbeat!).and_raise(LittleMonster::JobAlreadyFinishedError)
+      end
+
+      it 'does not raise the error' do
+        runner.run
+      end
+
+      it 'does not run job' do
+        runner.run
         expect(job).not_to have_received(:run)
       end
     end
@@ -76,9 +110,29 @@ describe LittleMonster::Core::Runner do
                                                                { body: hash_including(:ip, :pid, :host) })
       end
 
-      context 'if request is unauthorized' do
+      context 'if request has status forbidden' do
         before :each do
-          allow(response).to receive(:code).and_return(401)
+          allow(response).to receive(:code).and_return(403)
+        end
+
+        it 'raises JobAlreadyLockedError' do
+          expect { runner.send_heartbeat! }.to raise_error(LittleMonster::JobAlreadyFinishedError)
+        end
+      end
+
+      context 'if request has status failed_dependency' do
+        before :each do
+          allow(response).to receive(:code).and_return(424)
+        end
+
+        it 'raises JobAlreadyLockedError' do
+          expect { runner.send_heartbeat! }.to raise_error(LittleMonster::JobWaitingError)
+        end
+      end
+
+      context 'if request has status locked' do
+        before :each do
+          allow(response).to receive(:code).and_return(423)
         end
 
         it 'raises JobAlreadyLockedError' do
@@ -86,7 +140,7 @@ describe LittleMonster::Core::Runner do
         end
       end
 
-      context 'if request is not unauthorized' do
+      context 'if request has another status' do
         it 'returns success?' do
           expect(runner.send_heartbeat!).to eq(response.success?)
         end

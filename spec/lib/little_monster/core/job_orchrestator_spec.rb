@@ -452,6 +452,7 @@ describe LittleMonster::Core::Job::Orchrestator do
   end
 
   describe '#abort_job' do
+    let(:error) { LittleMonster::FatalTaskError.new }
     context 'if callback is running' do
       let(:callback) { :on_success }
 
@@ -461,8 +462,8 @@ describe LittleMonster::Core::Job::Orchrestator do
 
       it 'calls notify_callback with status error' do
         allow(subject.job).to receive(:notify_callback)
-        subject.abort_job LittleMonster::FatalTaskError.new rescue
-        expect(subject.job).to have_received(:notify_callback).with(:error)
+        subject.abort_job error rescue
+        expect(subject.job).to have_received(:notify_callback).with(:error, exception: error)
       end
 
       context 'if current_action is not on_error' do
@@ -471,12 +472,12 @@ describe LittleMonster::Core::Job::Orchrestator do
         end
 
         it 'sets status to pending' do
-          subject.abort_job LittleMonster::FatalTaskError.new rescue
+          subject.abort_job error rescue
           expect(subject.job.status).to eq(:pending)
         end
 
         it 'raises error' do
-          expect { subject.abort_job LittleMonster::FatalTaskError.new }.to raise_error(LittleMonster::CallbackFailedError)
+          expect { subject.abort_job error }.to raise_error(LittleMonster::CallbackFailedError)
         end
 
         context 'if current_action is on_error' do
@@ -485,12 +486,12 @@ describe LittleMonster::Core::Job::Orchrestator do
           end
 
           it 'sets status to error' do
-            subject.abort_job LittleMonster::FatalTaskError.new rescue
+            subject.abort_job error rescue
             expect(subject.job.status).to eq(:error)
           end
 
           it 'does not raise an error' do
-            subject.abort_job LittleMonster::FatalTaskError.new
+            subject.abort_job error
           end
         end
       end
@@ -503,13 +504,13 @@ describe LittleMonster::Core::Job::Orchrestator do
 
       it 'calls notify_task with status error' do
         allow(subject.job).to receive(:notify_task)
-        subject.abort_job LittleMonster::FatalTaskError.new
-        expect(subject.job).to have_received(:notify_task).with(:error)
+        subject.abort_job error
+        expect(subject.job).to have_received(:notify_task).with(:error, exception: error)
       end
     end
 
     it 'sets status as error' do
-      subject.abort_job LittleMonster::FatalTaskError.new
+      subject.abort_job error
       expect(subject.job.status).to eq(:error)
     end
   end
@@ -566,69 +567,73 @@ describe LittleMonster::Core::Job::Orchrestator do
       end
 
       it 'calls do_retry if non FatalTaskError nor NameError' do
-        subject.handle_error LittleMonster::TaskError.new
-        expect(subject).to have_received(:do_retry).with no_args
+        error = LittleMonster::TaskError.new
+        subject.handle_error error
+        expect(subject).to have_received(:do_retry).with error
       end
     end
   end
 
   describe '#do_retry' do
-    context 'if job retry is true' do
-      before :each do
-        allow(subject.job).to receive(:retry?).and_return(true)
-      end
-
-      it 'increases job retries by 1' do
-        retries = subject.job.retries
-        subject.do_retry rescue nil
-        expect(subject.job.retries).to eq(retries + 1)
-      end
-
-      it 'raises JobRetryError'  do
-        expect { subject.do_retry }.to raise_error(LittleMonster::JobRetryError)
-      end
-
-      it 'sets job status to pending' do
-        subject.do_retry rescue nil
-        expect(subject.job.status).to eq(:pending)
-      end
-
-      context 'if task is running' do
-        it 'notifies current task as pending and set retries' do
-          allow(subject.job).to receive(:notify_task)
-          subject.do_retry rescue nil
-          expect(subject.job).to have_received(:notify_task).with(:pending, retries: subject.job.retries)
-        end
-      end
-
-      context 'if callback is running' do
+    context 'given an error' do
+      let(:error) { StandardError.new 'booom' }
+      context 'if job retry is true' do
         before :each do
-          allow(subject.job).to receive(:callback_running?).and_return(true)
+          allow(subject.job).to receive(:retry?).and_return(true)
         end
 
-        it 'notifies callback as pending and set retries' do
-          allow(subject.job).to receive(:notify_callback)
-          subject.do_retry rescue nil
-          expect(subject.job).to have_received(:notify_callback).with(:pending, retries: subject.job.retries)
+        it 'increases job retries by 1' do
+          retries = subject.job.retries
+          subject.do_retry(error) rescue nil
+          expect(subject.job.retries).to eq(retries + 1)
+        end
+
+        it 'raises JobRetryError'  do
+          expect { subject.do_retry(error) }.to raise_error(LittleMonster::JobRetryError)
+        end
+
+        it 'sets job status to pending' do
+          subject.do_retry(error) rescue nil
+          expect(subject.job.status).to eq(:pending)
+        end
+
+        context 'if task is running' do
+          it 'notifies current task as pending and send retries and exception' do
+            allow(subject.job).to receive(:notify_task)
+            subject.do_retry(error) rescue nil
+            expect(subject.job).to have_received(:notify_task).with(:pending, retries: subject.job.retries, exception: error)
+          end
+        end
+
+        context 'if callback is running' do
+          before :each do
+            allow(subject.job).to receive(:callback_running?).and_return(true)
+          end
+
+          it 'notifies callback as pending and send retries and exception' do
+            allow(subject.job).to receive(:notify_callback)
+            subject.do_retry(error) rescue nil
+            expect(subject.job).to have_received(:notify_callback).with(:pending, retries: subject.job.retries, exception: error)
+          end
         end
       end
-    end
 
-    context 'if job retry is false' do
-      before :each do
-        allow(subject).to receive(:abort_job)
-        allow(subject.job).to receive(:retry?).and_return(false)
-      end
+      context 'if job retry is false' do
+        before :each do
+          allow(subject).to receive(:abort_job)
+          allow(subject.job).to receive(:retry?).and_return(false)
+        end
 
-      it 'aborts job' do
-        subject.do_retry
-        expect(subject).to have_received(:abort_job).with(LittleMonster::MaxRetriesError)
-      end
+        it 'aborts job' do
+          subject.do_retry(error)
+          expect(subject).to have_received(:abort_job).with(error)
+        end
 
-      it 'does not retry' do
-        allow(LittleMonster::JobRetryError).to receive(:new)
-        subject.do_retry
-        expect(LittleMonster::JobRetryError).not_to have_received(:new)
+        it 'does not retry' do
+          allow(LittleMonster::JobRetryError).to receive(:new)
+          subject.do_retry(error)
+          expect(LittleMonster::JobRetryError).not_to have_received(:new)
+        end
       end
     end
   end

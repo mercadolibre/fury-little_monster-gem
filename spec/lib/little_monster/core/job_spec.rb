@@ -186,11 +186,34 @@ describe LittleMonster::Core::Job do
             allow(job).to receive(:should_request?).and_return(true)
           end
 
-          it 'makes a request to api with current_action and status merged with options' do
-            job.notify_callback status, options
-            expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/callbacks/#{job.current_action}", { body: { name: job.current_action, status: status }.merge(options) },
-                                                                   retries: LittleMonster.job_requests_retries,
-                                                                   retry_wait: LittleMonster.job_requests_retry_wait).once
+          context 'if options does not contain exception' do
+            it 'makes a request to api with current_action and status merged with options' do
+              job.notify_callback status, options
+              expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/callbacks/#{job.current_action}",
+                                                                     { body: { name: job.current_action,
+                                                                               status: status }.merge(options) },
+                                                                     retries: LittleMonster.job_requests_retries,
+                                                                     retry_wait: LittleMonster.job_requests_retry_wait).once
+            end
+          end
+
+          context 'if options contains exception' do
+            let(:serialized_error) { { message: 'message', type: 'type', retry: 2 } }
+
+            before :each do
+              options[:exception] = double
+              allow(job).to receive(:serialize_error).and_return(serialized_error)
+            end
+
+            it 'makes a request to api with current_action and status merged with options' do
+              job.notify_callback status, options
+              expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}/callbacks/#{job.current_action}",
+                                                                     { body: { name: job.current_action,
+                                                                               status: status,
+                                                                               exception: serialized_error }.merge(options.except(:exception)) },
+                                                                     retries: LittleMonster.job_requests_retries,
+                                                                     retry_wait: LittleMonster.job_requests_retry_wait).once
+            end
           end
 
           it 'returns request success?' do
@@ -210,10 +233,11 @@ describe LittleMonster::Core::Job do
           allow(job).to receive(:notify_job).and_return(response)
         end
 
-        context 'if options does not contain data' do
+        context 'if options does not contain data and exception' do
           it 'makes a request to api with current_action, status, options, critical, retries and retry wait' do
             job.notify_task status, options
-            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_action, status: status }.merge(options)] } },
+            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_action,
+                                                                               status: status }.merge(options)] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
@@ -227,7 +251,29 @@ describe LittleMonster::Core::Job do
           it 'makes a request to api with current_action, status, options, critical, retries, retry wait and sets data to body' do
             job.notify_task status, options
             expect(job).to have_received(:notify_job).with({ body: { data: options[:data],
-                                                                     tasks: [{ name: job.current_action, status: status }.merge(options.except(:data))] } },
+                                                                     tasks: [{ name: job.current_action,
+                                                                               status: status }
+                                                                                  .merge(options.except(:data))] } },
+                                                           retries: LittleMonster.task_requests_retries,
+                                                           retry_wait: LittleMonster.task_requests_retry_wait).once
+          end
+        end
+
+        context 'if options contains exception' do
+          let(:serialized_error) { { message: 'message', type: 'type', retry: 2 } }
+
+          before :each do
+            options[:exception] = double
+            allow(job).to receive(:serialize_error).and_return(serialized_error)
+          end
+
+
+          it 'makes a request to api with current_action, status, options, critical, retries, retry wait and sets serialized error to body' do
+            job.notify_task status, options
+            expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_action,
+                                                                               status: status,
+                                                                               exception: serialized_error }
+                                                                                 .merge(options.except(:exception))] } },
                                                            retries: LittleMonster.task_requests_retries,
                                                            retry_wait: LittleMonster.task_requests_retry_wait).once
           end
@@ -401,6 +447,16 @@ describe LittleMonster::Core::Job do
       described_class::CALLBACKS.each do |callback|
         job.current_action = callback
         expect(job.callback_running?).to be true
+      end
+    end
+  end
+
+  describe 'serialize_error' do
+    context 'given an error' do
+      let(:error) { StandardError.new 'boooom' }
+
+      it 'returns a hash with message, type and current retry' do
+        expect(job.serialize_error error).to eq(message: error.message, type: error.class, retry: job.retries)
       end
     end
   end

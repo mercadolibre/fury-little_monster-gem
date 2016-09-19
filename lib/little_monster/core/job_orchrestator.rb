@@ -124,12 +124,12 @@ module LittleMonster::Core
 
     # Methods that work both on tasks and callbacks
 
-    def abort_job(_e)
+    def abort_job(error)
       logger.debug 'notifiying abort...'
 
       if @job.callback_running?
         logger.info "[type:finish_callback] [status:error] data: #{@job.data.to_h[:outputs]}"
-        @job.notify_callback :error
+        @job.notify_callback :error, exception: error
 
         # if callback is not on_error, raise exception to run on_error
         if @job.current_action != :on_error
@@ -138,26 +138,26 @@ module LittleMonster::Core
           raise CallbackFailedError, '[type:callback_fail_error]'
         end
       else
-        @job.notify_task :error
+        @job.notify_task :error, exception: error
         logger.info "[type:finish_task] [status:error] data: #{@job.data.to_h[:outputs]}"
       end
 
       @job.status = :error
     end
 
-    def handle_error(e)
-      raise e if LittleMonster.env.development?
-      logger.error "[type:error] [error_type:#{e.class}][message:#{e.message}] \n #{e.backtrace.to_a.join("\n\t")}"
+    def handle_error(error)
+      raise error if LittleMonster.env.development?
+      logger.error "[type:error] [error_type:#{error.class}][message:#{error.message}] \n #{error.backtrace.to_a.join("\n\t")}"
 
-      if e.is_a?(FatalTaskError) || e.is_a?(NameError)
+      if error.is_a?(FatalTaskError) || error.is_a?(NameError)
         logger.debug 'error is fatal, aborting run'
-        return abort_job(e)
+        return abort_job(error)
       end
 
-      do_retry
+      do_retry(error)
     end
 
-    def do_retry
+    def do_retry(error)
       if @job.retry?
         logger.debug "Retry ##{@job.retries} of #{@job.max_retries}"
 
@@ -165,10 +165,10 @@ module LittleMonster::Core
 
         logger.debug 'notifiying retry'
         if @job.callback_running?
-          @job.notify_callback :pending, retries: @job.retries
+          @job.notify_callback :pending, retries: @job.retries, exception: error
           logger.info '[type:callback_retry]'
         else
-          @job.notify_task :pending, retries: @job.retries
+          @job.notify_task :pending, retries: @job.retries, exception: error
           logger.info '[type:task_retry]'
         end
 
@@ -186,7 +186,7 @@ module LittleMonster::Core
         end
 
         logger.info "[type:job_max_retries] [retries:#{@job.max_retries}]"
-        abort_job(MaxRetriesError.new)
+        abort_job(error)
       end
     end
   end

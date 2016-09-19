@@ -1,4 +1,5 @@
 require 'little_monster/core/errors/task_error' # must be required first to satisfy dependencies
+require 'little_monster/core/errors/heartbeat_error' # must be required first to satisfy dependencies
 require 'little_monster/core/errors/cancel_error'
 require 'little_monster/core/errors/fatal_task_error'
 require 'little_monster/core/errors/max_retries_error'

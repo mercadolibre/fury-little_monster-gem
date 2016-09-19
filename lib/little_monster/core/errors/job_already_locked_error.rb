@@ -1,4 +1,4 @@
 module LittleMonster::Core
-  class JobAlreadyLockedError < StandardError
+  class JobAlreadyLockedError < HeartbeatError
   end
 end

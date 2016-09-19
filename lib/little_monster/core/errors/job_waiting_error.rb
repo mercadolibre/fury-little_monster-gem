@@ -1,4 +1,4 @@
 module LittleMonster::Core
-  class JobWaitingError < StandardError
+  class JobWaitingError < HeartbeatError
   end
 end

@@ -76,6 +76,21 @@ describe LittleMonster::Core::Runner do
       end
     end
 
+    context 'when heartbeat raises HeartbeatError' do
+      before :each do
+        allow(runner).to receive(:send_heartbeat!).and_raise(LittleMonster::HeartbeatError)
+      end
+
+      it 'raises the error' do
+        expect { runner.run }.to raise_error(LittleMonster::HeartbeatError)
+      end
+
+      it 'does not run job' do
+        runner.run rescue nil
+        expect(job).not_to have_received(:run)
+      end
+    end
+
     context ' when heartbeat passes' do
       it 'builds job instance from factory' do
         runner.run
@@ -137,6 +152,16 @@ describe LittleMonster::Core::Runner do
 
         it 'raises JobAlreadyLockedError' do
           expect { runner.send_heartbeat! }.to raise_error(LittleMonster::JobAlreadyLockedError)
+        end
+      end
+
+      context 'if request has a any other status >= 400' do
+        before :each do
+          allow(response).to receive(:code).and_return(401)
+        end
+
+        it 'raises HeartbeatError' do
+          expect { runner.send_heartbeat! }.to raise_error(LittleMonster::HeartbeatError)
         end
       end
 

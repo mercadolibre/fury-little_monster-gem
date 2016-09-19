@@ -33,9 +33,12 @@ module LittleMonster::Core
         pid: Process.pid.to_s
       }
 
-      raise JobWaitingError, "[type:job_waiting_error] job [id:#{@params[:id]}] is waiting" if res.code == 424
-      raise JobAlreadyFinishedError, "[type:job_already_finished_error] job [id:#{@params[:id]}] has already finished, disacarding" if res.code == 403
-      raise JobAlreadyLockedError, "[type:job_already_locked_error] job [id:#{@params[:id]}] is already locked, discarding" if res.code == 423
+      if res.code >= 400
+        raise JobWaitingError, "[type:job_waiting_error] job [id:#{@params[:id]}] is waiting" if res.code == 424
+        raise JobAlreadyFinishedError, "[type:job_already_finished_error] job [id:#{@params[:id]}] has already finished, disacarding" if res.code == 403
+        raise JobAlreadyLockedError, "[type:job_already_locked_error] job [id:#{@params[:id]}] is already locked, discarding" if res.code == 423
+        raise HeartbeatError, "[type:heartbeat_error] job [id:#{@params[:id]}] heartbeat failed with [status:#{res.code}]"
+      end
       res.success?
     end
   end

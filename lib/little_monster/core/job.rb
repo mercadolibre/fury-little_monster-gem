@@ -190,7 +190,7 @@ module LittleMonster::Core
     def serialize_error(error)
       {
         message: error.message,
-        type: error.class,
+        type: error.class.to_s,
         retry: @retries
       }
     end

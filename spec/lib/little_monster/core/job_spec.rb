@@ -459,7 +459,7 @@ describe LittleMonster::Core::Job do
       let(:error) { StandardError.new 'boooom' }
 
       it 'returns a hash with message, type and current retry' do
-        expect(job.serialize_error error).to eq(message: error.message, type: error.class, retry: job.retries)
+        expect(job.serialize_error error).to eq(message: error.message, type: error.class.to_s, retry: job.retries)
       end
     end
   end

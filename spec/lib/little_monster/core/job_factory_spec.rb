@@ -322,14 +322,14 @@ describe LittleMonster::Core::Job::Factory do
     end
   end
 
-  describe '#calculate_status' do
+  describe '#calculate_status_and_error' do
     context 'if api_attributes tasks is blank' do
       before :each do
         factory.instance_variable_set '@api_attributes', tasks: []
       end
 
-      it 'returns pending' do
-        expect(factory.calculate_status).to eq(:pending)
+      it 'returns pending and empty hash' do
+        expect(factory.calculate_status_and_error).to eq([:pending, {}])
       end
     end
 
@@ -339,13 +339,22 @@ describe LittleMonster::Core::Job::Factory do
           tasks: [
             {
               order: 0,
-              status: 'success'
+              status: 'success',
+              exception: {
+                message: 'exception 0'
+              }
             },{
               order: 2,
-              status: 'pending'
+              status: 'pending',
+              exception: {
+                message: 'exception 2'
+              }
             },{
               order: 1,
-              status: 'error'
+              status: 'error',
+              exception: {
+                message: 'exception 1'
+              }
             }
           ]
         }
@@ -356,8 +365,8 @@ describe LittleMonster::Core::Job::Factory do
       end
 
       context 'on ordered task list' do
-        it 'returns the first status that is not success' do
-          expect(factory.calculate_status).to eq(:error)
+        it 'returns the first status that is not success with its exception hash' do
+          expect(factory.calculate_status_and_error).to eq([:error, { message: 'exception 1' }])
         end
 
         context 'if a task is cancelled' do
@@ -367,7 +376,7 @@ describe LittleMonster::Core::Job::Factory do
 
           context 'and no callback has run' do
             it 'returns cancelled' do
-              expect(factory.calculate_status).to eq(:cancelled)
+              expect(factory.calculate_status_and_error).to eq([:cancelled, { message: 'exception 0' }])
             end
           end
 
@@ -377,17 +386,17 @@ describe LittleMonster::Core::Job::Factory do
             end
 
             it 'returns cancelled' do
-              expect(factory.calculate_status).to eq(:cancelled)
+              expect(factory.calculate_status_and_error).to eq([:cancelled, { message: 'exception 0' }])
             end
           end
 
           context 'and on_cancel has failed' do
             before :each do
-              api_attributes[:callbacks] = [{ name: 'on_cancel', status: :error }]
+              api_attributes[:callbacks] = [{ name: 'on_cancel', status: :error, exception: { message: 'message' } }]
             end
 
             it 'returns error' do
-              expect(factory.calculate_status).to eq(:error)
+              expect(factory.calculate_status_and_error).to eq([:error, { message: 'message' }])
             end
           end
         end
@@ -403,19 +412,19 @@ describe LittleMonster::Core::Job::Factory do
             end
 
             it 'returns success' do
-              expect(factory.calculate_status).to eq(:success)
+              expect(factory.calculate_status_and_error).to eq([:success, {}])
             end
           end
 
           context 'and there are callbacks' do
             it 'returns error if there is a callback on error' do
-              api_attributes[:callbacks] = [{ status: :success }, { status: :error }]
-              expect(factory.calculate_status).to eq(:error)
+              api_attributes[:callbacks] = [{ status: :success }, { status: :error, exception: { message: 'message' }}]
+              expect(factory.calculate_status_and_error).to eq([:error, { message: 'message' }])
             end
 
             it 'return success if there is no callback on error' do
               api_attributes[:callbacks] = [{ status: :success }, { status: :success }]
-              expect(factory.calculate_status).to eq(:success)
+              expect(factory.calculate_status_and_error).to eq([:success, {}])
             end
           end
         end
@@ -435,13 +444,14 @@ describe LittleMonster::Core::Job::Factory do
     context 'when requests are enabled' do
       let(:data) { { a: 'b' } }
       let(:status) { :status }
+      let(:error) { { message: 'message', type: 'type', retry: 1 } }
       let(:retries) { :retries }
       let(:current_action) { :current_action }
 
       before :each do
         factory.instance_variable_set('@api_attributes', data: data)
         allow(LittleMonster).to receive(:disable_requests?).and_return(false)
-        allow(factory).to receive(:calculate_status).and_return(status)
+        allow(factory).to receive(:calculate_status_and_error).and_return([status, error])
         allow(factory).to receive(:find_current_action_and_retries).and_return([current_action, retries])
       end
 
@@ -450,6 +460,7 @@ describe LittleMonster::Core::Job::Factory do
                                              tags: factory.instance_variable_get('@tags'),
                                              data: data,
                                              status: status,
+                                             error: error,
                                              current_action: current_action,
                                              retries: retries)
       end

@@ -42,6 +42,7 @@ module LittleMonster::Core
     attr_accessor :retries
     attr_accessor :current_action
     attr_accessor :data
+    attr_accessor :error
 
     attr_reader :orchrestator
 
@@ -60,6 +61,7 @@ module LittleMonster::Core
               end
 
       @status = options.fetch(:status, :pending)
+      @error= options.fetch(:error, {})
 
       @orchrestator = Job::Orchrestator.new(self)
 

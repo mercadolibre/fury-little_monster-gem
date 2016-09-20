@@ -73,20 +73,20 @@ module LittleMonster::Core
       resp.success? ? resp.body : nil
     end
 
-    def calculate_status
-      return :pending if @api_attributes[:tasks].blank?
+    def calculate_status_and_error
+      return [:pending, {}] if @api_attributes[:tasks].blank?
 
-      #FIRST we check if any callback has fail so set error status if necessary
+      #FIRST we check if any callback has failed to set error status
       @api_attributes.fetch(:callbacks, []).each do |callback|
-        return :error if callback[:status].to_sym == :error
+        return [:error, callback[:exception] || {}] if callback[:status].to_sym == :error
       end
 
       #if no callback has fail we get the status from the tasks
       @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
-        return task[:status].to_sym if task[:status].to_sym != :success
+        return [task[:status].to_sym, task[:exception] || {}] if task[:status].to_sym != :success
       end
 
-      :success
+      [:success, {}]
     end
 
     def find_current_action_and_retries
@@ -125,11 +125,14 @@ module LittleMonster::Core
 
       return attributes if LittleMonster.disable_requests?
 
-      status = calculate_status
+      # these two attribute retrival methods are arranged in this way
+      # because each one filters the tasks based on different statuses
+      status, error = calculate_status_and_error
       current_action, retries = find_current_action_and_retries
 
       attributes.merge(status: status,
                        current_action: current_action,
+                       error: error,
                        retries: retries)
     end
 

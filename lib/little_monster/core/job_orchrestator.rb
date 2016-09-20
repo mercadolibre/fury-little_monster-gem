@@ -149,6 +149,8 @@ module LittleMonster::Core
       raise error if LittleMonster.env.development?
       logger.error "[type:error] [error_type:#{error.class}][message:#{error.message}] \n #{error.backtrace.to_a.join("\n\t")}"
 
+      @job.error = @job.serialize_error error
+
       if error.is_a?(FatalTaskError) || error.is_a?(NameError)
         logger.debug 'error is fatal, aborting run'
         return abort_job(error)

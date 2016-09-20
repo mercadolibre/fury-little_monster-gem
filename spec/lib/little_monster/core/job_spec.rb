@@ -48,7 +48,8 @@ describe LittleMonster::Core::Job do
           tags: { tag: 'a tag' },
           retries: 2,
           current_action: :task_a,
-          data: { outputs: { a: :b }, owners: { c: :d } }
+          data: { outputs: { a: :b }, owners: { c: :d } },
+          error: { message: 'message', retry: 2, type: 'type' }
         }
       end
 
@@ -57,6 +58,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.retries).to eq(options[:retries]) }
       it { expect(job.current_action).to eq(options[:current_action]) }
       it { expect(job.data).to eq(LittleMonster::Core::Job::Data.new(nil, options[:data])) }
+      it { expect(job.error).to eq(options[:error]) }
     end
 
     context 'given empty options' do
@@ -67,6 +69,7 @@ describe LittleMonster::Core::Job do
       it { expect(job.retries).to eq(0) }
       it { expect(job.current_action).to eq(job.class.tasks.first) }
       it { expect(job.data).to be_instance_of(LittleMonster::Core::Job::Data) }
+      it { expect(job.error).to eq({}) }
     end
 
     it 'sets status to pending' do

@@ -19,7 +19,8 @@ module LittleMonster::Core
       job.run unless job.nil?
     rescue JobNotFoundError => e
       logger.error "[id:#{@params[:id]}][type:job_not_found] [message:#{e.message}] \n #{e.backtrace.to_a.join("\n\t")}"
-    rescue JobAlreadyFinishedError
+    rescue JobAlreadyFinishedError => e
+      logger.error e.message
     ensure
       @heartbeat_task.shutdown
     end

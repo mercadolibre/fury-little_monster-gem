@@ -473,29 +473,17 @@ describe LittleMonster::Core::Job do
     end
   end
 
-  describe '#retry?' do
+  describe '#max_retries' do
+    let(:retries) { double }
+
     context 'if callback is not running' do
       before :each do
         allow(job).to receive(:callback_running?).and_return(false)
       end
 
-      it 'returns true if max_retries is -1' do
-        allow(job).to receive(:max_retries).and_return(-1)
-        expect(job.retry?).to be true
-      end
-
-      it 'returns true if max_retries is greater than retries' do
-        r = 3
-        allow(job).to receive(:max_retries).and_return(r)
-        job.retries = r - 1
-        expect(job.retry?).to be true
-      end
-
-      it 'returns false if retries than max_retries' do
-        r = 3
-        allow(job).to receive(:max_retries).and_return(r)
-        job.retries = r + 1
-        expect(job.retry?).to be false
+      it 'returns class max retries' do
+        allow(job.class).to receive(:max_retries).and_return(retries)
+        expect(job.max_retries).to eq(retries)
       end
     end
 
@@ -504,24 +492,35 @@ describe LittleMonster::Core::Job do
         allow(job).to receive(:callback_running?).and_return(true)
       end
 
-      it 'returns true if callback_max_retries is -1' do
-        allow(job).to receive(:callback_max_retries).and_return(-1)
-        expect(job.retry?).to be true
+      it 'returns class callback max retries' do
+        allow(job.class).to receive(:callback_max_retries).and_return(retries)
+        expect(job.max_retries).to eq(retries)
       end
+    end
+  end
 
-      it 'returns true if callback_max_retries is greater than retries' do
-        r = 3
-        allow(job).to receive(:callback_max_retries).and_return(r)
-        job.retries = r - 1
-        expect(job.retry?).to be true
-      end
+  describe '#retry?' do
+    before :each do
+      allow(job).to receive(:callback_running?).and_return(false)
+    end
 
-      it 'returns false if retries than callback_max_retries' do
-        r = 3
-        allow(job).to receive(:callback_max_retries).and_return(r)
-        job.retries = r + 1
-        expect(job.retry?).to be false
-      end
+    it 'returns true if max_retries is -1' do
+      allow(job).to receive(:max_retries).and_return(-1)
+      expect(job.retry?).to be true
+    end
+
+    it 'returns true if max_retries is greater than retries' do
+      r = 3
+      allow(job).to receive(:max_retries).and_return(r)
+      job.retries = r - 1
+      expect(job.retry?).to be true
+    end
+
+    it 'returns false if retries than max_retries' do
+      r = 3
+      allow(job).to receive(:max_retries).and_return(r)
+      job.retries = r + 1
+      expect(job.retry?).to be false
     end
   end
 end

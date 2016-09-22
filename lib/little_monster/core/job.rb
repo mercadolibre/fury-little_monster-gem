@@ -151,19 +151,11 @@ module LittleMonster::Core
     end
 
     def max_retries
-      self.class.max_retries
-    end
-
-    def callback_max_retries
-      self.class.callback_max_retries
+      callback_running? ? self.class.callback_max_retries : self.class.max_retries
     end
 
     def retry?
-      if callback_running?
-        callback_max_retries == -1 || callback_max_retries > @retries
-      else
-        max_retries == -1 || max_retries > @retries
-      end
+      max_retries == -1 || max_retries > @retries
     end
 
     def callback_to_run

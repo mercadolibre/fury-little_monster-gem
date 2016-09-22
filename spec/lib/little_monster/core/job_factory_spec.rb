@@ -220,7 +220,12 @@ describe LittleMonster::Core::Job::Factory do
       it 'makes a request to api with job_class max_retries' do
         factory.notify_job_max_retries
         expect(LittleMonster::API).to have_received(:put).with("/jobs/#{message[:id]}",
-                                                               { body: { max_retries: MockJob.max_retries } },
+                                                               {
+                                                                 body: {
+                                                                   max_retries: MockJob.max_retries,
+                                                                   callback_retries: MockJob.callback_max_retries
+                                                                 }
+                                                                },
                                                                 retries: LittleMonster.job_requests_retries,
                                                                 retry_wait: LittleMonster.job_requests_retry_wait).once
       end

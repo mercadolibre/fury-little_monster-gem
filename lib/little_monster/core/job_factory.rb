@@ -56,7 +56,10 @@ module LittleMonster::Core
       return true unless @api_attributes[:max_retries].blank?
 
       params = {
-        body: { max_retries: @job_class.max_retries }
+        body: {
+          max_retries: @job_class.max_retries,
+          callback_retries: @job_class.callback_max_retries
+        }
       }
 
       res = LittleMonster::API.put "/jobs/#{@id}", params, retries: LittleMonster.job_requests_retries,

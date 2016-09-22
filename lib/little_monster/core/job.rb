@@ -42,6 +42,7 @@ module LittleMonster::Core
     attr_accessor :retries
     attr_accessor :current_action
     attr_accessor :data
+    attr_accessor :error
 
     attr_reader :orchrestator
 
@@ -60,6 +61,7 @@ module LittleMonster::Core
               end
 
       @status = options.fetch(:status, :pending)
+      @error= options.fetch(:error, {})
 
       @orchrestator = Job::Orchrestator.new(self)
 
@@ -91,9 +93,11 @@ module LittleMonster::Core
 
     def notify_task(status, options = {})
       params = { body: { tasks: [{ name: @current_action, status: status }] } }
-      params[:body][:data] = options[:data] if options[:data]
 
-      params[:body][:tasks].first.merge!(options.except(:data))
+      params[:body][:data] = options[:data] if options[:data]
+      params[:body][:tasks].first[:exception] = serialize_error(options[:exception]) if options[:exception]
+
+      params[:body][:tasks].first.merge!(options.except(:data, :exception))
 
       notify_job params, retries: LittleMonster.task_requests_retries,
                          retry_wait: LittleMonster.task_requests_retry_wait
@@ -102,7 +106,10 @@ module LittleMonster::Core
     def notify_callback(status, options = {})
       return true unless should_request?
       params = { body: { name: @current_action, status: status } }
-      params[:body].merge!(options)
+
+      params[:body][:exception] = serialize_error(options[:exception]) if options[:exception]
+
+      params[:body].merge!(options.except(:exception))
 
       resp = LittleMonster::API.put "/jobs/#{id}/callbacks/#{@current_action}", params,
                                     retries: LittleMonster.task_requests_retries,
@@ -178,6 +185,14 @@ module LittleMonster::Core
 
     def should_request?
       !(mock? || LittleMonster.disable_requests?)
+    end
+
+    def serialize_error(error)
+      {
+        message: error.message,
+        type: error.class.to_s,
+        retry: @retries
+      }
     end
 
     # callbacks definition

@@ -31,7 +31,7 @@ module LittleMonster::Core
       end
 
       def mock!
-        @@mock = true
+        @mock = true
       end
 
       def tasks
@@ -39,7 +39,7 @@ module LittleMonster::Core
       end
 
       def mock?
-        @@mock ||= false
+        @mock ||= false
       end
     end
 
@@ -155,7 +155,7 @@ module LittleMonster::Core
     end
 
     def retry?
-      max_retries == -1 || max_retries > @retries
+      !mock? && (max_retries == -1 || max_retries > @retries)
     end
 
     def callback_to_run

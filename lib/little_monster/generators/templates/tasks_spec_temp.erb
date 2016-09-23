@@ -1,9 +1,7 @@
 require_relative '../../spec_helper.rb'
 
 describe <%= "#{@job_name.camelize}::#{@current_task_name.camelize}" %> do
-  before :each do
-    @<%=@current_task_name%> = described_class.new({my_data_key:'my_data_value'})
-  end
+  let(:task) { generate_task(described_class, data: {}) }
 
   describe '.run' do
     it 'tell me how to run <%=@current_task_name.underscore%>!'

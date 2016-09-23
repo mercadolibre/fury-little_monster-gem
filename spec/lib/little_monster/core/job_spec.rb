@@ -38,6 +38,15 @@ describe LittleMonster::Core::Job do
         expect(job_class.max_retries).to eq(retries)
       end
     end
+
+    describe '::callback_max_retries' do
+      let(:retries) { 5 }
+
+      it 'sets the callback_max_retries class level instance variable' do
+        job_class.callback_retries(retries)
+        expect(job_class.callback_max_retries).to eq(retries)
+      end
+    end
   end
 
   describe '#initialize' do
@@ -461,6 +470,57 @@ describe LittleMonster::Core::Job do
       it 'returns a hash with message, type and current retry' do
         expect(job.serialize_error error).to eq(message: error.message, type: error.class.to_s, retry: job.retries)
       end
+    end
+  end
+
+  describe '#max_retries' do
+    let(:retries) { double }
+
+    context 'if callback is not running' do
+      before :each do
+        allow(job).to receive(:callback_running?).and_return(false)
+      end
+
+      it 'returns class max retries' do
+        allow(job.class).to receive(:max_retries).and_return(retries)
+        expect(job.max_retries).to eq(retries)
+      end
+    end
+
+    context 'if callback is running' do
+      before :each do
+        allow(job).to receive(:callback_running?).and_return(true)
+      end
+
+      it 'returns class callback max retries' do
+        allow(job.class).to receive(:callback_max_retries).and_return(retries)
+        expect(job.max_retries).to eq(retries)
+      end
+    end
+  end
+
+  describe '#retry?' do
+    before :each do
+      allow(job).to receive(:callback_running?).and_return(false)
+    end
+
+    it 'returns true if max_retries is -1' do
+      allow(job).to receive(:max_retries).and_return(-1)
+      expect(job.retry?).to be true
+    end
+
+    it 'returns true if max_retries is greater than retries' do
+      r = 3
+      allow(job).to receive(:max_retries).and_return(r)
+      job.retries = r - 1
+      expect(job.retry?).to be true
+    end
+
+    it 'returns false if retries than max_retries' do
+      r = 3
+      allow(job).to receive(:max_retries).and_return(r)
+      job.retries = r + 1
+      expect(job.retry?).to be false
     end
   end
 end

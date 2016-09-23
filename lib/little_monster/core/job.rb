@@ -14,12 +14,20 @@ module LittleMonster::Core
         @max_retries = value
       end
 
+      def callback_retries(value)
+        @callback_max_retries = value
+      end
+
       def task_class_for(task_name)
         "#{to_s.underscore}/#{task_name}".camelcase.constantize
       end
 
       def max_retries
         @max_retries ||= LittleMonster.default_job_retries
+      end
+
+      def callback_max_retries
+        @callback_max_retries ||= max_retries
       end
 
       def mock!
@@ -143,7 +151,7 @@ module LittleMonster::Core
     end
 
     def max_retries
-      self.class.max_retries
+      callback_running? ? self.class.callback_max_retries : self.class.max_retries
     end
 
     def retry?

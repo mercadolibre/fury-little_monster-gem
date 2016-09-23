@@ -500,27 +500,39 @@ describe LittleMonster::Core::Job do
   end
 
   describe '#retry?' do
-    before :each do
-      allow(job).to receive(:callback_running?).and_return(false)
+    context 'is mock is false' do
+      before :each do
+        allow(job).to receive(:mock?).and_return(false)
+      end
+
+      it 'returns true if max_retries is -1' do
+        allow(job).to receive(:max_retries).and_return(-1)
+        expect(job.retry?).to be true
+      end
+
+      it 'returns true if max_retries is greater than retries' do
+        r = 3
+        allow(job).to receive(:max_retries).and_return(r)
+        job.retries = r - 1
+        expect(job.retry?).to be true
+      end
+
+      it 'returns false if retries than max_retries' do
+        r = 3
+        allow(job).to receive(:max_retries).and_return(r)
+        job.retries = r + 1
+        expect(job.retry?).to be false
+      end
     end
 
-    it 'returns true if max_retries is -1' do
-      allow(job).to receive(:max_retries).and_return(-1)
-      expect(job.retry?).to be true
-    end
+    context 'if mock is true' do
+      before :each do
+        allow(job).to receive(:mock?).and_return(true)
+      end
 
-    it 'returns true if max_retries is greater than retries' do
-      r = 3
-      allow(job).to receive(:max_retries).and_return(r)
-      job.retries = r - 1
-      expect(job.retry?).to be true
-    end
-
-    it 'returns false if retries than max_retries' do
-      r = 3
-      allow(job).to receive(:max_retries).and_return(r)
-      job.retries = r + 1
-      expect(job.retry?).to be false
+      it 'returns false' do
+        expect(job.retry?).to be false
+      end
     end
   end
 end

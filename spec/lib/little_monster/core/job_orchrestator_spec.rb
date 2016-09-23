@@ -3,6 +3,10 @@ require 'spec_helper'
 describe LittleMonster::Core::Job::Orchrestator do
   subject { MockJob.new({}).orchrestator }
 
+  before :each do
+    MockJob.instance_variable_set '@mock', false
+  end
+
   describe '#initialize' do
     context 'given a job instance' do
       it 'sets job instance variable' do

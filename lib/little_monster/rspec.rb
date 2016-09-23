@@ -10,6 +10,8 @@ module LittleMonster::RSpec
   require 'little_monster/rspec/matchers/have_data'
   require 'little_monster/rspec/matchers/have_run'
   require 'little_monster/rspec/matchers/have_run_task'
+  require 'little_monster/rspec/matchers/have_retries'
+  require 'little_monster/rspec/matchers/have_callback_retries'
 
   # includes the run_job and run_task helper methods
   ::RSpec.configure do |config|

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    little_monster (0.1.5)
+    little_monster (0.1.6)
       activesupport
       multi_json
       thor
@@ -21,12 +21,12 @@ GEM
       tzinfo (~> 1.1)
     addressable (2.4.0)
     ast (2.3.0)
-    aws-sdk (2.6.2)
-      aws-sdk-resources (= 2.6.2)
-    aws-sdk-core (2.6.2)
+    aws-sdk (2.6.3)
+      aws-sdk-resources (= 2.6.3)
+    aws-sdk-core (2.6.3)
       jmespath (~> 1.0)
-    aws-sdk-resources (2.6.2)
-      aws-sdk-core (= 2.6.2)
+    aws-sdk-resources (2.6.3)
+      aws-sdk-core (= 2.6.3)
     byebug (9.0.5)
     codeclimate-test-reporter (0.6.0)
       simplecov (>= 0.7.1, < 1.0.0)

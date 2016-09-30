@@ -2,7 +2,7 @@ module LittleMonster::RSpec::Matchers
   class HaveRun
     def initialize(*expected_tasks)
       @expected_tasks = if expected_tasks.length == 1
-                          expected_tasks.first
+                          [expected_tasks.first].flatten
                         else
                           expected_tasks
                         end

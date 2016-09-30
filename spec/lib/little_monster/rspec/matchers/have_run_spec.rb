@@ -17,6 +17,13 @@ describe LittleMonster::RSpec::Matchers::HaveRun do
       end
     end
 
+    context 'given one task' do
+      it 'sets the expected_tasks as an array' do
+        matcher = subject.new(:a)
+        expect(matcher.instance_variable_get '@expected_tasks').to eq([:a])
+      end
+    end
+
     context 'given an array of tasks' do
       it 'sets the expected_tasks' do
         matcher = subject.new(tasks)
@@ -34,7 +41,7 @@ describe LittleMonster::RSpec::Matchers::HaveRun do
         expect(subject.matches? job_result).to be true
       end
 
-      it 'returns false if runneds_tasks do not match the expected_tasks' do
+      it 'returns false if runned_tasks do not match the expected_tasks' do
         job_result = instance_double(LittleMonster::RSpec::JobHelper::Result,
                                      runned_tasks: { a: double })
         expect(subject.matches? job_result).to be false

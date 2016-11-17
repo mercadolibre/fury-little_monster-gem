@@ -68,11 +68,10 @@ module LittleMonster::Core
           begin
             task.error e unless e.is_a? NameError
           rescue StandardError => task_error
-            handle_error task_error
+          ensure
+            handle_error task_error || e
             return
           end
-          handle_error e
-          return
         end
 
         @job.retries = 0 # Hago esto para que despues de succesful un task resete retries

@@ -65,7 +65,12 @@ module LittleMonster::Core
           return
         rescue StandardError => e
           logger.debug "[type:standard_error] an error was catched with [message:#{e.message}]"
-          task.error e unless e.is_a? NameError
+          begin
+            task.error e unless e.is_a? NameError
+          rescue StandardError => task_error
+            handle_error task_error
+            return
+          end
           handle_error e
           return
         end

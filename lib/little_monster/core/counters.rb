@@ -13,7 +13,7 @@ module LittleMonster::Core::Counters
       logger.error "Could not increase counter #{counter_name}, Api unreachable"
       raise e
     end
-    raise DuplicatedCounterError if resp.code == 412
+    #raise DuplicatedCounterError if resp.code == 412
     true
   end
 

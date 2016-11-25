@@ -42,16 +42,16 @@ describe LittleMonster::Core::Counters do
       end
     end
 
-    it 'raise CounterError on duplicate unique_id' do
-      ret = Typhoeus::Response.new(code:412)
-
-      expect(LittleMonster::Core::API).to(receive(:put))
-      .with('/jobs/1/counters/my_counter',{body: { type: 'fail',unique_id:"my_unique_id",output: ''}}, critical:true)
-      .and_return(ret)
-
-      expect { dummy_class.increase_counter('my_counter',"my_unique_id",'fail')}
-      .to raise_error LittleMonster::Core::Counters::DuplicatedCounterError
-    end
+#    it 'raise CounterError on duplicate unique_id' do
+#      ret = Typhoeus::Response.new(code:412)
+#
+#      expect(LittleMonster::Core::API).to(receive(:put))
+#      .with('/jobs/1/counters/my_counter',{body: { type: 'fail',unique_id:"my_unique_id",output: ''}}, critical:true)
+#      .and_return(ret)
+#
+#      expect { dummy_class.increase_counter('my_counter',"my_unique_id",'fail')}
+#      .to raise_error LittleMonster::Core::Counters::DuplicatedCounterError
+#    end
 
 
     it 'fails if couldn\'t send counter to the api' do

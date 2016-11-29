@@ -7,10 +7,10 @@ describe LittleMonster::Core::API do
   let(:params) { {} }
   let(:options) { { critical: false } }
   let(:response) { double(code: 200, effective_url: '') }
-  let(:uuid) { '123' }
+  let(:request_id) { '123' }
 
   before :each do
-    allow(SecureRandom).to receive(:uuid).and_return(uuid)
+    allow(SecureRandom).to receive(:uuid).and_return(request_id)
   end
 
   describe '::get' do
@@ -145,11 +145,11 @@ describe LittleMonster::Core::API do
         it 'has content type set to json if it was not specified' do
           subject.request method, path, params, options
           expect(Typhoeus).to have_received(method)
-            .with(url, hash_including(headers: { 'Content-Type' => 'application/json', 'X-Request-Token' => uuid  }))
+            .with(url, hash_including(headers: { 'Content-Type' => 'application/json', 'X-Request-ID' => request_id  }))
         end
 
         it 'has content type set to json if specified' do
-          headers = { 'Content-Type' => 'something', 'X-Request-Token' => uuid }
+          headers = { 'Content-Type' => 'something', 'X-Request-ID' => request_id }
           params[:headers] = headers
           subject.request method, path, params, options
           expect(Typhoeus).to have_received(method)

@@ -31,7 +31,7 @@ module LittleMonster::Core
                   retry_wait: LittleMonster.default_request_retry_wait,
                   critical: false)
 
-        uuid = SecureRandom.uuid
+        request_id = SecureRandom.uuid
         ret = 0
         res = nil
         url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
@@ -40,17 +40,17 @@ module LittleMonster::Core
 
         params[:headers] ||= {}
         params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
-        params[:headers]['X-Request-Token'] = uuid
+        params[:headers]['X-Request-ID'] = request_id
 
         params[:timeout] = LittleMonster.request_timeout
 
         begin
           res = Typhoeus.public_send method, url, params
           if res.code >= 500 || res.code.zero?
-            raise FuryHttpApiError, "[type:request_failed][uuid:#{uuid}] request to #{res.effective_url} failed with status #{res.code} retry #{ret}"
+            raise FuryHttpApiError, "[type:request_failed][request_id:#{request_id}] request to #{res.effective_url} failed with status #{res.code} retry #{ret}"
           end
 
-          logger.debug "[type:request_log][uuid:#{uuid}] request made to #{url} with [status:#{res.code}]"
+          logger.debug "[type:request_log][request_id:#{request_id}] request made to #{url} with [status:#{res.code}]"
         rescue StandardError => e
           logger.error e.message
           if ret < retries
@@ -59,11 +59,11 @@ module LittleMonster::Core
             retry
           end
 
-          logger.error "[type:request_max_retries_reached][uuid:#{uuid}][url:#{url}][retries:#{ret}] request has reached max retries"
+          logger.error "[type:request_max_retries_reached][request_id:#{request_id}][url:#{url}][retries:#{ret}] request has reached max retries"
 
           if critical
-            logger.error "[type:critical_request_failed][uuid:#{uuid}][url:#{url}][retries:#{ret}] request has reached max retries"
-            raise APIUnreachableError, "[uuid:#{uuid}] critical request to #{url} has fail, check little monster api"
+            logger.error "[type:critical_request_failed][request_id:#{request_id}][url:#{url}][retries:#{ret}] request has reached max retries"
+            raise APIUnreachableError, "[request_id:#{request_id}] critical request to #{url} has fail, check little monster api"
           end
         end
 

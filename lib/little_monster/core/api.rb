@@ -50,7 +50,7 @@ module LittleMonster::Core
             raise FuryHttpApiError, "[type:request_failed][request_id:#{request_id}] request to #{res.effective_url} failed with status #{res.code} retry #{ret}"
           end
 
-          logger.debug "[type:request_log][request_id:#{request_id}] request made to #{url} with [status:#{res.code}]"
+          logger.info "[type:request_log][request_id:#{request_id}] request made to #{url} with [status:#{res.code}]"
         rescue StandardError => e
           logger.error e.message
           if ret < retries

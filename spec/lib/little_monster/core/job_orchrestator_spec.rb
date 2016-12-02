@@ -289,32 +289,63 @@ describe LittleMonster::Core::Job::Orchrestator do
         expect(subject.job.status).to eq(:error)
       end
     end
-
+    
     context 'when a task fails' do
-      let(:mock_task) { MockJob::TaskB.new({}) }
-      let(:error) { StandardError.new 'error' }
+      context 'when task.on_error does not fail' do
+        let(:mock_task) { MockJob::TaskB.new({}) }
+        let(:error) { StandardError.new 'error' }
 
-      before :each do
-        allow(subject).to receive(:handle_error)
-        allow(MockJob::TaskB).to receive(:new).and_return(mock_task)
-        allow(mock_task).to receive(:run).and_raise(error)
-        allow(mock_task).to receive(:error)
+        before :each do
+          allow(subject).to receive(:handle_error)
+          allow(MockJob::TaskB).to receive(:new).and_return(mock_task)
+          allow(mock_task).to receive(:run).and_raise(error)
+          allow(mock_task).to receive(:error)
+        end
+
+        it 'calls handle_error with error' do
+          subject.run_tasks
+          expect(subject).to have_received(:handle_error).with(error)
+        end
+
+        it 'calls error callback on task unless there is a name error' do
+          subject.run_tasks
+          expect(mock_task).to have_received(:error).with(error)
+        end
+
+        it 'does not call error callback on task if there is a name error' do
+          allow(mock_task).to receive(:run).and_raise(NameError, 'name error')
+          subject.run_tasks
+          expect(mock_task).not_to have_received(:error)
+        end
       end
 
-      it 'calls handle_error with error' do
-        subject.run_tasks
-        expect(subject).to have_received(:handle_error).with(error)
-      end
+      context 'when task.on_error fails' do
+        let(:mock_task) { MockJob::TaskB.new({}) }
+        let(:error) { StandardError.new 'error' }
+        let(:task_error) { StandardError.new 'another_error' }
 
-      it 'calls error callback on task unless there is a name error' do
-        subject.run_tasks
-        expect(mock_task).to have_received(:error).with(error)
-      end
+        before :each do
+          allow(subject).to receive(:handle_error)
+          allow(MockJob::TaskB).to receive(:new).and_return(mock_task)
+          allow(mock_task).to receive(:run).and_raise(error)
+          allow(mock_task).to receive(:error).and_raise(task_error)
+        end
 
-      it 'does not call error callback on task if there is a name error' do
-        allow(mock_task).to receive(:run).and_raise(NameError, 'name error')
-        subject.run_tasks
-        expect(mock_task).not_to have_received(:error)
+        it 'calls handle_error with task_error' do
+          subject.run_tasks
+          expect(subject).to have_received(:handle_error).with(task_error)
+        end
+
+        it 'calls error callback on task unless there is a name error' do
+          subject.run_tasks
+          expect(mock_task).to have_received(:error).with(error)
+        end
+
+        it 'does not call error callback on task if there is a name error' do
+          allow(mock_task).to receive(:run).and_raise(NameError, 'name error')
+          subject.run_tasks
+          expect(mock_task).not_to have_received(:error)
+        end
       end
     end
   end

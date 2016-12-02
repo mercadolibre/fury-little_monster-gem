@@ -65,9 +65,13 @@ module LittleMonster::Core
           return
         rescue StandardError => e
           logger.debug "[type:standard_error] an error was catched with [message:#{e.message}]"
-          task.error e unless e.is_a? NameError
-          handle_error e
-          return
+          begin
+            task.error e unless e.is_a? NameError
+          rescue StandardError => task_error
+          ensure
+            handle_error task_error || e
+            return
+          end
         end
 
         @job.retries = 0 # Hago esto para que despues de succesful un task resete retries

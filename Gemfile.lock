@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    little_monster (0.1.10)
+    little_monster (0.1.11)
       activesupport
       multi_json
       thor
@@ -121,4 +121,4 @@ DEPENDENCIES
   simplecov
 
 BUNDLED WITH
-   1.12.5
+   1.13.3

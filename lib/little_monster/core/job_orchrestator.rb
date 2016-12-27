@@ -57,14 +57,14 @@ module LittleMonster::Core
             @job.runned_tasks[task_name][:data] = @job.data.to_h[:outputs].to_h.dup
           end
         rescue APIUnreachableError => e
-          logger.error "[type:api_unreachable] [message:#{e.message}]"
+          logger.error "[type:api_unreachable] [message:#{e.message.dump}]"
           raise e
         rescue CancelError => e
           logger.info '[type:cancel] job was cancelled'
           cancel
           return
         rescue StandardError => e
-          logger.debug "[type:standard_error] an error was catched with [message:#{e.message}]"
+          logger.debug "[type:standard_error] an error was catched with [message:#{e.message.dump}]"
           begin
             task.error e unless e.is_a? NameError
           rescue StandardError => task_error
@@ -104,10 +104,10 @@ module LittleMonster::Core
       @job.retries = 0
       logger.default_tags.delete(:callback)
     rescue APIUnreachableError => e
-      logger.error "[type:api_unreachable] [message:#{e.message}]"
+      logger.error "[type:api_unreachable] [message:#{e.message.dump}]"
       raise e
     rescue StandardError => e
-      logger.debug "[type:standard_error] an error was catched with [message:#{e.message}]"
+      logger.debug "[type:standard_error] an error was catched with [message:#{e.message.dump}]"
       handle_error e
     end
 
@@ -151,7 +151,7 @@ module LittleMonster::Core
 
     def handle_error(error)
       raise error if LittleMonster.env.development?
-      logger.error "[type:error] [error_type:#{error.class}][message:#{error.message}] \n #{error.backtrace.to_a.join("\n\t")}"
+      logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}] \n #{error.backtrace.to_a.join("\n\t")}"
 
       @job.error = @job.serialize_error error
 

@@ -22,10 +22,12 @@ module LittleMonster::Core
       on_error e
     end
 
+    def is_cancelled?
+      @cancelled_callback.nil? ? false : @cancelled_callback.call
+    end
+
     def is_cancelled!
-      is_cancelled = false
-      is_cancelled = @cancelled_callback.call unless @cancelled_callback.nil?
-      raise CancelError if is_cancelled
+      raise CancelError if is_cancelled?
     end
 
     private

@@ -39,7 +39,7 @@ module LittleMonster::RSpec
       default_values = {
         data: data,
         cancelled_callback: proc { options.fetch(:cancelled, false) },
-        job_id: options.fetch(:job_id, 0),
+        job_id: options.fetch(:job_id, nil),
         retries: options.fetch(:job_retries, 0),
         max_retries: options.fetch(:job_max_retries, 0),
         retry_callback: proc { !options.fetch(:last_retry, false) }

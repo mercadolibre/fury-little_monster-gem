@@ -91,6 +91,30 @@ describe LittleMonster::RSpec::TaskHelper do
           options[:cancelled] = true
           expect { task.is_cancelled! }.to raise_error(LittleMonster::CancelError)
         end
+
+        it 'has job_id' do
+          options[:job_id] = 5
+          expect(task.job_id).to eq(options[:job_id])
+        end
+
+        it 'has job_retries' do
+          options[:job_retries] = 5
+          expect(task.job_retries).to eq(options[:job_retries])
+        end
+
+        it 'has job_max_retries' do
+          options[:job_max_retries] = 12
+          expect(task.job_max_retries).to eq(options[:job_max_retries])
+        end
+
+        it 'has last_retry? to true' do
+          options[:last_retry] = true
+          expect(task.last_retry?).to be true
+        end
+
+        it 'has last_retry? to false by default' do
+          expect(task.last_retry?).to be false
+        end
       end
     end
   end

@@ -113,7 +113,14 @@ module LittleMonster::Core
 
     def build_task(task_symbol)
       task = @job.task_class_for(task_symbol).new(@job.data)
-      task.send(:set_default_values, @job.data, @job.id, logger, @job.method(:is_cancelled?))
+      task.send(:set_default_values,
+                data: @job.data,
+                job_id: @job.id,
+                job_logger: logger,
+                cancelled_callback: @job.method(:is_cancelled?),
+                retries: @job.retries,
+                max_retries: @job.max_retries,
+                retry_callback: @job.method(:retry?))
       task
     end
 

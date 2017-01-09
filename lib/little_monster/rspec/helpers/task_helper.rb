@@ -36,9 +36,17 @@ module LittleMonster::RSpec
                                             outputs: options.fetch(:data, {}))
               end
 
+      default_values = {
+        data: data,
+        cancelled_callback: proc { options.fetch(:cancelled, false) },
+        job_id: options.fetch(:job_id, 0),
+        retries: options.fetch(:job_retries, 0),
+        max_retries: options.fetch(:job_max_retries, 0),
+        retry_callback: proc { !options.fetch(:last_retry, false) }
+      }
+
       task_instance = task_class.new(data)
-      task_instance.send(:set_default_values, data)
-      task_instance.instance_variable_set('@cancelled_callback', (proc { true })) if options[:cancelled]
+      task_instance.send(:set_default_values, default_values)
 
       task_instance
     end

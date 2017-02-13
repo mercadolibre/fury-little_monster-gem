@@ -32,41 +32,52 @@ describe LittleMonster::Core::Task do
   end
 
   describe '#set_default_values' do
-    let(:data) { LittleMonster::Core::Job::Data.new job }
-    let(:cancelled_callback) { double }
-    let(:job_id) { 0 }
-    let(:logger) { double }
-    let(:mock_task) { MockJob::Task.new(nil) }
+    let(:params) do
+      {
+        data: LittleMonster::Core::Job::Data.new(job),
+        job_id: 0,
+        job_logger: double,
+        cancelled_callback: double,
+        retries: 0,
+        max_retries: 2,
+        retry_callback: double
+      }
+    end
 
     it 'sets data' do
-      mock_task.send(:set_default_values, data)
-      expect(mock_task.data).to eq(data)
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.data).to eq(params[:data])
     end
 
-    it 'sets parent_logger if logger is not nil' do
+    it 'sets parent_logger' do
       mock_task.logger
-      mock_task.send(:set_default_values, data, job_id, logger)
-      expect(mock_task.logger.parent_logger).to eq(logger)
-    end
-
-    it 'does not set parent_logger if logger is nil' do
-      mock_task.send(:set_default_values, data, job_id, nil)
-      expect(mock_task.logger.parent_logger).to be_nil
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.logger.parent_logger).to eq(params[:job_logger])
     end
 
     it 'sets cancelled_callback' do
-      mock_task.send(:set_default_values, data, job_id, logger, cancelled_callback)
-      expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(cancelled_callback)
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(params[:cancelled_callback])
     end
 
     it 'sets job_id' do
-      mock_task.send(:set_default_values, data, job_id)
-      expect(mock_task.instance_variable_get('@job_id')).to eq(job_id)
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.instance_variable_get('@job_id')).to eq(params[:job_id])
     end
 
-    it 'sets cancelled_callback to nil if cancelled_callback is not sent' do
-      mock_task.send(:set_default_values, data)
-      expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(nil)
+    it 'sets job_retries' do
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.instance_variable_get('@job_retries')).to eq(params[:retries])
+    end
+
+    it 'sets job_max_retries' do
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.instance_variable_get('@job_max_retries')).to eq(params[:max_retries])
+    end
+
+    it 'sets retry_callback' do
+      mock_task.send(:set_default_values, params)
+      expect(mock_task.instance_variable_get('@retry_callback')).to eq(params[:retry_callback])
     end
   end
 

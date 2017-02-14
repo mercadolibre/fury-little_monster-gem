@@ -5,6 +5,7 @@ module LittleMonster::Core
     def initialize(params)
       @params = params
 
+      @thread_id = Thread.current.object_id
       @heartbeat_task = Concurrent::TimerTask.new(execution_interval: LittleMonster.heartbeat_execution_interval) do
         send_heartbeat!
       end
@@ -29,7 +30,7 @@ module LittleMonster::Core
       res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", body: {
         ip: Socket.gethostname,
         host: Socket.gethostname,
-        pid: "#{Process.pid}-#{Thread.current.object_id}"
+        pid: "#{Process.pid}-#{@thread_id}"
       }
 
       raise LittleMonster::JobAlreadyLockedError, "job [id:#{@params[:id]}] is already locked, discarding" if res.code == 401

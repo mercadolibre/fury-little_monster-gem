@@ -411,7 +411,7 @@ describe LittleMonster::Core::Job do
         end
 
         it 'returns array sliced from current task to end' do
-          expect(job.tasks_to_run).to eq([:task_b])
+          expect(job.tasks_to_run).to eq([:task_b, :task_c])
         end
       end
     end

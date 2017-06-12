@@ -262,6 +262,10 @@ describe LittleMonster::Core::Job::Orchrestator do
           it 'builds task_b' do
             expect(MockJob::TaskB).to have_received(:new)
           end
+
+          it 'builds task_c' do
+            expect(TaskC).to have_received(:new)
+          end
         end
 
         context 'and it does not have any current_action' do
@@ -289,7 +293,7 @@ describe LittleMonster::Core::Job::Orchrestator do
         expect(subject.job.status).to eq(:error)
       end
     end
-    
+
     context 'when a task fails' do
       context 'when task.on_error does not fail' do
         let(:mock_task) { MockJob::TaskB.new({}) }

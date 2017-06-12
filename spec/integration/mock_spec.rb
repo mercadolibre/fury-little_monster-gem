@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe MockJob do
   it 'runs both its tasks' do
-    expect(run_job(:mock_job, data: { a: :b })).to have_run(:task_a, :task_b)
+    expect(run_job(:mock_job, data: { a: :b })).to have_run(:task_a, :task_b, :task_c)
   end
 
   it 'ends with status success' do

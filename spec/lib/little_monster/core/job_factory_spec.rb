@@ -171,7 +171,7 @@ describe LittleMonster::Core::Job::Factory do
       end
 
       it 'makes a request to api with job_class task_list, critical, retries and retry wait' do
-        mockjob_tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }]
+        mockjob_tasks_name_with_order = [{ name: :task_a, order: 0 }, { name: :task_b, order: 1 }, { name: :task_c, order: 2}]
         factory.notify_job_task_list
         expect(LittleMonster::API).to have_received(:post).with("/jobs/#{message[:id]}/tasks",
                                                                 { body: { tasks: mockjob_tasks_name_with_order } },

@@ -20,6 +20,8 @@ module LittleMonster::Core
 
       def task_class_for(task_name)
         "#{to_s.underscore}/#{task_name}".camelcase.constantize
+      rescue NameError
+        task_name.to_s.camelcase.constantize
       end
 
       def max_retries

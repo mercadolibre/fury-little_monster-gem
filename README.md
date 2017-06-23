@@ -3,9 +3,9 @@
 [![Code Climate](https://codeclimate.com/github/mercadolibre/fury-little_monster-gem/badges/gpa.svg)](https://codeclimate.com/github/mercadolibre/fury-little_monster-gem)
 # fury-little_monster
 
-##RSPEC Matchers
+## RSPEC Matchers
 
-###Installation
+### Installation
 
 in your spec_helper add the following line
 
@@ -13,7 +13,7 @@ in your spec_helper add the following line
 require 'little_monster/rspec'
 ```
 
-###helpers
+### helpers
 
 ### generate_job
 it takes a job and a hash of parameters and returns a fully configured job instance
@@ -44,30 +44,30 @@ it takes a task class or symbol and returns a fully configured task instance
 generate_task MyJob::MyTask, data: { a: :b }
 ```
 
-###matchers
+### matchers
 
-###have_run
+### have_run
 
 given a JobResult object expects the job to run that list of tasks
 ```ruby
 expect(run_job(:my_job)).to have_run(:my_task, :my_other_task)
 ```
 
-###have_run_task
+### have_run_task
 
 given a JobResult object expects the job to run the a given task with a certain data
 ```ruby
 expect(run_job(:my_job)).to have_run_task(:my_task).with_data(a: :b)
 ```
 
-###have_ended_with_status
+### have_ended_with_status
 
 given a JobResult object expects the job have a given status after the run
 ```ruby
 expect(run_job(:my_job)).to have_ended_with_status(:success)
 ```
 
-###have_data
+### have_data
 
 given checks a job or JobResult instance data
 ```ruby
@@ -77,14 +77,14 @@ expect(run_job(:my_job)).to have_ended_with_status(:success)
 expect(generate_job(:my_job)).to have_ended_with_status(:success)
 ```
 
-###have_retries
+### have_retries
 
 given job instance, a class or a class symbol it expects the retries for that class
 ```ruby
 expect(:my_job).to have_retries(3)
 ```
 
-###have_retries
+### have_callback_retries
 
 given job instance, a class or a class symbol it expects the callback retries for that class
 ```ruby

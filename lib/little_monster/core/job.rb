@@ -1,3 +1,5 @@
+require 'newrelic_rpm'
+
 module LittleMonster::Core
   class Job
     include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation

@@ -1,5 +1,6 @@
 module LittleMonster::Core
   class Job
+    include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
     include Loggable
 
     ENDED_STATUS = %i(success error cancelled).freeze
@@ -8,6 +9,10 @@ module LittleMonster::Core
     class << self
       def task_list(*tasks)
         @tasks = *tasks
+
+        tasks.each do |name|
+          add_method_tracer name
+        end
       end
 
       def retries(value)
@@ -209,5 +214,7 @@ module LittleMonster::Core
     def on_error ; end
     def on_success ; end
     def on_cancel ; end
+
+    add_transaction_tracer :run
   end
 end

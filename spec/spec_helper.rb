@@ -6,6 +6,7 @@ end
 
 ENV['RUBY_ENV'] = 'test'
 
+require 'newrelic_rpm'
 require 'rspec'
 require 'byebug'
 require 'require_all'

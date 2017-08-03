@@ -1,6 +1,7 @@
 module LittleMonster::Core
   class Task
     include Loggable
+    include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
 
     attr_reader :data
     attr_reader :job_id
@@ -50,5 +51,7 @@ module LittleMonster::Core
       logger.default_tags.merge!(type: 'task_log')
     end
   end
+
+  add_transaction_tracer :run
 
 end

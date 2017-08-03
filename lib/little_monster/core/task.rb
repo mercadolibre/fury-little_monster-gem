@@ -1,7 +1,6 @@
 module LittleMonster::Core
   class Task
     include Loggable
-    include ::NewRelic::Agent::MethodTracer
 
     attr_reader :data
     attr_reader :job_id
@@ -52,5 +51,4 @@ module LittleMonster::Core
     end
   end
 
-  add_method_tracer :run
 end

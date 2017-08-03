@@ -1,5 +1,7 @@
 module LittleMonster::Core
   class Job::Orchrestator
+    include ::NewRelic::Agent::MethodTracer
+
     attr_reader :logger
     attr_reader :job
 
@@ -112,6 +114,10 @@ module LittleMonster::Core
     end
 
     def build_task(task_symbol)
+      @job.task_class_for(task_symbol).class_eval do
+        add_method_tracer :run
+      end
+
       task = @job.task_class_for(task_symbol).new(@job.data)
       task.send(:set_default_values,
                 data: @job.data,

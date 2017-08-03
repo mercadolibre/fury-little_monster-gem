@@ -50,8 +50,7 @@ module LittleMonster::Core
       logger.parent_logger = job_logger if job_logger
       logger.default_tags.merge!(type: 'task_log')
     end
+
+    add_transaction_tracer :run
   end
-
-  add_transaction_tracer :run
-
 end

@@ -1,17 +1,12 @@
 module LittleMonster::Core
   class Task
     include Loggable
+    include ::NewRelic::Agent::MethodTracer
 
     attr_reader :data
     attr_reader :job_id
     attr_reader :job_retries
     attr_reader :job_max_retries
-
-    class << self
-      include ::NewRelic::Agent::MethodTracer
-
-      add_method_tracer :run
-    end
 
     def initialize(data, job_id = nil)
       @data = data
@@ -56,4 +51,6 @@ module LittleMonster::Core
       logger.default_tags.merge!(type: 'task_log')
     end
   end
+
+  add_method_tracer :run
 end

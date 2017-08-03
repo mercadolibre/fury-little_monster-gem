@@ -7,6 +7,12 @@ module LittleMonster::Core
     attr_reader :job_retries
     attr_reader :job_max_retries
 
+    class << self
+      include ::NewRelic::Agent::MethodTracer
+
+      add_method_tracer :run
+    end
+
     def initialize(data, job_id = nil)
       @data = data
       @job_id = job_id

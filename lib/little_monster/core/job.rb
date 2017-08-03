@@ -11,10 +11,6 @@ module LittleMonster::Core
     class << self
       def task_list(*tasks)
         @tasks = *tasks
-
-        tasks.each do |name|
-          add_method_tracer name
-        end
       end
 
       def retries(value)

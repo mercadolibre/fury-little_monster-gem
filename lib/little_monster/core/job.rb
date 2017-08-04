@@ -213,6 +213,6 @@ module LittleMonster::Core
     def on_success ; end
     def on_cancel ; end
 
-    add_transaction_tracer :run
+#    add_transaction_tracer :run
   end
 end

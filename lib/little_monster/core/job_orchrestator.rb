@@ -46,9 +46,9 @@ module LittleMonster::Core
           raise LittleMonster::CancelError if @job.is_cancelled?
 
           task = build_task(task_name)
-          self.class.trace_execution_scoped(["#{task_name.upcase}\#Run"]) do
+#          self.class.trace_execution_scoped(["#{task_name.upcase}\#Run"]) do
             task.run
-          end
+#          end
 
           # data is sent only on task success
           @job.notify_task :success, data: @job.data

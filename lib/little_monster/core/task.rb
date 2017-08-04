@@ -37,6 +37,12 @@ module LittleMonster::Core
       @retry_callback.nil? ? false : !@retry_callback.call
     end
 
+    def self.inherited(subclass)
+      subclass.class_eval do
+        add_transaction_tracer :run
+      end
+    end
+
     private
 
     def set_default_values(data:, job_id: nil, job_logger: nil,
@@ -50,7 +56,5 @@ module LittleMonster::Core
       logger.parent_logger = job_logger if job_logger
       logger.default_tags.merge!(type: 'task_log')
     end
-
-    add_transaction_tracer :run
   end
 end

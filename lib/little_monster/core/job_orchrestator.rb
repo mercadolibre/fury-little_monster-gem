@@ -1,5 +1,9 @@
+require 'newrelic_rpm'
+
 module LittleMonster::Core
   class Job::Orchrestator
+    extend ::NewRelic::Agent::MethodTracer
+
     attr_reader :logger
     attr_reader :job
 
@@ -44,7 +48,9 @@ module LittleMonster::Core
           raise LittleMonster::CancelError if @job.is_cancelled?
 
           task = build_task(task_name)
-          task.run
+          self.class.trace_execution_scoped(["#{class_to_use(task_name)}\#Run"]) do
+            task.run
+          end
 
           # data is sent only on task success
           @job.notify_task :success, data: @job.data
@@ -111,8 +117,12 @@ module LittleMonster::Core
       handle_error e
     end
 
+    def class_to_use(task_symbol)
+      @job.task_class_for(task_symbol)
+    end
+
     def build_task(task_symbol)
-      task = @job.task_class_for(task_symbol).new(@job.data)
+      task = class_to_use(task_symbol).new(@job.data)
       task.send(:set_default_values,
                 data: @job.data,
                 job_id: @job.id,

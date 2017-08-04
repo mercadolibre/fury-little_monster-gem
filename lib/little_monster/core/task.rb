@@ -37,7 +37,7 @@ module LittleMonster::Core
       @retry_callback.nil? ? false : !@retry_callback.call
     end
 
-    add_transaction_tracer :run, category: :task
+#    add_transaction_tracer :run, category: :task
 
     private
 

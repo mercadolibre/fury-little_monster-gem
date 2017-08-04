@@ -1,5 +1,6 @@
 module LittleMonster::Core
   class Task
+    include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
     include Loggable
 
     attr_reader :data
@@ -35,6 +36,8 @@ module LittleMonster::Core
     def last_retry?
       @retry_callback.nil? ? false : !@retry_callback.call
     end
+
+#    add_transaction_tracer :run, category: :task
 
     private
 

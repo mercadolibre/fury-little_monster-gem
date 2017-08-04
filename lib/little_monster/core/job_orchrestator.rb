@@ -48,7 +48,7 @@ module LittleMonster::Core
           raise LittleMonster::CancelError if @job.is_cancelled?
 
           task = build_task(task_name)
-          self.class.trace_execution_scoped(["#{class_to_use(task_name).to_s}\#Run"]) do
+          self.class.trace_execution_scoped(["#{class_to_use(task_name)}\#Run"]) do
             task.run
           end
 

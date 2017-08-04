@@ -1,5 +1,7 @@
 module LittleMonster::Core
   class Job::Orchrestator
+    extend ::NewRelic::Agent::MethodTracer
+
     attr_reader :logger
     attr_reader :job
 
@@ -44,7 +46,9 @@ module LittleMonster::Core
           raise LittleMonster::CancelError if @job.is_cancelled?
 
           task = build_task(task_name)
-          task.run
+          self.class.trace_execution_scoped(["#{task_name.upcase}\#Run"]) do
+            task.run
+          end
 
           # data is sent only on task success
           @job.notify_task :success, data: @job.data

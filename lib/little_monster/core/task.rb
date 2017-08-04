@@ -1,7 +1,6 @@
 module LittleMonster::Core
   class Task
     include Loggable
-    include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
 
     attr_reader :data
     attr_reader :job_id
@@ -35,12 +34,6 @@ module LittleMonster::Core
 
     def last_retry?
       @retry_callback.nil? ? false : !@retry_callback.call
-    end
-
-    def self.inherited(subclass)
-      subclass.class_eval do
-        add_transaction_tracer :run
-      end
     end
 
     private

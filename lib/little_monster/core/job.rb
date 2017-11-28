@@ -201,8 +201,9 @@ module LittleMonster::Core
     end
 
     def serialize_error(error)
+      # encode error message to UTF-8 and remove invalid characters or MultiJson breaks
       {
-        message: error.message,
+        message: error.message.encode('UTF-8', invalid: :replace, replace: ''),
         type: error.class.to_s,
         retry: @retries
       }

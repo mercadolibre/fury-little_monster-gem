@@ -471,6 +471,14 @@ describe LittleMonster::Core::Job do
         expect(job.serialize_error error).to eq(message: error.message, type: error.class.to_s, retry: job.retries)
       end
     end
+
+    context 'if error contains non UTF-8 characters' do
+      let(:error) { StandardError.new "testing\xC2 a non UTF-8 string" }
+
+      it 'returns a hash with message, type and current retry' do
+        expect(job.serialize_error(error)[:message]).to eq('testing a non UTF-8 string')
+      end
+    end
   end
 
   describe '#max_retries' do

@@ -70,7 +70,8 @@ module LittleMonster::Core
         res.define_singleton_method(:body) do
           begin
             MultiJson.load(res.options[:response_body], symbolize_keys: true)
-          rescue
+          rescue StandardError => e
+            logger.error "[type:critical_request_failed][request_id:#{request_id}][url:#{url}][retries:#{ret}] failed to parse response body #{e.class}: #{e.message}"
             res.options[:response_body]
           end
         end

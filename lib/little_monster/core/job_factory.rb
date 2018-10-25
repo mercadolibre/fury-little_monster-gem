@@ -73,7 +73,14 @@ module LittleMonster::Core
                                          retry_wait: LittleMonster.job_requests_retry_wait,
                                          critical: true
 
-      resp.success? ? resp.body : nil
+      if resp.success?
+        if resp.body.nil? || resp.body[:status].nil?
+          logger.error("Failed to get api attributes body: #{resp.body.inspect} status: #{resp.body[:status]}")
+        end
+        return resp.body
+      end
+      logger.error("Failed to get api attributes unsuccessful response: #{resp.inspect} success: #{resp.success?}")
+      nil
     end
 
     def calculate_status_and_error

@@ -6,7 +6,7 @@ describe LittleMonster::Core::API do
   let(:path) { '/path' }
   let(:params) { {} }
   let(:options) { { critical: false } }
-  let(:response) { double(code: 200, effective_url: '') }
+  let(:response) { double(code: 200, effective_url: '', success?: true, return_code: :ok) }
   let(:request_id) { '123' }
 
   before :each do
@@ -182,7 +182,9 @@ describe LittleMonster::Core::API do
 
       context 'if status >= 500' do
         before :each do
+          allow(response).to receive(:success?).and_return(false)
           allow(response).to receive(:code).and_return(500)
+          allow(response).to receive(:return_code).and_return(:error)
         end
 
         context 'if no retry configs were passed' do
@@ -195,13 +197,13 @@ describe LittleMonster::Core::API do
           it 'retries the defaulted amount of times' do
             subject.request method, path, params, options
             expect(Typhoeus).to have_received(method)
-              .exactly(LittleMonster.default_request_retries+1).times #es la cantidad de retries +1 de el primer request
+              .exactly(LittleMonster.default_request_retries + 1).times #es la cantidad de retries +1 de el primer request
           end
         end
 
         context 'given retries and retry_wait in options' do
-          let(:retries) { LittleMonster.default_request_retries+1 }
-          let(:retry_wait) { LittleMonster.default_request_retry_wait+1 }
+          let(:retries) { LittleMonster.default_request_retries + 1 }
+          let(:retry_wait) { LittleMonster.default_request_retry_wait + 1 }
 
           before :each do
             options[:retries] = retries

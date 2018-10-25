@@ -46,8 +46,9 @@ module LittleMonster::Core
 
         begin
           res = Typhoeus.public_send method, url, params
-          if res.code >= 500 || res.code.zero?
-            raise FuryHttpApiError, "[type:request_failed][request_id:#{request_id}] request to #{res.effective_url} failed with status #{res.code} retry #{ret}"
+          if !res.success? && (res.code < 400 || res.code >= 500)
+            raise FuryHttpApiError, "[type:request_failed][request_id:#{request_id}] request to #{res.effective_url} "\
+                                    "failed with status #{res.code} code #{res.return_code} retry #{ret}"
           end
 
           logger.info "[type:request_log][request_id:#{request_id}] request made to #{url} with [status:#{res.code}]"
@@ -70,8 +71,7 @@ module LittleMonster::Core
         res.define_singleton_method(:body) do
           begin
             MultiJson.load(res.options[:response_body], symbolize_keys: true)
-          rescue StandardError => e
-            logger.error "[type:critical_request_failed][request_id:#{request_id}][url:#{url}][retries:#{ret}] failed to parse response body #{e.class}: #{e.message}"
+          rescue StandardError
             res.options[:response_body]
           end
         end

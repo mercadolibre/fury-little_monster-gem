@@ -90,7 +90,7 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#fetch_attributes' do
-    let(:response) { double(success?: true, body: double) }
+    let(:response) { double(success?: true, body: {}) }
 
     before :each do
       factory

@@ -29,7 +29,7 @@ module LittleMonster::Core
       end
 
       run_callback
-      logger.info "[type:job_finish] [status:#{@job.status}] data: #{@job.data.to_h[:outputs]}"
+      logger.info "[type:job_finish] [status:#{@job.status}] Job finished"
     ensure
       options = {}
       options[:data] = @job.data if @job.ended_status?
@@ -42,7 +42,7 @@ module LittleMonster::Core
         @job.notify_task :running
 
         logger.default_tags[:current_task] = @job.current_action
-        logger.info "[type:start_task] data: #{@job.data.to_h[:outputs]}"
+        logger.info "[type:start_task] Task #{task_name} started"
 
         begin
           raise LittleMonster::CancelError if @job.is_cancelled?
@@ -55,7 +55,7 @@ module LittleMonster::Core
           # data is sent only on task success
           @job.notify_task :success, data: @job.data
 
-          logger.info "[type:finish_task] [status:success] data: #{@job.data.to_h[:outputs]}"
+          logger.info "[type:finish_task] [status:success] Task finished!"
 
           if @job.mock?
             @job.runned_tasks[task_name] = {}
@@ -95,14 +95,14 @@ module LittleMonster::Core
       logger.default_tags[:callback] = @job.current_action
       @job.notify_callback :running
 
-      logger.info "[type:start_callback] data: #{@job.data.to_h[:outputs]}"
+      logger.info "[type:start_callback] Started callback!"
       begin
         logger.default_tags[:type] = 'callback_log'
         @job.public_send(@job.current_action)
       ensure
         logger.default_tags.delete(:type)
       end
-      logger.info "[type:finish_callback] [status:success] data: #{@job.data.to_h[:outputs]}"
+      logger.info "[type:finish_callback] [status:success] Finished callback!"
 
       @job.notify_callback :success
 
@@ -138,7 +138,7 @@ module LittleMonster::Core
       logger.debug 'notifiying cancel...'
 
       @job.notify_task :cancelled
-      logger.info "[type:finish_task] [status:cancelled] data: #{@job.data.to_h[:outputs]}"
+      logger.info "[type:finish_task] [status:cancelled] Cancelled task!"
 
       @job.status = :cancelled
     end
@@ -149,7 +149,7 @@ module LittleMonster::Core
       logger.debug 'notifiying abort...'
 
       if @job.callback_running?
-        logger.info "[type:finish_callback] [status:error] data: #{@job.data.to_h[:outputs]}"
+        logger.info "[type:finish_callback] [status:error] Failed on callback"
         @job.notify_callback :error, exception: error
 
         # if callback is not on_error, raise exception to run on_error
@@ -160,7 +160,7 @@ module LittleMonster::Core
         end
       else
         @job.notify_task :error, exception: error
-        logger.info "[type:finish_task] [status:error] data: #{@job.data.to_h[:outputs]}"
+        logger.info "[type:finish_task] [status:error] Failed on callback"
       end
 
       @job.status = :error
@@ -197,7 +197,7 @@ module LittleMonster::Core
 
         @job.status = :pending
 
-        logger.info "[type:job_retry] data: #{@job.data.to_h[:outputs]}"
+        logger.info "[type:job_retry] Job retry!"
         raise JobRetryError, "doing retry #{@job.retries} of #{@job.max_retries}"
       else
         logger.debug 'job has reached max retries'

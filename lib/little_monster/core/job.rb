@@ -89,7 +89,7 @@ module LittleMonster::Core
         retry: @retries
       )
 
-      logger.info "[type:start_job] Starting job with data: #{data.to_h[:outputs]}"
+      logger.info "[type:start_job] Starting job"
     end
 
     def run

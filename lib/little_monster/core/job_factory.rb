@@ -2,7 +2,8 @@ module LittleMonster::Core
   class Job::Factory
     include Loggable
 
-    def initialize(message = {})
+    def initialize(worker_id, message = {})
+      @worker_id = worker_id
       @id = message[:id]
       @name = message[:name]
 
@@ -18,7 +19,7 @@ module LittleMonster::Core
 
       begin
         @job_class = @name.to_s.camelcase.constantize
-      rescue NameError
+      rescue NameError => e
         raise JobNotFoundError.new(@id), "[type:error] job [name:#{@name}] does not exists"
       end
     end
@@ -130,7 +131,8 @@ module LittleMonster::Core
       attributes = {
         id: @id,
         data: data,
-        tags: @tags
+        tags: @tags,
+        worker_id: @worker_id
       }
 
       return attributes if LittleMonster.disable_requests?

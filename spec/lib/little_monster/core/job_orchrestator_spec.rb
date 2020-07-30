@@ -361,13 +361,20 @@ describe LittleMonster::Core::Job::Orchrestator do
     end
   end
 
+  context 'when ownership lost' do
+    it 'raises OwnershipLostError' do
+      allow(subject.job).to receive(:check_abort_cause).and_return(:ownership_lost)
+      expect { subject.run_tasks }.to raise_error(LittleMonster::OwnershipLostError)
+    end
+  end
+
   context 'if job is cancelled' do
     before :each do
       allow(subject).to receive(:cancel)
     end
 
     it 'calls cancel' do
-      allow(subject.job).to receive(:is_cancelled?).and_return(true)
+      allow(subject.job).to receive(:check_abort_cause).and_return(:cancel)
       subject.run_tasks
       expect(subject).to have_received(:cancel).once
     end
@@ -484,6 +491,7 @@ describe LittleMonster::Core::Job::Orchrestator do
                                                               job_id: subject.job.id,
                                                               job_logger: subject.logger,
                                                               cancelled_callback: subject.job.method(:is_cancelled?),
+                                                              cancelled_throw_callback: subject.job.method(:is_cancelled!),
                                                               retries: subject.job.retries,
                                                               max_retries: subject.job.max_retries,
                                                               retry_callback: subject.job.method(:retry?))

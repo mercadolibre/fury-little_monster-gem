@@ -62,6 +62,7 @@ module LittleMonster::Core
     def initialize(options = {})
       @id = options.fetch(:id, nil)
       @tags = (options[:tags] || {}).freeze
+      @worker_id = options.fetch(:worker_id, nil)
 
       @retries = options[:retries] || 0
 
@@ -140,15 +141,32 @@ module LittleMonster::Core
       resp.success?
     end
 
-    def is_cancelled?
-      return false unless should_request?
+    def check_abort_cause
+      return nil unless should_request?
       resp = LittleMonster::API.get "/jobs/#{id}"
 
       if resp.success?
-        resp.body[:cancel]
-      else
-        false
+        return :cancel if resp.body[:cancel]
+        return :ownership_lost unless is_current_worker?(resp.body[:worker])
       end
+      nil
+    end
+
+    def is_cancelled?
+      !check_abort_cause.nil?
+    end
+
+    def is_cancelled!
+      case check_abort_cause
+      when :cancel
+        raise CancelError
+      when :ownership_lost
+        raise OwnershipLostError
+      end
+    end
+
+    def is_current_worker?(current_worker)
+      @worker_id.nil? || @worker_id == LittleMonster::Core::WorkerId.new(current_worker)
     end
 
     def task_class_for(task_name)

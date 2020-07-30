@@ -10,7 +10,8 @@ describe LittleMonster::Core::Job::Factory do
     }
   end
 
-  let(:factory) { described_class.new message }
+  let(:worker_id) { LittleMonster::Core::WorkerId.new }
+  let(:factory) { described_class.new worker_id, message }
 
   describe '#initialize' do
     it { expect(factory.instance_variable_get '@id').to eq(message[:id]) }
@@ -442,7 +443,8 @@ describe LittleMonster::Core::Job::Factory do
       it 'returns hash with id tags and input data' do
         expect(factory.job_attributes).to eq(id: message[:id],
                                              data: message[:data],
-                                             tags: factory.instance_variable_get('@tags'))
+                                             tags: factory.instance_variable_get('@tags'),
+                                             worker_id: worker_id)
       end
     end
 
@@ -463,6 +465,7 @@ describe LittleMonster::Core::Job::Factory do
       it 'returns hash with id, params, tags, data, calculated_status, current_action and retries' do
         expect(factory.job_attributes).to eq(id: message[:id],
                                              tags: factory.instance_variable_get('@tags'),
+                                             worker_id: worker_id,
                                              data: data,
                                              status: status,
                                              error: error,

@@ -45,7 +45,7 @@ module LittleMonster::Core
         logger.info "[type:start_task] Task #{task_name} started"
 
         begin
-          raise LittleMonster::CancelError if @job.is_cancelled?
+          @job.is_cancelled!
 
           task = build_task(task_name)
           self.class.trace_execution_scoped(["#{class_to_use(task_name)}\#Run"]) do
@@ -64,6 +64,9 @@ module LittleMonster::Core
           end
         rescue APIUnreachableError => e
           logger.error "[type:api_unreachable] [message:#{e.message.dump}]"
+          raise e
+        rescue OwnershipLostError => e
+          logger.error "[type:ownership_lost] [message:#{e.message.dump}]"
           raise e
         rescue CancelError => e
           logger.info '[type:cancel] job was cancelled'
@@ -128,6 +131,7 @@ module LittleMonster::Core
                 job_id: @job.id,
                 job_logger: logger,
                 cancelled_callback: @job.method(:is_cancelled?),
+                cancelled_throw_callback: @job.method(:is_cancelled!),
                 retries: @job.retries,
                 max_retries: @job.max_retries,
                 retry_callback: @job.method(:retry?))

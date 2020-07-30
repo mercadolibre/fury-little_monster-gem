@@ -73,7 +73,7 @@ describe LittleMonster::Core::Runner do
       it 'makes a request to api with critical: true , ip and pid' do
         runner.send_heartbeat!
         expect(LittleMonster::API).to have_received(:put).with("/jobs/#{params[:id]}/worker",
-                                                               { body: hash_including(:ip, :pid, :host) })
+                                                               { body: hash_including(:ip, :pid, :host) }, { critical: true })
       end
 
       context 'if request is unauthorized' do

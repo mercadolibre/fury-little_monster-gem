@@ -28,7 +28,7 @@ module LittleMonster
   end
 
   def disable_requests?
-    %w(development test).include?(@@env)
+    %w[development test].include?(@@env)
   end
 
   def configure

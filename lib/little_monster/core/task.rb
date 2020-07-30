@@ -16,8 +16,7 @@ module LittleMonster::Core
       raise NotImplementedError, 'You must implement the run method'
     end
 
-    def on_error(error)
-    end
+    def on_error(error); end
 
     def error(e)
       logger.error e
@@ -29,7 +28,7 @@ module LittleMonster::Core
     end
 
     def is_cancelled!
-      raise CancelError if is_cancelled?
+      @cancelled_throw_callback&.call
     end
 
     def last_retry?
@@ -39,8 +38,10 @@ module LittleMonster::Core
     private
 
     def set_default_values(data:, job_id: nil, job_logger: nil,
-                           cancelled_callback: nil, retries: 0, max_retries: 0, retry_callback: nil)
+                           cancelled_callback: nil, cancelled_throw_callback: nil,
+                           retries: 0, max_retries: 0, retry_callback: nil)
       @cancelled_callback = cancelled_callback
+      @cancelled_throw_callback = cancelled_throw_callback
       @job_id = job_id
       @data = data
       @job_retries = retries

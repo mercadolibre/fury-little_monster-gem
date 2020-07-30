@@ -2,7 +2,8 @@ module LittleMonster::Core
   class Job::Factory
     include Loggable
 
-    def initialize(message = {})
+    def initialize(worker_id, message = {})
+      @worker_id = worker_id
       @id = message[:id]
       @name = message[:name]
 
@@ -86,12 +87,12 @@ module LittleMonster::Core
     def calculate_status_and_error
       return [:pending, {}] if @api_attributes[:tasks].blank?
 
-      #FIRST we check if any callback has failed to set error status
+      # FIRST we check if any callback has failed to set error status
       @api_attributes.fetch(:callbacks, []).each do |callback|
         return [:error, callback[:exception] || {}] if callback[:status].to_sym == :error
       end
 
-      #if no callback has fail we get the status from the tasks
+      # if no callback has fail we get the status from the tasks
       @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
         return [task[:status].to_sym, task[:exception] || {}] if task[:status].to_sym != :success
       end
@@ -130,7 +131,8 @@ module LittleMonster::Core
       attributes = {
         id: @id,
         data: data,
-        tags: @tags
+        tags: @tags,
+        worker_id: @worker_id
       }
 
       return attributes if LittleMonster.disable_requests?

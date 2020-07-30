@@ -3,7 +3,7 @@ module LittleMonster::Core
     attr_accessor :parent_logger
     attr_reader :tags
 
-    LEVELS = [:unknown, :fatal, :error, :warn, :info, :debug].freeze
+    LEVELS = %i[unknown fatal error warn info debug].freeze
 
     def self.tags_to_string(hash)
       hash.map { |k, v| "[#{k}:#{v}]" }.join

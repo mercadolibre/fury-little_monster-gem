@@ -5,8 +5,8 @@ module LittleMonster::Core
     include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
     include Loggable
 
-    ENDED_STATUS = %i(success error cancelled).freeze
-    CALLBACKS = %i(on_success on_error on_cancel).freeze
+    ENDED_STATUS = %i[success error cancelled].freeze
+    CALLBACKS = %i[on_success on_error on_cancel].freeze
 
     class << self
       def task_list(*tasks)
@@ -62,6 +62,7 @@ module LittleMonster::Core
     def initialize(options = {})
       @id = options.fetch(:id, nil)
       @tags = (options[:tags] || {}).freeze
+      @worker_id = options.fetch(:worker_id, nil)
 
       @retries = options[:retries] || 0
 
@@ -74,7 +75,7 @@ module LittleMonster::Core
               end
 
       @status = options.fetch(:status, :pending)
-      @error= options.fetch(:error, {})
+      @error = options.fetch(:error, {})
 
       @orchrestator = Job::Orchrestator.new(self)
 
@@ -89,7 +90,7 @@ module LittleMonster::Core
         retry: @retries
       )
 
-      logger.info "[type:start_job] Starting job"
+      logger.info '[type:start_job] Starting job'
     end
 
     def run
@@ -140,15 +141,30 @@ module LittleMonster::Core
       resp.success?
     end
 
-    def is_cancelled?
-      return false unless should_request?
-      resp = LittleMonster::API.get "/jobs/#{id}"
+    def check_abort_cause(critical: false)
+      return nil unless should_request?
+      resp = LittleMonster::API.get "/jobs/#{id}", {}, critical: critical
 
-      if resp.success?
-        resp.body[:cancel]
-      else
-        false
+      return unless resp.success?
+      return :cancel if resp.body[:cancel]
+      return :ownership_lost unless worker_matches_lock?(resp.body[:worker])
+    end
+
+    def is_cancelled?
+      !check_abort_cause.nil?
+    end
+
+    def is_cancelled!(critical: false)
+      case check_abort_cause(critical: critical)
+      when :cancel
+        raise CancelError
+      when :ownership_lost
+        raise OwnershipLostError
       end
+    end
+
+    def worker_matches_lock?(current_worker)
+      @worker_id.nil? || @worker_id.matches_lock?(current_worker)
     end
 
     def task_class_for(task_name)
@@ -210,9 +226,11 @@ module LittleMonster::Core
     end
 
     # callbacks definition
-    def on_error ; end
-    def on_success ; end
-    def on_cancel ; end
+    def on_error; end
+
+    def on_success; end
+
+    def on_cancel; end
 
     add_transaction_tracer :run
   end

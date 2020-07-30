@@ -129,8 +129,8 @@ describe LittleMonster::Core::Task do
       expect { mock_task.is_cancelled! }.not_to raise_error
     end
 
-    it 'raises CancelError if callback returns true' do
-      mock_task.instance_variable_set('@cancelled_callback', proc { true })
+    it 'raises CancelError if callback raises' do
+      mock_task.instance_variable_set('@cancelled_throw_callback', proc { raise LittleMonster::CancelError })
       expect { mock_task.is_cancelled! }.to raise_error(LittleMonster::CancelError)
     end
   end

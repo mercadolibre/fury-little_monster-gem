@@ -34,11 +34,12 @@ module LittleMonster::RSpec
              else
                LittleMonster::Job::Data.new(double(current_action: task_symbol),
                                             outputs: options.fetch(:data, {}))
-              end
+             end
 
       default_values = {
         data: data,
         cancelled_callback: proc { options.fetch(:cancelled, false) },
+        cancelled_throw_callback: proc { raise LittleMonster::CancelError if options.fetch(:cancelled, false) },
         job_id: options.fetch(:job_id, nil),
         retries: options.fetch(:job_retries, 0),
         max_retries: options.fetch(:job_max_retries, 0),

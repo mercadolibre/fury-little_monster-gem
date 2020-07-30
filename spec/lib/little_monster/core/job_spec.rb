@@ -12,7 +12,8 @@ describe LittleMonster::Core::Job do
   let(:options) do
     {
       id: 0,
-      tags: { a: :b }
+      tags: { a: :b },
+      worker_id: LittleMonster::Core::WorkerId.new
     }
   end
 
@@ -130,7 +131,7 @@ describe LittleMonster::Core::Job do
 
         it 'makes a request to api' do
           job.send(:is_cancelled?)
-          expect(LittleMonster::API).to have_received(:get).with("/jobs/#{job.id}")
+          expect(LittleMonster::API).to have_received(:get).with("/jobs/#{job.id}", {}, { critical: false })
         end
 
         context 'if request was successful' do
@@ -139,13 +140,18 @@ describe LittleMonster::Core::Job do
           end
 
           it 'returns true if response cancel is true' do
-            allow(response).to receive(:body).and_return(cancel: true)
+            allow(response).to receive(:body).and_return(cancel: true, worker: options[:worker_id].to_h)
             expect(job.send(:is_cancelled?)).to be true
           end
 
           it 'returns false if response cancel is false' do
-            allow(response).to receive(:body).and_return(cancel: false)
+            allow(response).to receive(:body).and_return(cancel: false, worker: options[:worker_id].to_h)
             expect(job.send(:is_cancelled?)).to be false
+          end
+
+          it 'returns true if response worker is not current' do
+            allow(response).to receive(:body).and_return(cancel: false, worker: { id: 1, pid: '1-12413', host: 'wrong-host', locked: true})
+            expect(job.send(:is_cancelled?)).to be true
           end
         end
 
@@ -156,6 +162,66 @@ describe LittleMonster::Core::Job do
 
           it 'returns false' do
             expect(job.send(:is_cancelled?)).to be false
+          end
+        end
+      end
+    end
+
+    describe '#is_cancelled!' do
+      context 'when should_request is false' do
+        it 'does not raise' do
+          expect{ job.send(:is_cancelled!) }.not_to raise_error
+        end
+
+        it 'does not send any request' do
+          job.send(:is_cancelled!)
+          expect(LittleMonster::API).not_to have_received(:get)
+        end
+      end
+
+      context 'when should_request is true' do
+        before :each do
+          allow(job).to receive(:should_request?).and_return(true)
+        end
+
+        it 'makes a request to api' do
+          job.send(:is_cancelled!)
+          expect(LittleMonster::API).to have_received(:get).with("/jobs/#{job.id}", {}, { critical: false })
+        end
+
+        it 'makes a critical request to api critical' do
+          job.send(:is_cancelled!, critical: true)
+          expect(LittleMonster::API).to have_received(:get).with("/jobs/#{job.id}", {}, { critical: true })
+        end
+
+        context 'if request was successful' do
+          before :each do
+            allow(response).to receive(:success?).and_return(true)
+          end
+
+          it 'raises CancelError if response cancel is true' do
+            allow(response).to receive(:body).and_return(cancel: true, worker: options[:worker_id].to_h)
+            expect{ job.send(:is_cancelled!) }.to raise_error LittleMonster::CancelError
+          end
+
+          it 'does not raise if response cancel is false' do
+            allow(response).to receive(:body).and_return(cancel: false, worker: options[:worker_id].to_h)
+            expect{ job.send(:is_cancelled!) }.not_to raise_error
+          end
+
+          it 'raises OwnershipLostError if response worker is not current' do
+            allow(response).to receive(:body).and_return(cancel: false, worker: { id: 1, pid: '1-12413', host: 'wrong-host', locked: true})
+            expect{ job.send(:is_cancelled!) }.to raise_error LittleMonster::OwnershipLostError
+          end
+        end
+
+        context 'if request was not succesful' do
+          before :each do
+            allow(response).to receive(:success?).and_return(false)
+          end
+
+          it 'returns false' do
+            expect{ job.send(:is_cancelled!) }.not_to raise_error
           end
         end
       end

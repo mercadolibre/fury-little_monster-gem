@@ -4,7 +4,7 @@ require_relative '../core/api'
 module LittleMonster::Core::Counters
   def increase_counter(counter_name, unique_id, type, output = '')
     begin
-      resp = LittleMonster::Core::API.put(
+      LittleMonster::Core::API.put(
         "/jobs/#{job_id}/counters/#{counter_name}",
         { body: { type: type, unique_id: unique_id, output: output } },
         critical: true
@@ -13,7 +13,7 @@ module LittleMonster::Core::Counters
       logger.error "Could not increase counter #{counter_name}, Api unreachable"
       raise e
     end
-    #raise DuplicatedCounterError if resp.code == 412
+    # raise DuplicatedCounterError if resp.code == 412
     true
   end
 

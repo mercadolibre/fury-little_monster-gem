@@ -5,8 +5,8 @@ module LittleMonster::Core
     include ::NewRelic::Agent::Instrumentation::ControllerInstrumentation
     include Loggable
 
-    ENDED_STATUS = %i(success error cancelled).freeze
-    CALLBACKS = %i(on_success on_error on_cancel).freeze
+    ENDED_STATUS = %i[success error cancelled].freeze
+    CALLBACKS = %i[on_success on_error on_cancel].freeze
 
     class << self
       def task_list(*tasks)
@@ -75,7 +75,7 @@ module LittleMonster::Core
               end
 
       @status = options.fetch(:status, :pending)
-      @error= options.fetch(:error, {})
+      @error = options.fetch(:error, {})
 
       @orchrestator = Job::Orchrestator.new(self)
 
@@ -90,7 +90,7 @@ module LittleMonster::Core
         retry: @retries
       )
 
-      logger.info "[type:start_job] Starting job"
+      logger.info '[type:start_job] Starting job'
     end
 
     def run
@@ -228,9 +228,11 @@ module LittleMonster::Core
     end
 
     # callbacks definition
-    def on_error ; end
-    def on_success ; end
-    def on_cancel ; end
+    def on_error; end
+
+    def on_success; end
+
+    def on_cancel; end
 
     add_transaction_tracer :run
   end

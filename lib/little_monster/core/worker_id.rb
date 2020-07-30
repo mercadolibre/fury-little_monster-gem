@@ -8,8 +8,8 @@ module LittleMonster::Core
     end
 
     def has_lock?(lock)
-      self.host == lock[:host] &&
-        self.pid == lock[:pid]
+      host == lock[:host] &&
+        pid == lock[:pid]
     end
 
     def to_h

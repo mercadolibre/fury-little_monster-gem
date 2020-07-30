@@ -34,7 +34,7 @@ module LittleMonster::RSpec
              else
                LittleMonster::Job::Data.new(double(current_action: task_symbol),
                                             outputs: options.fetch(:data, {}))
-              end
+             end
 
       default_values = {
         data: data,

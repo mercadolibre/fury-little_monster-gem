@@ -1,4 +1,4 @@
-# coding: utf-8
+
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'little_monster/version'
@@ -28,21 +28,21 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_runtime_dependency 'activesupport'
-  spec.add_runtime_dependency 'toiler'
   spec.add_runtime_dependency 'multi_json'
-  spec.add_runtime_dependency 'typhoeus'
-  spec.add_runtime_dependency 'tilt'
   spec.add_runtime_dependency 'thor'
+  spec.add_runtime_dependency 'tilt'
+  spec.add_runtime_dependency 'toiler'
+  spec.add_runtime_dependency 'typhoeus'
   spec.add_runtime_dependency 'vcr'
   spec.add_runtime_dependency 'webmock'
 
   spec.add_development_dependency 'bundler'
-  spec.add_development_dependency 'require_all'
-  spec.add_development_dependency 'oj'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'pry'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'simplecov'
-  spec.add_development_dependency 'rubocop'
   spec.add_development_dependency 'byebug'
+  spec.add_development_dependency 'oj'
+  spec.add_development_dependency 'pry'
+  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'require_all'
+  spec.add_development_dependency 'rspec'
+  spec.add_development_dependency 'rubocop'
+  spec.add_development_dependency 'simplecov'
 end

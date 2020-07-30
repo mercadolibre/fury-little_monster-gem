@@ -19,7 +19,7 @@ module LittleMonster::Core
 
       begin
         @job_class = @name.to_s.camelcase.constantize
-      rescue NameError => e
+      rescue NameError
         raise JobNotFoundError.new(@id), "[type:error] job [name:#{@name}] does not exists"
       end
     end
@@ -87,12 +87,12 @@ module LittleMonster::Core
     def calculate_status_and_error
       return [:pending, {}] if @api_attributes[:tasks].blank?
 
-      #FIRST we check if any callback has failed to set error status
+      # FIRST we check if any callback has failed to set error status
       @api_attributes.fetch(:callbacks, []).each do |callback|
         return [:error, callback[:exception] || {}] if callback[:status].to_sym == :error
       end
 
-      #if no callback has fail we get the status from the tasks
+      # if no callback has fail we get the status from the tasks
       @api_attributes[:tasks].sort_by! { |task| task[:order] }.each do |task|
         return [task[:status].to_sym, task[:exception] || {}] if task[:status].to_sym != :success
       end

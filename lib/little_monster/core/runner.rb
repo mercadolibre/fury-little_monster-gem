@@ -23,7 +23,7 @@ module LittleMonster::Core
       @heartbeat_task.execute unless LittleMonster.disable_requests?
 
       job = LittleMonster::Job::Factory.new(@worker_id, @params).build
-      job.run unless job.nil?
+      job&.run
     rescue JobNotFoundError => e
       logger.error "[id:#{@params[:id]}][type:job_not_found] [message:#{e.message.dump}] \n #{e.backtrace.to_a.join("\n\t")}"
     ensure

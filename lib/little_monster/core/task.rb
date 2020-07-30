@@ -16,8 +16,7 @@ module LittleMonster::Core
       raise NotImplementedError, 'You must implement the run method'
     end
 
-    def on_error(error)
-    end
+    def on_error(error); end
 
     def error(e)
       logger.error e
@@ -29,7 +28,7 @@ module LittleMonster::Core
     end
 
     def is_cancelled!
-      @cancelled_throw_callback.call unless @cancelled_throw_callback.nil?
+      @cancelled_throw_callback&.call
     end
 
     def last_retry?

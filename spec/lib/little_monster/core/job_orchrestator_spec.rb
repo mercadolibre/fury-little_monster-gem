@@ -365,6 +365,7 @@ describe LittleMonster::Core::Job::Orchrestator do
     it 'raises OwnershipLostError' do
       allow(subject.job).to receive(:check_abort_cause).and_return(:ownership_lost)
       expect { subject.run_tasks }.to raise_error(LittleMonster::OwnershipLostError)
+      expect(subject.job).to have_received(:check_abort_cause).once.with(critical: true)
     end
   end
 
@@ -376,6 +377,7 @@ describe LittleMonster::Core::Job::Orchrestator do
     it 'calls cancel' do
       allow(subject.job).to receive(:check_abort_cause).and_return(:cancel)
       subject.run_tasks
+      expect(subject.job).to have_received(:check_abort_cause).once.with(critical: true)
       expect(subject).to have_received(:cancel).once
     end
 

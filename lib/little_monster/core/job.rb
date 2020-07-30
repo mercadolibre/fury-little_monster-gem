@@ -141,23 +141,21 @@ module LittleMonster::Core
       resp.success?
     end
 
-    def check_abort_cause
+    def check_abort_cause(critical: false)
       return nil unless should_request?
-      resp = LittleMonster::API.get "/jobs/#{id}"
+      resp = LittleMonster::API.get "/jobs/#{id}", {}, critical: critical
 
-      if resp.success?
-        return :cancel if resp.body[:cancel]
-        return :ownership_lost unless worker_has_lock?(resp.body[:worker])
-      end
-      nil
+      return unless resp.success?
+      return :cancel if resp.body[:cancel]
+      return :ownership_lost unless worker_has_lock?(resp.body[:worker])
     end
 
     def is_cancelled?
       !check_abort_cause.nil?
     end
 
-    def is_cancelled!
-      case check_abort_cause
+    def is_cancelled!(critical: false)
+      case check_abort_cause(critical: critical)
       when :cancel
         raise CancelError
       when :ownership_lost

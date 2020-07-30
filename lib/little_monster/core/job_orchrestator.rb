@@ -45,7 +45,7 @@ module LittleMonster::Core
         logger.info "[type:start_task] Task #{task_name} started"
 
         begin
-          @job.is_cancelled!
+          @job.is_cancelled! critical: true
 
           task = build_task(task_name)
           self.class.trace_execution_scoped(["#{class_to_use(task_name)}\#Run"]) do

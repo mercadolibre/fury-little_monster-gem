@@ -7,7 +7,7 @@ module LittleMonster::Core
       @pid = pid.nil? ? "#{Process.pid}-#{Thread.current.object_id}".freeze : pid.freeze
     end
 
-    def has_lock?(lock)
+    def matches_lock?(lock)
       host == lock[:host] &&
         pid == lock[:pid]
     end

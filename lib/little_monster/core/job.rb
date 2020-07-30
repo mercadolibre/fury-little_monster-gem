@@ -147,7 +147,7 @@ module LittleMonster::Core
 
       return unless resp.success?
       return :cancel if resp.body[:cancel]
-      return :ownership_lost unless worker_has_lock?(resp.body[:worker])
+      return :ownership_lost unless worker_matches_lock?(resp.body[:worker])
     end
 
     def is_cancelled?
@@ -163,8 +163,8 @@ module LittleMonster::Core
       end
     end
 
-    def worker_has_lock?(current_worker)
-      @worker_id.nil? || @worker_id.has_lock?(current_worker)
+    def worker_matches_lock?(current_worker)
+      @worker_id.nil? || @worker_id.matches_lock?(current_worker)
     end
 
     def task_class_for(task_name)

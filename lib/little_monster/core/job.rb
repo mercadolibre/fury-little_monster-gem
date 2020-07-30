@@ -147,7 +147,7 @@ module LittleMonster::Core
 
       if resp.success?
         return :cancel if resp.body[:cancel]
-        return :ownership_lost unless is_current_worker?(resp.body[:worker])
+        return :ownership_lost unless worker_has_lock?(resp.body[:worker])
       end
       nil
     end
@@ -165,8 +165,8 @@ module LittleMonster::Core
       end
     end
 
-    def is_current_worker?(current_worker)
-      @worker_id.nil? || @worker_id == LittleMonster::Core::WorkerId.new(current_worker)
+    def worker_has_lock?(current_worker)
+      @worker_id.nil? || @worker_id.has_lock?(current_worker)
     end
 
     def task_class_for(task_name)

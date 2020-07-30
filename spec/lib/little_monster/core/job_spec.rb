@@ -12,7 +12,8 @@ describe LittleMonster::Core::Job do
   let(:options) do
     {
       id: 0,
-      tags: { a: :b }
+      tags: { a: :b },
+      worker_id: LittleMonster::Core::WorkerId.new
     }
   end
 
@@ -139,13 +140,18 @@ describe LittleMonster::Core::Job do
           end
 
           it 'returns true if response cancel is true' do
-            allow(response).to receive(:body).and_return(cancel: true)
+            allow(response).to receive(:body).and_return(cancel: true, worker: options[:worker_id].to_h)
             expect(job.send(:is_cancelled?)).to be true
           end
 
           it 'returns false if response cancel is false' do
-            allow(response).to receive(:body).and_return(cancel: false)
+            allow(response).to receive(:body).and_return(cancel: false, worker: options[:worker_id].to_h)
             expect(job.send(:is_cancelled?)).to be false
+          end
+
+          it 'returns true if response worker is not current' do
+            allow(response).to receive(:body).and_return(cancel: false, worker: { id: 1, pid: '1-12413', host: 'wrong-host', locked: true})
+            expect(job.send(:is_cancelled?)).to be true
           end
         end
 

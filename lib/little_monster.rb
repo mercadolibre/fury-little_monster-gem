@@ -19,7 +19,7 @@ module LittleMonster
     @@logger = @@env.test? ? Logger.new('/dev/null') : Toiler.logger
 
     @@logger.formatter = proc do |severity, datetime, _progname, msg|
-      MultiJson.dump(timestamp: "#{datetime.to_s}", severity: severity, message: msg) + "\n"
+      MultiJson.dump(timestamp: datetime, severity: severity, message: msg) + "\n"
     end
   end
 

@@ -42,7 +42,7 @@ module LittleMonster::Core
         params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
         params[:headers]['X-Request-ID'] = request_id
 
-        params[:timeout] = params[:timeout] || LittleMonster.request_timeout
+        params[:timeout] ||= LittleMonster.request_timeout
 
         begin
           res = Typhoeus.public_send method, url, params

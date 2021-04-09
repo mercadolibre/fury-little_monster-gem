@@ -13,6 +13,9 @@ module LittleMonster::Core
           # prevent excessive heartbeating and accidental lock owning if we don't own the lock
           task.shutdown
           raise e
+        rescue LittleMonster::APIUnreachableError => e
+          logger.error "[id:#{@params[:id]}][type:lm_api_fail] [message:#{e.message.dump}] \n #{e.backtrace.to_a.join("\n\t")}"
+          raise e
         end
       end
     end
@@ -34,7 +37,8 @@ module LittleMonster::Core
       return if LittleMonster.disable_requests?
 
       params = {
-        body: @worker_id.to_h
+        body: @worker_id.to_h,
+        timeout: 9 # heartbeat interval is 10s, timeout at 9s
       }
       res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", params, critical: true
 

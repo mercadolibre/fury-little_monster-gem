@@ -88,7 +88,7 @@ module LittleMonster::Core
 
       if resp.body.nil? || resp.body[:status].nil?
         logger.error("Failed to get api attributes body: #{resp.body.inspect}")
-        raise StandardError, "empty api attributes"
+        raise AttributesNotFound, "empty api attributes"
       end
 
       return resp.body

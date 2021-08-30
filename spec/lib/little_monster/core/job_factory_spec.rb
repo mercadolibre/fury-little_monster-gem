@@ -159,7 +159,7 @@ describe LittleMonster::Core::Job::Factory do
         end
 
         it 'fails' do
-          expect{ factory.fetch_attributes }.to raise_error(StandardError, "empty api attributes")
+          expect{ factory.fetch_attributes }.to raise_error(LittleMonster::AttributesNotFoundError, "empty api attributes")
         end
       end
 
@@ -170,7 +170,7 @@ describe LittleMonster::Core::Job::Factory do
         end
 
         it 'fails' do
-          expect{ factory.fetch_attributes }.to raise_error(StandardError, "empty api attributes")
+          expect{ factory.fetch_attributes }.to raise_error(LittleMonster::AttributesNotFoundError, "empty api attributes")
         end
       end
     end

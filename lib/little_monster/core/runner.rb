@@ -13,6 +13,10 @@ module LittleMonster::Core
           # prevent excessive heartbeating and accidental lock owning if we don't own the lock
           task.shutdown
           raise e
+        rescue LittleMonster::JobNotFoundError => e
+          # prevent excessive heartbeating when job does not exist
+          task.shutdown
+          raise e
         rescue LittleMonster::APIUnreachableError => e
           logger.error "[id:#{@params[:id]}][type:lm_api_fail] [message:#{e.message.dump}] \n #{e.backtrace.to_a.join("\n\t")}"
           raise e
@@ -29,6 +33,8 @@ module LittleMonster::Core
       job&.run
     rescue JobNotFoundError => e
       logger.error "[id:#{@params[:id]}][type:job_not_found] [message:#{e.message.dump}] \n #{e.backtrace.to_a.join("\n\t")}"
+    rescue JobClassNotFoundError => e
+      logger.error "[id:#{@params[:id]}][type:job_class_not_found] [message:#{e.message.dump}] \n #{e.backtrace.to_a.join("\n\t")}"
     ensure
       @heartbeat_task.shutdown
     end
@@ -43,7 +49,10 @@ module LittleMonster::Core
       res = LittleMonster::API.put "/jobs/#{@params[:id]}/worker", params, critical: true
 
       raise LittleMonster::JobAlreadyLockedError, "job [id:#{@params[:id]}] is already locked, discarding" if res.code == 401
-      res.success?
+      raise LittleMonster::JobNotFoundError, "[type:error] job [id:#{@params[:id]}] does not exists" if res.code == 404
+      raise LittleMonster::APIUnreachableError, "job [id:#{@params[:id]}] unsuccessful lock [status:#{res.code}]" unless res.success?
+
+      true
     end
   end
 end

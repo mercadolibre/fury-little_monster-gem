@@ -51,7 +51,8 @@ module LittleMonster::Core
                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
                                                                   critical: true
 
-      return true if res.success? || res.code == 400 # don't fail if request has succeded or if status is 400 (tasks have already been created)
+      # don't fail if request has succeded or if status is 400 (tasks have already been created)
+      return true if res.success? || res.code == 400
 
       raise JobNotFoundError, "[type:error] job [id:#{@id}] does not exists" if res.code == 404
       raise APIUnreachableError, "[type:error] failed to notify task list [status:#{res.code}]"

@@ -33,7 +33,8 @@ module LittleMonster::Core::Counters
       values = { body: { name: counter_name } }
       begin
         res = LittleMonster::Core::API.post(resource, values, critical: true)
-        raise MissedCounterError, "Could not post to #{resource}" if !res.success? && res.code != 409 # counter already exists
+        # 409 means counter already exists
+        raise MissedCounterError, "Could not post to #{resource}" if !res.success? && res.code != 409
       rescue LittleMonster::APIUnreachableError => e
         logger.error "Could not init counter #{resource} with #{values} , Api unreachable"
         raise e

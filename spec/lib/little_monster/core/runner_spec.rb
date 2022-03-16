@@ -37,8 +37,73 @@ describe LittleMonster::Core::Runner do
       end
 
       it 'does not run job' do
-        runner.run rescue nil rescue nil
+        expect { runner.run }.to raise_error(LittleMonster::JobAlreadyLockedError)
         expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when heartbeat raises JobNotFoundError' do
+      before :each do
+        allow(runner).to receive(:send_heartbeat!).and_raise(LittleMonster::JobNotFoundError)
+      end
+
+      it 'swallows exception and does not run job' do
+        expect { runner.run }.not_to raise_error
+        expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when build raises JobClassNotFoundError' do
+      before :each do
+        allow(LittleMonster::API).to receive(:put)
+        allow(factory).to receive(:build).and_raise(LittleMonster::JobClassNotFoundError.new(1))
+      end
+
+      it 'swallows exception and does not run job' do
+        expect { runner.run }.not_to raise_error
+        expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when build raises JobNotFoundError' do
+      before :each do
+        allow(factory).to receive(:build).and_raise(LittleMonster::JobNotFoundError)
+      end
+
+      it 'swallows exception and does not run job' do
+        expect { runner.run }.not_to raise_error
+        expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when build raises APIUnreachableError' do
+      before :each do
+        allow(factory).to receive(:build).and_raise(LittleMonster::APIUnreachableError)
+      end
+
+      it 'raises' do
+        expect { runner.run }.to raise_error(LittleMonster::APIUnreachableError)
+        expect(job).not_to have_received(:run)
+      end
+    end
+
+    context 'when run raises JobNotFoundError' do
+      before :each do
+        allow(job).to receive(:run).and_raise(LittleMonster::JobNotFoundError)
+      end
+
+      it 'swallows exception' do
+        expect { runner.run }.not_to raise_error
+      end
+    end
+
+    context 'when run raises APIUnreachableError' do
+      before :each do
+        allow(job).to receive(:run).and_raise(LittleMonster::APIUnreachableError)
+      end
+
+      it 'raises' do
+        expect { runner.run }.to raise_error(LittleMonster::APIUnreachableError)
       end
     end
 
@@ -86,7 +151,28 @@ describe LittleMonster::Core::Runner do
         end
       end
 
-      context 'if request is not unauthorized' do
+      context 'if job not found' do
+        before :each do
+          allow(response).to receive(:code).and_return(404)
+        end
+
+        it 'raises JobNotFoundError' do
+          expect { runner.send_heartbeat! }.to raise_error(LittleMonster::JobNotFoundError)
+        end
+      end
+
+      context 'request is unsuccessful' do
+        before :each do
+          allow(response).to receive(:code).and_return(405)
+          allow(response).to receive(:success?).and_return(false)
+        end
+
+        it 'raises APIUnreachableError' do
+          expect { runner.send_heartbeat! }.to raise_error(LittleMonster::APIUnreachableError)
+        end
+      end
+
+      context 'if request is authorized' do
         it 'returns success?' do
           expect(runner.send_heartbeat!).to eq(response.success?)
         end

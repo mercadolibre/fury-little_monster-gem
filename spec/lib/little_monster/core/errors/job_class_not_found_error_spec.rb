@@ -1,9 +1,9 @@
 require 'spec_helper'
 
-describe LittleMonster::Core::JobNotFoundError do
+describe LittleMonster::Core::JobClassNotFoundError do
   describe '#initialize' do
     let(:job_id) { 23 }
-    let(:error) { LittleMonster::Core::JobNotFoundError }
+    let(:error) { LittleMonster::Core::JobClassNotFoundError}
 
     before :each do
       allow(LittleMonster::API).to receive(:put)

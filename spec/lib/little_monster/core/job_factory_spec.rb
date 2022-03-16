@@ -24,10 +24,10 @@ describe LittleMonster::Core::Job::Factory do
       expect(factory).to have_received(:fetch_attributes).once
     end
 
-    it 'raises JobNotFoundError if job class does not exists' do
+    it 'raises JobClassNotFoundError if job class does not exists' do
       message[:name] = 'not_existing_class'
       allow(LittleMonster::API).to receive(:put)
-      expect { factory }.to raise_error(LittleMonster::JobNotFoundError)
+      expect { factory }.to raise_error(LittleMonster::JobClassNotFoundError)
     end
 
     it 'converts tags array to tags hash' do
@@ -91,7 +91,7 @@ describe LittleMonster::Core::Job::Factory do
   end
 
   describe '#fetch_attributes' do
-    let(:response) { double(success?: true, body: {}) }
+    let(:response) { double(code: 200, success?: true, body: {status: "pending"}) }
 
     before :each do
       factory
@@ -124,18 +124,54 @@ describe LittleMonster::Core::Job::Factory do
                                             critical: true).once
       end
 
-      context 'when request succeds' do
+      it 'fails if job not found' do
+        allow(response).to receive(:success?).and_return(false)
+        allow(response).to receive(:code).and_return(404)
+        expect { factory.fetch_attributes }.to raise_error(LittleMonster::JobNotFoundError)
+        expect(LittleMonster::API).to have_received(:get)
+          .with("/jobs/#{message[:id]}", {}, retries: LittleMonster.job_requests_retries,
+                                            retry_wait: LittleMonster.job_requests_retry_wait,
+                                            critical: true).once
+      end
+
+      it 'fails if request was not successful' do
+        # there are cases where typhoeus returns status 200 but success is false
+        # normally this is due to a timeout
+        allow(response).to receive(:success?).and_return(false)
+        allow(response).to receive(:code).and_return(200)
+        expect { factory.fetch_attributes }.to raise_error(LittleMonster::APIUnreachableError)
+        expect(LittleMonster::API).to have_received(:get)
+          .with("/jobs/#{message[:id]}", {}, retries: LittleMonster.job_requests_retries,
+                                            retry_wait: LittleMonster.job_requests_retry_wait,
+                                            critical: true).once
+      end
+
+      context 'when request succeeds' do
         it 'returns request body' do
           expect(factory.fetch_attributes).to eq(response.body)
         end
       end
 
-      context 'when request fails' do
+      context 'when body is emtpy' do
         before :each do
-          allow(response).to receive(:success?).and_return(false)
+          allow(response).to receive(:success?).and_return(true)
+          allow(response).to receive(:body).and_return(nil)
         end
 
-        it { expect(factory.fetch_attributes).to be_nil }
+        it 'fails' do
+          expect{ factory.fetch_attributes }.to raise_error(LittleMonster::AttributesNotFoundError, "empty api attributes")
+        end
+      end
+
+      context 'when status is emtpy' do
+        before :each do
+          allow(response).to receive(:success?).and_return(true)
+          allow(response).to receive(:body).and_return({})
+        end
+
+        it 'fails' do
+          expect{ factory.fetch_attributes }.to raise_error(LittleMonster::AttributesNotFoundError, "empty api attributes")
+        end
       end
     end
   end
@@ -183,6 +219,30 @@ describe LittleMonster::Core::Job::Factory do
 
       it 'returns request success?' do
         expect(factory.notify_job_task_list).to eq(response.success?)
+      end
+    end
+
+    context 'when notification returns 400' do
+      it 'does not fail' do
+        allow(response).to receive(:success?).and_return(false)
+        allow(response).to receive(:code).and_return(400)
+        expect(factory.notify_job_task_list).to be true
+      end
+    end
+
+    context 'when job does not exist' do
+      it 'fails' do
+        allow(response).to receive(:success?).and_return(false)
+        allow(response).to receive(:code).and_return(404)
+        expect{factory.notify_job_task_list}.to raise_error(LittleMonster::JobNotFoundError)
+      end
+    end
+
+    context 'when notification is not sucessfull' do
+      it 'fails' do
+        allow(response).to receive(:success?).and_return(false)
+        allow(response).to receive(:code).and_return(409)
+        expect{factory.notify_job_task_list}.to raise_error(LittleMonster::APIUnreachableError)
       end
     end
   end

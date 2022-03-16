@@ -20,7 +20,7 @@ module LittleMonster::Core
       begin
         @job_class = @name.to_s.camelcase.constantize
       rescue NameError
-        raise JobNotFoundError.new(@id), "[type:error] job [name:#{@name}] does not exists"
+        raise JobClassNotFoundError.new(@id), "[type:error] job [name:#{@name}] does not exists"
       end
     end
 
@@ -50,7 +50,12 @@ module LittleMonster::Core
       res = LittleMonster::API.post "/jobs/#{@id}/tasks", params, retries: LittleMonster.job_requests_retries,
                                                                   retry_wait: LittleMonster.job_requests_retry_wait,
                                                                   critical: true
-      res.success?
+
+      # don't fail if request has succeded or if status is 400 (tasks have already been created)
+      return true if res.success? || res.code == 400
+
+      raise JobNotFoundError, "[type:error] job [id:#{@id}] does not exists" if res.code == 404
+      raise APIUnreachableError, "[type:error] failed to notify task list [status:#{res.code}]"
     end
 
     def notify_job_max_retries
@@ -74,14 +79,19 @@ module LittleMonster::Core
                                          retry_wait: LittleMonster.job_requests_retry_wait,
                                          critical: true
 
-      if resp.success?
-        if resp.body.nil? || resp.body[:status].nil?
-          logger.error("Failed to get api attributes body: #{resp.body.inspect} status: #{resp.body[:status]}")
-        end
-        return resp.body
+      raise JobNotFoundError, "[type:error] job [id:#{@id}] does not exists" if resp.code == 404
+
+      if !resp.success?
+        logger.error("Failed to get api attributes unsuccessful response: #{resp.inspect} success: #{resp.success?}")
+        raise APIUnreachableError, "failed to fetch attributes [status:#{resp.code}]"
       end
-      logger.error("Failed to get api attributes unsuccessful response: #{resp.inspect} success: #{resp.success?}")
-      nil
+
+      if resp.body.nil? || resp.body[:status].nil?
+        logger.error("Failed to get api attributes body: #{resp.body.inspect}")
+        raise AttributesNotFoundError, "empty api attributes"
+      end
+
+      return resp.body
     end
 
     def calculate_status_and_error

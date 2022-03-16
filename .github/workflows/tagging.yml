@@ -1,0 +1,17 @@
+name: Tagging workflow
+on:
+  issue_comment:
+    types: [created]
+  pull_request:
+    branches: [master]
+    types: [opened, synchronize, ready_for_review, edited, closed]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Push RC tag
+        uses: mercadolibre/fury-core-ci@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

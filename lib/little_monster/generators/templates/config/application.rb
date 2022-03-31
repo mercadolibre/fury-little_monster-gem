@@ -6,6 +6,8 @@ LittleMonster.configure do |conf|
   conf.default_request_retries = 3
   # conf.worker_concurrency = 200
   # conf.worker_queue = 'my_sqs_queue'
+  # conf.provider = :aws
+  # conf.provider_config = nil
 end
 
 require_relative "environments/#{LittleMonster.env}"

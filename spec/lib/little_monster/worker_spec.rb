@@ -15,7 +15,9 @@ describe LittleMonster::Worker do
       allow(described_class).to receive(:toiler_options)
       described_class.update_attributes
       expect(described_class).to have_received(:toiler_options).with(queue: LittleMonster.worker_queue,
-                                                                     concurrency: LittleMonster.worker_concurrency)
+                                                                     concurrency: LittleMonster.worker_concurrency,
+                                                                     provider: LittleMonster.worker_provider,
+                                                                     provider_config: LittleMonster.worker_provider_config)
     end
   end
 

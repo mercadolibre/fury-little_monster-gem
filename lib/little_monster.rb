@@ -42,6 +42,8 @@ module LittleMonster
       api_url: 'http://little_monster_api_url.com/',
       worker_concurrency: 200,
       worker_queue: nil,
+      worker_provider: :aws,
+      worker_provider_config: nil,
       request_timeout: 3,
       default_request_retries: 4,
       default_request_retry_wait: 1,

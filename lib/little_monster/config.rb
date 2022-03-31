@@ -4,6 +4,8 @@ module LittleMonster
 
     attr_accessor :worker_concurrency
     attr_accessor :worker_queue
+    attr_accessor :worker_provider
+    attr_accessor :worker_provider_config
 
     attr_accessor :formatter
 

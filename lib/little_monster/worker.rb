@@ -13,7 +13,7 @@ module LittleMonster
     toiler_options auto_visibility_timeout: true,
                    auto_delete: true
 
-    toiler_options parser: MultiJson
+    toiler_options parser: ->(msg){ MultiJson.load msg.body, symbolize_keys: true }
 
     def self.update_attributes
       toiler_options queue: LittleMonster.worker_queue,
@@ -23,7 +23,11 @@ module LittleMonster
     end
 
     def perform(_sqs_msg, body)
-      message = MultiJson.load body['Message'], symbolize_keys: true
+      if LittleMonster.worker_provider == :gcp 
+        message = body
+      else
+        message = MultiJson.load body['Message'], symbolize_keys: true
+      end
 
       LittleMonster::Runner.new(message).run
     end

@@ -26,7 +26,7 @@ module LittleMonster
       if LittleMonster.worker_provider == :gcp 
         message = body
       else
-        message = MultiJson.load body['Message'], symbolize_keys: true
+        message = MultiJson.load body[:Message], symbolize_keys: true
       end
 
       LittleMonster::Runner.new(message).run

@@ -7,8 +7,7 @@ module LittleMonster
 
     toiler_options queue: LittleMonster.worker_queue,
                    concurrency: LittleMonster.worker_concurrency,
-                   provider: LittleMonster.worker_provider,
-                   provider_config: LittleMonster.worker_provider_config
+                   provider: LittleMonster.worker_provider
 
     toiler_options auto_visibility_timeout: true,
                    auto_delete: true
@@ -18,8 +17,7 @@ module LittleMonster
     def self.update_attributes
       toiler_options queue: LittleMonster.worker_queue,
                      concurrency: LittleMonster.worker_concurrency,
-                     provider: LittleMonster.worker_provider,
-                     provider_config: LittleMonster.worker_provider_config
+                     provider: LittleMonster.worker_provider
     end
 
     def perform(_sqs_msg, body)

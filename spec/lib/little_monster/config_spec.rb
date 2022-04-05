@@ -10,7 +10,6 @@ describe LittleMonster::Config do
           worker_concurrency: 200,
           worker_queue: nil,
           worker_provider: :aws,
-          worker_provider_config: nil,
           key: :value
         }
       end

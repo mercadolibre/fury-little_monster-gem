@@ -43,7 +43,6 @@ module LittleMonster
       worker_concurrency: 200,
       worker_queue: nil,
       worker_provider: :aws,
-      worker_provider_config: nil,
       request_timeout: 3,
       default_request_retries: 4,
       default_request_retry_wait: 1,

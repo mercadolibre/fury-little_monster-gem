@@ -1,6 +1,6 @@
 GIT
   remote: https://github.com/mercadolibre/toiler.git
-  revision: a518f4ffcd8cfcb237d0abe8af1630cf73b9f39a
+  revision: fa85771feab19085b4538e2d5fa54cafdaa1b721
   branch: pubsub
   specs:
     toiler (0.7.0)

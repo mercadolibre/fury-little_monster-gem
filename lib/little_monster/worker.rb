@@ -9,7 +9,7 @@ module LittleMonster
                    concurrency: LittleMonster.worker_concurrency,
                    provider: LittleMonster.worker_provider
 
-    toiler_options auto_visibility_timeout: true,
+    toiler_options deadline_extension: true,
                    auto_delete: true
 
     toiler_options parser: ->(msg){ MultiJson.load msg.body, symbolize_keys: true }

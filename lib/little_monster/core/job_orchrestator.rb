@@ -172,7 +172,14 @@ module LittleMonster::Core
 
     def handle_error(error)
       raise error if LittleMonster.env.development?
-      logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}] \n #{error.backtrace.to_a.join("\n\t")}"
+      if error.cause.nil?
+        logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}] \n #{error.backtrace.to_a.join("\n\t")}"
+      else
+        logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}]"\
+                     "\n\t#{error.backtrace.to_a.join("\n\t")}"\
+                     "\nCaused by:"\
+                     "\n\t#{error.cause.backtrace.to_a.join("\n\t")}"
+      end
 
       @job.error = @job.serialize_error error
 

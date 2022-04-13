@@ -9,6 +9,7 @@ describe LittleMonster::Config do
           api_request_retries: 100,
           worker_concurrency: 200,
           worker_queue: nil,
+          worker_provider: :aws,
           key: :value
         }
       end

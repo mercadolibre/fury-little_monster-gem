@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    little_monster (0.1.25)
+    little_monster (0.1.26)
       activesupport
       multi_json
       thor

@@ -25,7 +25,7 @@ describe LittleMonster::Worker do
 
     before :each do
       allow(LittleMonster::Core::Runner).to receive(:new).and_return(runner)
-      worker.perform(nil, 'Message' => MultiJson.dump(message))
+      worker.perform(nil, :Message => MultiJson.dump(message))
     end
 
     it 'creates a runner instance with parsed message and parsed data' do

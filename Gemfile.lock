@@ -8,8 +8,6 @@ PATH
       tilt
       toiler
       typhoeus
-      vcr
-      webmock
 
 GEM
   remote: https://rubygems.org/
@@ -42,8 +40,6 @@ GEM
     concurrent-ruby (1.1.10)
     concurrent-ruby-edge (0.6.0)
       concurrent-ruby (~> 1.1.6)
-    crack (0.4.5)
-      rexml
     diff-lcs (1.5.0)
     docile (1.4.0)
     ethon (0.15.0)
@@ -98,7 +94,6 @@ GEM
       google-protobuf (~> 3.14)
       googleapis-common-protos (>= 1.3.12, < 2.0)
       grpc (~> 1.27)
-    hashdiff (1.0.1)
     i18n (1.10.0)
       concurrent-ruby (~> 1.0)
     jmespath (1.6.1)
@@ -171,11 +166,6 @@ GEM
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.1.0)
-    vcr (6.1.0)
-    webmock (3.14.0)
-      addressable (>= 2.8.0)
-      crack (>= 0.3.2)
-      hashdiff (>= 0.4.0, < 2.0.0)
     zeitwerk (2.6.0)
 
 PLATFORMS

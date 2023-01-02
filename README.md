@@ -90,3 +90,4 @@ given job instance, a class or a class symbol it expects the callback retries fo
 ```ruby
 expect(my_job).to have_callback_retries(10)
 ```
+test

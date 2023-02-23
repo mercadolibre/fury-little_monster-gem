@@ -9,8 +9,37 @@ module LittleMonster::Core
     CALLBACKS = %i[on_success on_error on_cancel].freeze
 
     class << self
+      def inherited(subclass)
+        subclass.instance_variable_set :@tasks, tasks.dup
+        subclass.instance_variable_set :@max_retries, @max_retries unless :@max_retries.nil?
+        subclass.instance_variable_set :@callback_max_retries, @callback_max_retries unless @callback_max_retries.nil?
+        super
+      end
+
       def task_list(*tasks)
         @tasks = *tasks
+      end
+
+      def task_list_prepend(*tasks)
+        @tasks.prepend(*tasks)
+      end
+
+      def task_list_prepend_at(task, *tasks)
+        index = @tasks.index(task)
+        raise "Task #{task} not found" if index.nil?
+
+        @tasks.insert(index, *tasks)
+      end
+
+      def task_list_append(*tasks)
+        @tasks.append(*tasks)
+      end
+
+      def task_list_append_at(task, *tasks)
+        index = @tasks.index(task)
+        raise "Task #{task} not found" if index.nil?
+
+        @tasks.append(*tasks)
       end
 
       def retries(value)
@@ -22,9 +51,22 @@ module LittleMonster::Core
       end
 
       def task_class_for(task_name)
+        # attempt to find task in namespace of job (JobName::TaskName)
         "#{to_s.underscore}/#{task_name}".camelcase.constantize
       rescue NameError
-        task_name.to_s.camelcase.constantize
+        if superclass == LittleMonster::Core::Job
+          # attempt to find task without namespace
+          task_name.to_s.camelcase.constantize
+        else
+          # attempt to find task in namespace of parent jobs in cases where
+          # a Job extends another one (JobSuperClass::TaskName)
+          begin
+            "#{superclass.to_s.underscore}/#{task_name}".camelcase.constantize
+          rescue NameError
+            # attempt to find task without namespace
+            task_name.to_s.camelcase.constantize
+          end
+        end
       end
 
       def max_retries
@@ -48,14 +90,7 @@ module LittleMonster::Core
       end
     end
 
-    attr_accessor :id
-    attr_accessor :tags
-    attr_accessor :status
-
-    attr_accessor :retries
-    attr_accessor :current_action
-    attr_accessor :data
-    attr_accessor :error
+    attr_accessor :id, :tags, :status, :retries, :current_action, :data, :error
 
     attr_reader :orchrestator
 
@@ -119,6 +154,7 @@ module LittleMonster::Core
 
     def notify_callback(status, options = {})
       return true unless should_request?
+
       params = { body: { name: @current_action, status: status } }
 
       params[:body][:exception] = serialize_error(options[:exception]) if options[:exception]
@@ -133,6 +169,7 @@ module LittleMonster::Core
 
     def notify_job(params = {}, options = {})
       return true unless should_request?
+
       options[:critical] = true
 
       params[:body][:data] = params[:body][:data].to_h if params[:body][:data]
@@ -143,6 +180,7 @@ module LittleMonster::Core
 
     def check_abort_cause(critical: false)
       return nil unless should_request?
+
       resp = LittleMonster::API.get "/jobs/#{id}", {}, critical: critical
 
       return unless resp.success?
@@ -193,14 +231,17 @@ module LittleMonster::Core
     # returns the tasks that will be runned for this instance
     def tasks_to_run
       return [] if callback_running?
+
       task_index = self.class.tasks.find_index(@current_action)
 
       return [] if task_index.nil?
+
       self.class.tasks.slice(task_index..-1)
     end
 
     def callback_running?
       return false if @current_action.nil? || self.class.tasks.include?(@current_action)
+
       CALLBACKS.include? @current_action
     end
 

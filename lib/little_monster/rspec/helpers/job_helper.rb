@@ -42,7 +42,7 @@ module LittleMonster::RSpec
     end
 
     def generate_job(job, options = {})
-      job_class = job.class == Class ? job : job.to_s.camelcase.constantize
+      job_class = job.instance_of?(Class) ? job : job.to_s.camelcase.constantize
       job_class.mock!
 
       job_instance = job_class.new(data: { outputs: options.fetch(:data, {}) })

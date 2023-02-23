@@ -22,10 +22,10 @@ module LittleMonster::RSpec
     end
 
     def generate_task(task, options = {})
-      task_class = if task.class != Class
-                     task.to_s.camelcase.constantize
-                   else
+      task_class = if task.instance_of?(Class)
                      task
+                   else
+                     task.to_s.camelcase.constantize
                    end
 
       task_symbol = task.to_s.underscore.split('/').last.to_sym

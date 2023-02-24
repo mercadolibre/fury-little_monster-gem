@@ -10,6 +10,8 @@ module LittleMonster::Core
 
     class << self
       def inherited(subclass)
+        return if self == Job # skip when job is the base class
+
         subclass.instance_variable_set :@tasks, tasks.dup
         subclass.instance_variable_set :@max_retries, @max_retries unless :@max_retries.nil?
         subclass.instance_variable_set :@callback_max_retries, @callback_max_retries unless @callback_max_retries.nil?
@@ -26,7 +28,7 @@ module LittleMonster::Core
 
       def task_list_prepend_at(task, *tasks)
         index = @tasks.index(task)
-        raise "Task #{task} not found" if index.nil?
+        raise TaskNotFoundError, "Task #{task} not found" if index.nil?
 
         @tasks.insert(index, *tasks)
       end
@@ -37,9 +39,9 @@ module LittleMonster::Core
 
       def task_list_append_at(task, *tasks)
         index = @tasks.index(task)
-        raise "Task #{task} not found" if index.nil?
+        raise TaskNotFoundError, "Task #{task} not found" if index.nil?
 
-        @tasks.append(*tasks)
+        @tasks.insert(index + 1, *tasks)
       end
 
       def retries(value)

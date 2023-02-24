@@ -1,4 +1,5 @@
 require 'spec_helper'
+require_relative '../../../mock/mock_job_extension'
 
 RSpec::Matchers.define :job_data_with_hash do |x|
   match { |actual| actual == x }
@@ -6,7 +7,10 @@ end
 
 describe LittleMonster::Core::Job do
   after :each do
-    load './spec/mock/mock_job.rb'
+    # reset mock job variables
+    MockJob.task_list(:task_a, :task_b, :task_c)
+    MockJob.retries 4
+    MockJob.callback_retries nil
   end
 
   let(:options) do
@@ -18,34 +22,116 @@ describe LittleMonster::Core::Job do
   end
 
   let(:job) { MockJob.new options }
+  let(:job_extension) { MockJobExtension.new options }
 
   context 'class level instance variables' do
-    let(:job_class) { MockJob.new.class }
+    context 'top level job' do
+      let(:job_class) { MockJob.new.class }
 
-    describe '::task_list' do
-      let(:tasks) { [:mock_task_b, :mock_task_a] }
+      describe '::task_list' do
+        let(:tasks) { [:mock_task_b, :mock_task_a] }
 
-      it 'sets the task class level instance variable' do
-        job_class.task_list(*tasks)
-        expect(job_class.tasks).to eq(tasks)
+        it 'sets the task class level instance variable' do
+          job_class.task_list(*tasks)
+          expect(job_class.tasks).to eq(tasks)
+        end
+      end
+
+      describe '::task_list_prepend' do
+        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+
+        it 'prepends tasks to task list' do
+          job_class.task_list(*initial_tasks)
+
+          job_class.task_list_prepend(:mock_task_c, :mock_task_d)
+          expect(job_class.tasks).to eq([:mock_task_c, :mock_task_d, :mock_task_b, :mock_task_a])
+        end
+      end
+
+      describe '::task_list_prepend_at' do
+        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+
+        it 'prepends tasks to task list before given task' do
+          job_class.task_list(*initial_tasks)
+
+          job_class.task_list_prepend_at(:mock_task_a, :mock_task_c, :mock_task_d)
+          expect(job_class.tasks).to eq([:mock_task_b, :mock_task_c, :mock_task_d, :mock_task_a])
+        end
+
+        it 'fails if task is not found' do
+          job_class.task_list(*initial_tasks)
+
+          expect { job_class.task_list_prepend_at(:mock_task_c, :mock_task_d, :mock_task_e) }.to raise_error(LittleMonster::Core::TaskNotFoundError, "Task mock_task_c not found")
+        end
+      end
+
+      describe '::task_list_append' do
+        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+
+        it 'appends tasks to task list' do
+          job_class.task_list(*initial_tasks)
+
+          job_class.task_list_append(:mock_task_c, :mock_task_d)
+          expect(job_class.tasks).to eq([:mock_task_b, :mock_task_a, :mock_task_c, :mock_task_d])
+        end
+      end
+
+      describe '::task_list_append_at' do
+        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+
+        it 'append tasks to task list after given task' do
+          job_class.task_list(*initial_tasks)
+
+          job_class.task_list_append_at(:mock_task_b, :mock_task_c, :mock_task_d)
+          expect(job_class.tasks).to eq([:mock_task_b, :mock_task_c, :mock_task_d, :mock_task_a])
+        end
+
+        it 'fails if task is not found' do
+          job_class.task_list(*initial_tasks)
+
+          expect { job_class.task_list_prepend_at(:mock_task_c, :mock_task_d, :mock_task_e) }.to raise_error(LittleMonster::Core::TaskNotFoundError, "Task mock_task_c not found")
+        end
+      end
+
+      describe '::retries' do
+        let(:retries) { 3 }
+
+        it 'sets the max_retries class level instance variable' do
+          job_class.retries(retries)
+          expect(job_class.max_retries).to eq(retries)
+        end
+      end
+
+      describe '::callback_max_retries' do
+        let(:retries) { 5 }
+
+        it 'sets the callback_max_retries class level instance variable' do
+          job_class.callback_retries(retries)
+          expect(job_class.callback_max_retries).to eq(retries)
+        end
       end
     end
 
-    describe '::retries' do
-      let(:retries) { 3 }
+    context 'subclassing' do
+      let(:job_class) { MockJob.new.class }
+      let(:job_extension_class) { MockJobExtension.new.class }
 
-      it 'sets the max_retries class level instance variable' do
-        job_class.retries(retries)
-        expect(job_class.max_retries).to eq(retries)
+      describe 'tasks' do
+        it 'inherits tasks of superclass' do
+          expect(job_extension_class.tasks).to eq([:task] + job_class.tasks)
+        end
       end
-    end
 
-    describe '::callback_max_retries' do
-      let(:retries) { 5 }
+      describe 'retries' do
+        it 'inherits retries of superclass' do
+          expect(job_extension_class.max_retries).to eq(job_class.max_retries)
+        end
+      end
 
-      it 'sets the callback_max_retries class level instance variable' do
-        job_class.callback_retries(retries)
-        expect(job_class.callback_max_retries).to eq(retries)
+      describe 'callback_max_retries' do
+        it 'inherits callback retries of supperclass' do
+          expect(job_extension_class.callback_max_retries).to eq(job_class.callback_max_retries)
+        end
       end
     end
   end

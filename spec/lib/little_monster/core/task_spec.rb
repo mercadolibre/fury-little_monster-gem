@@ -14,6 +14,7 @@ describe LittleMonster::Core::Task do
 
   after :each do
     load './spec/mock/mock_job.rb'
+    load './spec/mock/mock_job_extension.rb'
   end
 
   describe 'attr_readers' do
@@ -45,38 +46,38 @@ describe LittleMonster::Core::Task do
     end
 
     it 'sets data' do
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.data).to eq(params[:data])
     end
 
     it 'sets parent_logger' do
       mock_task.logger
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.logger.parent_logger).to eq(params[:job_logger])
     end
 
     it 'sets cancelled_callback' do
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.instance_variable_get('@cancelled_callback')).to eq(params[:cancelled_callback])
     end
 
     it 'sets job_id' do
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.instance_variable_get('@job_id')).to eq(params[:job_id])
     end
 
     it 'sets job_retries' do
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.instance_variable_get('@job_retries')).to eq(params[:retries])
     end
 
     it 'sets job_max_retries' do
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.instance_variable_get('@job_max_retries')).to eq(params[:max_retries])
     end
 
     it 'sets retry_callback' do
-      mock_task.send(:set_default_values, params)
+      mock_task.send(:set_default_values, **params)
       expect(mock_task.instance_variable_get('@retry_callback')).to eq(params[:retry_callback])
     end
   end

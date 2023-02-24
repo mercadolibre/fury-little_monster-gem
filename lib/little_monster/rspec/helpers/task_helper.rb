@@ -29,25 +29,26 @@ module LittleMonster::RSpec
                    end
 
       task_symbol = task.to_s.underscore.split('/').last.to_sym
-      data = if options[:data].class == LittleMonster::Job::Data
+      data = if options[:data].instance_of?(LittleMonster::Job::Data)
                options[:data]
              else
                LittleMonster::Job::Data.new(double(current_action: task_symbol),
                                             outputs: options.fetch(:data, {}))
              end
 
-      default_values = {
-        data: data,
-        cancelled_callback: proc { options.fetch(:cancelled, false) },
-        cancelled_throw_callback: proc { raise LittleMonster::CancelError if options.fetch(:cancelled, false) },
-        job_id: options.fetch(:job_id, nil),
-        retries: options.fetch(:job_retries, 0),
-        max_retries: options.fetch(:job_max_retries, 0),
-        retry_callback: proc { !options.fetch(:last_retry, false) }
-      }
-
       task_instance = task_class.new(data)
-      task_instance.send(:set_default_values, default_values)
+      task_instance.send(:set_default_values,
+                         data: data,
+                         cancelled_callback: proc { options.fetch(:cancelled, false) },
+                         cancelled_throw_callback: proc {
+                                                     if options.fetch(:cancelled, false)
+                                                       raise LittleMonster::CancelError
+                                                     end
+                                                   },
+                         job_id: options.fetch(:job_id, nil),
+                         retries: options.fetch(:job_retries, 0),
+                         max_retries: options.fetch(:job_max_retries, 0),
+                         retry_callback: proc { !options.fetch(:last_retry, false) })
 
       task_instance
     end

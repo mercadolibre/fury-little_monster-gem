@@ -73,7 +73,7 @@ describe LittleMonster do
 
       it 'calls Worker::update_attributes' do
         allow(LittleMonster::Worker).to receive(:update_attributes)
-        LittleMonster.configure { }
+        LittleMonster.configure {}
         expect(LittleMonster::Worker).to have_received(:update_attributes)
       end
     end

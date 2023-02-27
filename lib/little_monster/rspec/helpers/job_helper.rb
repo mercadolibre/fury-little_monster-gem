@@ -51,7 +51,8 @@ module LittleMonster::RSpec
       if options[:fails]
         options[:fails] = [options[:fails]] unless options[:fails].is_a? Array
         options[:fails].each do |hash|
-          allow_any_instance_of(job_class.task_class_for(hash[:task])).to receive(:run).and_raise(hash.fetch(:error, StandardError.new))
+          allow_any_instance_of(job_class.task_class_for(hash[:task])).to receive(:run).and_raise(hash.fetch(:error,
+                                                                                                             StandardError.new))
         end
       end
 

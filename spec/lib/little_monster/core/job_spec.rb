@@ -29,7 +29,7 @@ describe LittleMonster::Core::Job do
       let(:job_class) { MockJob.new.class }
 
       describe '::task_list' do
-        let(:tasks) { [:mock_task_b, :mock_task_a] }
+        let(:tasks) { %i[mock_task_b mock_task_a] }
 
         it 'sets the task class level instance variable' do
           job_class.task_list(*tasks)
@@ -38,58 +38,64 @@ describe LittleMonster::Core::Job do
       end
 
       describe '::task_list_prepend' do
-        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+        let(:initial_tasks) { %i[mock_task_b mock_task_a] }
 
         it 'prepends tasks to task list' do
           job_class.task_list(*initial_tasks)
 
           job_class.task_list_prepend(:mock_task_c, :mock_task_d)
-          expect(job_class.tasks).to eq([:mock_task_c, :mock_task_d, :mock_task_b, :mock_task_a])
+          expect(job_class.tasks).to eq(%i[mock_task_c mock_task_d mock_task_b mock_task_a])
         end
       end
 
       describe '::task_list_prepend_at' do
-        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+        let(:initial_tasks) { %i[mock_task_b mock_task_a] }
 
         it 'prepends tasks to task list before given task' do
           job_class.task_list(*initial_tasks)
 
           job_class.task_list_prepend_at(:mock_task_a, :mock_task_c, :mock_task_d)
-          expect(job_class.tasks).to eq([:mock_task_b, :mock_task_c, :mock_task_d, :mock_task_a])
+          expect(job_class.tasks).to eq(%i[mock_task_b mock_task_c mock_task_d mock_task_a])
         end
 
         it 'fails if task is not found' do
           job_class.task_list(*initial_tasks)
 
-          expect { job_class.task_list_prepend_at(:mock_task_c, :mock_task_d, :mock_task_e) }.to raise_error(LittleMonster::Core::TaskNotFoundError, "Task mock_task_c not found")
+          expect do
+            job_class.task_list_prepend_at(:mock_task_c, :mock_task_d,
+                                           :mock_task_e)
+          end.to raise_error(LittleMonster::Core::TaskNotFoundError, 'Task mock_task_c not found')
         end
       end
 
       describe '::task_list_append' do
-        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+        let(:initial_tasks) { %i[mock_task_b mock_task_a] }
 
         it 'appends tasks to task list' do
           job_class.task_list(*initial_tasks)
 
           job_class.task_list_append(:mock_task_c, :mock_task_d)
-          expect(job_class.tasks).to eq([:mock_task_b, :mock_task_a, :mock_task_c, :mock_task_d])
+          expect(job_class.tasks).to eq(%i[mock_task_b mock_task_a mock_task_c mock_task_d])
         end
       end
 
       describe '::task_list_append_at' do
-        let(:initial_tasks) { [:mock_task_b, :mock_task_a] }
+        let(:initial_tasks) { %i[mock_task_b mock_task_a] }
 
         it 'append tasks to task list after given task' do
           job_class.task_list(*initial_tasks)
 
           job_class.task_list_append_at(:mock_task_b, :mock_task_c, :mock_task_d)
-          expect(job_class.tasks).to eq([:mock_task_b, :mock_task_c, :mock_task_d, :mock_task_a])
+          expect(job_class.tasks).to eq(%i[mock_task_b mock_task_c mock_task_d mock_task_a])
         end
 
         it 'fails if task is not found' do
           job_class.task_list(*initial_tasks)
 
-          expect { job_class.task_list_prepend_at(:mock_task_c, :mock_task_d, :mock_task_e) }.to raise_error(LittleMonster::Core::TaskNotFoundError, "Task mock_task_c not found")
+          expect do
+            job_class.task_list_prepend_at(:mock_task_c, :mock_task_d,
+                                           :mock_task_e)
+          end.to raise_error(LittleMonster::Core::TaskNotFoundError, 'Task mock_task_c not found')
         end
       end
 
@@ -236,7 +242,10 @@ describe LittleMonster::Core::Job do
           end
 
           it 'returns true if response worker is not current' do
-            allow(response).to receive(:body).and_return(cancel: false, worker: { id: 1, pid: '1-12413', host: 'wrong-host', locked: true})
+            allow(response).to receive(:body).and_return(cancel: false,
+                                                         worker: {
+                                                           id: 1, pid: '1-12413', host: 'wrong-host', locked: true
+                                                         })
             expect(job.send(:is_cancelled?)).to be true
           end
         end
@@ -256,7 +265,7 @@ describe LittleMonster::Core::Job do
     describe '#is_cancelled!' do
       context 'when should_request is false' do
         it 'does not raise' do
-          expect{ job.send(:is_cancelled!) }.not_to raise_error
+          expect { job.send(:is_cancelled!) }.not_to raise_error
         end
 
         it 'does not send any request' do
@@ -287,17 +296,20 @@ describe LittleMonster::Core::Job do
 
           it 'raises CancelError if response cancel is true' do
             allow(response).to receive(:body).and_return(cancel: true, worker: options[:worker_id].to_h)
-            expect{ job.send(:is_cancelled!) }.to raise_error LittleMonster::CancelError
+            expect { job.send(:is_cancelled!) }.to raise_error LittleMonster::CancelError
           end
 
           it 'does not raise if response cancel is false' do
             allow(response).to receive(:body).and_return(cancel: false, worker: options[:worker_id].to_h)
-            expect{ job.send(:is_cancelled!) }.not_to raise_error
+            expect { job.send(:is_cancelled!) }.not_to raise_error
           end
 
           it 'raises OwnershipLostError if response worker is not current' do
-            allow(response).to receive(:body).and_return(cancel: false, worker: { id: 1, pid: '1-12413', host: 'wrong-host', locked: true})
-            expect{ job.send(:is_cancelled!) }.to raise_error LittleMonster::OwnershipLostError
+            allow(response).to receive(:body).and_return(cancel: false,
+                                                         worker: {
+                                                           id: 1, pid: '1-12413', host: 'wrong-host', locked: true
+                                                         })
+            expect { job.send(:is_cancelled!) }.to raise_error LittleMonster::OwnershipLostError
           end
         end
 
@@ -307,7 +319,7 @@ describe LittleMonster::Core::Job do
           end
 
           it 'returns false' do
-            expect{ job.send(:is_cancelled!) }.not_to raise_error
+            expect { job.send(:is_cancelled!) }.not_to raise_error
           end
         end
       end
@@ -381,7 +393,7 @@ describe LittleMonster::Core::Job do
           end
 
           it 'returns request success?' do
-            expect(job.notify_callback  status, options).to eq(response.success?)
+            expect(job.notify_callback(status, options)).to eq(response.success?)
           end
         end
       end
@@ -431,7 +443,6 @@ describe LittleMonster::Core::Job do
             allow(job).to receive(:serialize_error).and_return(serialized_error)
           end
 
-
           it 'makes a request to api with current_action, status, options, critical, retries, retry wait and sets serialized error to body' do
             job.notify_task status, options
             expect(job).to have_received(:notify_job).with({ body: { tasks: [{ name: job.current_action,
@@ -444,7 +455,7 @@ describe LittleMonster::Core::Job do
         end
 
         it 'returns request success?' do
-          expect(job.notify_task status, options).to eq(response)
+          expect(job.notify_task(status, options)).to eq(response)
         end
       end
     end
@@ -478,7 +489,8 @@ describe LittleMonster::Core::Job do
 
       it 'makes a request to api with params body with data and options merged with critical' do
         job.send(:notify_job, params, options)
-        expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", params, options.merge(critical: true)).once
+        expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", params,
+                                                               options.merge(critical: true)).once
       end
 
       context 'if options contains data' do
@@ -488,7 +500,8 @@ describe LittleMonster::Core::Job do
 
         it 'makes request with data as a hash' do
           job.send(:notify_job, params, options)
-          expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}", { body: hash_including(data: job.data.to_h) } , any_args).once
+          expect(LittleMonster::API).to have_received(:put).with("/jobs/#{job.id}",
+                                                                 { body: hash_including(data: job.data.to_h) }, any_args).once
         end
       end
 
@@ -563,7 +576,7 @@ describe LittleMonster::Core::Job do
         end
 
         it 'returns array sliced from current task to end' do
-          expect(job.tasks_to_run).to eq([:task_b, :task_c])
+          expect(job.tasks_to_run).to eq(%i[task_b task_c])
         end
       end
     end
@@ -620,7 +633,7 @@ describe LittleMonster::Core::Job do
       let(:error) { StandardError.new 'boooom' }
 
       it 'returns a hash with message, type and current retry' do
-        expect(job.serialize_error error).to eq(message: error.message, type: error.class.to_s, retry: job.retries)
+        expect(job.serialize_error(error)).to eq(message: error.message, type: error.class.to_s, retry: job.retries)
       end
     end
 

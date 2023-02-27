@@ -36,9 +36,7 @@ describe LittleMonster::Core::API do
       allow(subject).to receive(:request).and_return(response)
     end
 
-
     context 'given a path params hash and options hash' do
-
       it 'calls request with post path and params' do
         subject.post path, params, **options
         expect(subject).to have_received(:request).with(:post, path, params, **options)
@@ -56,9 +54,7 @@ describe LittleMonster::Core::API do
       allow(subject).to receive(:request).and_return(response)
     end
 
-
     context 'given a path params hash and options hash' do
-
       it 'calls request with put path and params' do
         subject.put path, params, **options
         expect(subject).to have_received(:request).with(:put, path, params, **options)
@@ -76,9 +72,7 @@ describe LittleMonster::Core::API do
       allow(subject).to receive(:request).and_return(response)
     end
 
-
     context 'given a path params hash and options hash' do
-
       it 'calls request with patch path and params' do
         subject.patch path, params, **options
         expect(subject).to have_received(:request).with(:patch, path, params, **options)
@@ -96,9 +90,7 @@ describe LittleMonster::Core::API do
       allow(subject).to receive(:request).and_return(response)
     end
 
-
     context 'given a path params hash and options hash' do
-
       it 'calls request with delete path and params' do
         subject.delete path, params, **options
         expect(subject).to have_received(:request).with(:delete, path, params, **options)
@@ -145,7 +137,7 @@ describe LittleMonster::Core::API do
         it 'has content type set to json if it was not specified' do
           subject.request method, path, params, **options
           expect(Typhoeus).to have_received(method)
-            .with(url, hash_including(headers: { 'Content-Type' => 'application/json', 'X-Request-ID' => request_id  }))
+            .with(url, hash_including(headers: { 'Content-Type' => 'application/json', 'X-Request-ID' => request_id }))
         end
 
         it 'has content type set to json if specified' do
@@ -158,7 +150,7 @@ describe LittleMonster::Core::API do
       end
 
       it 'returns the response' do
-        expect(subject.request method, path, params).to eq(response)
+        expect(subject.request(method, path, params)).to eq(response)
       end
 
       context 'returned response' do
@@ -173,7 +165,7 @@ describe LittleMonster::Core::API do
         end
       end
 
-      context 'if status < 500'  do
+      context 'if status < 500' do
         it 'makes only one request' do
           subject.request method, path, params, **options
           expect(Typhoeus).to have_received(method).once
@@ -191,13 +183,13 @@ describe LittleMonster::Core::API do
           it 'waits the default amount of time between requests' do
             subject.request method, path, params, **options
             expect(subject).to have_received(:sleep).with(LittleMonster.default_request_retry_wait)
-              .exactly(LittleMonster.default_request_retries).times
+                                                    .exactly(LittleMonster.default_request_retries).times
           end
 
           it 'retries the defaulted amount of times' do
             subject.request method, path, params, **options
             expect(Typhoeus).to have_received(method)
-              .exactly(LittleMonster.default_request_retries + 1).times #es la cantidad de retries +1 de el primer request
+              .exactly(LittleMonster.default_request_retries + 1).times # es la cantidad de retries +1 de el primer request
           end
         end
 
@@ -213,19 +205,21 @@ describe LittleMonster::Core::API do
           it 'waits the specified amount of time between requests' do
             subject.request method, path, params, **options
             expect(subject).to have_received(:sleep).with(retry_wait)
-              .exactly(retries).times
+                                                    .exactly(retries).times
           end
 
           it 'retries the specified amount of times' do
             subject.request method, path, params, **options
             expect(Typhoeus).to have_received(method)
-              .exactly(retries+1).times
+              .exactly(retries + 1).times
           end
         end
 
         context 'if request is critical' do
           it 'raises APIUnreachableError after all requests fail' do
-            expect { subject.request method, path, params, critical: true }.to raise_error(LittleMonster::APIUnreachableError)
+            expect do
+              subject.request method, path, params, critical: true
+            end.to raise_error(LittleMonster::APIUnreachableError)
           end
         end
       end

@@ -12,6 +12,6 @@ end
 
 require_relative "environments/#{LittleMonster.env}"
 
-Dir["#{Dir.pwd}/lib/**/*.rb"].each { |file| require_relative file }
-Dir["#{Dir.pwd}/jobs/**/*.rb"].each { |file| require_relative file }
-Dir["#{Dir.pwd}/tasks/**/*.rb"].each { |file| require_relative file }
+Dir["#{Dir.pwd}/lib/**/*.rb"].sort.each { |file| require_relative file }
+Dir["#{Dir.pwd}/jobs/**/*.rb"].sort.each { |file| require_relative file }
+Dir["#{Dir.pwd}/tasks/**/*.rb"].sort.each { |file| require_relative file }

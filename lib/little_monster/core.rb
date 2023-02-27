@@ -10,6 +10,7 @@ require 'little_monster/core/errors/attributes_not_found_error'
 require 'little_monster/core/errors/job_already_locked_error'
 require 'little_monster/core/errors/callback_failed_error'
 require 'little_monster/core/errors/ownership_lost_error'
+require 'little_monster/core/errors/task_not_found_error'
 
 require 'little_monster/core/tagged_logger'
 require 'little_monster/core/loggable' # must be required first to satisfy job and task dependencies

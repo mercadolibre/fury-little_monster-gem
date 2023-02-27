@@ -25,9 +25,7 @@ module LittleMonster::Core
         return @tags[tag_key] if LEVELS.include? tag_key
       end
 
-      if LEVELS.include? method.to_sym
-        return LittleMonster.logger.public_send method, tag_message(method.to_sym, *args)
-      end
+      return LittleMonster.logger.public_send method, tag_message(method.to_sym, *args) if LEVELS.include? method.to_sym
 
       super method, *args, &block
     end
@@ -48,9 +46,7 @@ module LittleMonster::Core
       prefix_string =  tags_to_string @tags[:default].merge(@tags[level])
       prefix_string << ' -- ' unless prefix_string.blank?
 
-      unless @parent_logger.nil?
-        prefix_string = @parent_logger.tag_message level, prefix_string
-      end
+      prefix_string = @parent_logger.tag_message level, prefix_string unless @parent_logger.nil?
 
       [prefix_string, message].join
     end

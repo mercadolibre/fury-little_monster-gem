@@ -36,9 +36,9 @@ describe LittleMonster do
             ENV['RUBY_ENV'] = 'test'
           end
 
-          it 'is set to /dev/null' do
+          it 'is set to nil' do
             LittleMonster.init
-            expect(LittleMonster.logger.instance_variable_get('@logdev').filename).to eq('/dev/null')
+            expect(LittleMonster.logger.instance_variable_get(:@logdev)).to eq(nil)
           end
         end
 
@@ -73,7 +73,7 @@ describe LittleMonster do
 
       it 'calls Worker::update_attributes' do
         allow(LittleMonster::Worker).to receive(:update_attributes)
-        LittleMonster.configure { }
+        LittleMonster.configure {}
         expect(LittleMonster::Worker).to have_received(:update_attributes)
       end
     end

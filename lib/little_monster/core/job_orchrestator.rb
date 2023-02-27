@@ -4,8 +4,7 @@ module LittleMonster::Core
   class Job::Orchrestator
     extend ::NewRelic::Agent::MethodTracer
 
-    attr_reader :logger
-    attr_reader :job
+    attr_reader :logger, :job
 
     def initialize(job)
       @job = job
@@ -48,7 +47,7 @@ module LittleMonster::Core
           @job.is_cancelled! critical: true
 
           task = build_task(task_name)
-          self.class.trace_execution_scoped(["#{class_to_use(task_name)}\#Run"]) do
+          self.class.trace_execution_scoped(["#{class_to_use(task_name)}#Run"]) do
             task.run
           end
 
@@ -172,12 +171,13 @@ module LittleMonster::Core
 
     def handle_error(error)
       raise error if LittleMonster.env.development?
+
       if error.cause.nil?
         logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}] \n #{error.backtrace.to_a.join("\n\t")}"
       else
-        logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}]"\
-                     "\n\t#{error.backtrace.to_a.join("\n\t")}"\
-                     "\nCaused by:"\
+        logger.error "[type:error] [error_type:#{error.class}][message:#{error.message.dump}]" \
+                     "\n\t#{error.backtrace.to_a.join("\n\t")}" \
+                     "\nCaused by:" \
                      "\n\t#{error.cause.backtrace.to_a.join("\n\t")}"
       end
 

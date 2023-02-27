@@ -1,10 +1,9 @@
 module LittleMonster::RSpec::Matchers
   class HaveRunTask
-    attr_reader :expected_task
-    attr_reader :expected_data
+    attr_reader :expected_task, :expected_data
 
     def initialize(expected_task)
-      @expected_task = if expected_task.class == Class
+      @expected_task = if expected_task.instance_of?(Class)
                          expected_task.to_s.underscore.split('/').last.to_sym
                        else
                          expected_task

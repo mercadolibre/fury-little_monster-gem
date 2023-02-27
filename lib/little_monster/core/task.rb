@@ -2,10 +2,7 @@ module LittleMonster::Core
   class Task
     include Loggable
 
-    attr_reader :data
-    attr_reader :job_id
-    attr_reader :job_retries
-    attr_reader :job_max_retries
+    attr_reader :data, :job_id, :job_retries, :job_max_retries
 
     def initialize(data, job_id = nil)
       @data = data

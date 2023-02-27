@@ -34,7 +34,7 @@ module LittleMonster::Core
         request_id = SecureRandom.uuid
         ret = 0
         res = nil
-        url = [LittleMonster.api_url.chomp('/'), path.sub(/\//, '')].join '/'
+        url = [LittleMonster.api_url.chomp('/'), path.sub(%r{/}, '')].join '/'
 
         params[:body] = MultiJson.dump params.fetch(:body, {}) unless params[:body].is_a? String
 
@@ -47,7 +47,7 @@ module LittleMonster::Core
         begin
           res = Typhoeus.public_send method, url, params
           if !res.success? && (res.code < 400 || res.code >= 500)
-            raise FuryHttpApiError, "[type:request_failed][request_id:#{request_id}] request to #{res.effective_url} "\
+            raise FuryHttpApiError, "[type:request_failed][request_id:#{request_id}] request to #{res.effective_url} " \
                                     "failed with status #{res.code} code #{res.return_code} retry #{ret}"
           end
 
@@ -64,16 +64,15 @@ module LittleMonster::Core
 
           if critical
             logger.error "[type:critical_request_failed][request_id:#{request_id}][url:#{url}][retries:#{ret}] request has reached max retries"
-            raise APIUnreachableError, "[request_id:#{request_id}] critical request to #{url} has fail, check little monster api"
+            raise APIUnreachableError,
+                  "[request_id:#{request_id}] critical request to #{url} has fail, check little monster api"
           end
         end
 
         res.define_singleton_method(:body) do
-          begin
-            MultiJson.load(res.options[:response_body], symbolize_keys: true)
-          rescue StandardError
-            res.options[:response_body]
-          end
+          MultiJson.load(res.options[:response_body], symbolize_keys: true)
+        rescue StandardError
+          res.options[:response_body]
         end
         res
       end

@@ -17,11 +17,13 @@ describe LittleMonster::RSpec::Matchers::HaveRetries do
     context 'given a job_class' do
       it 'returns true if job has the expected retries' do
         job_class = double(max_retries: expected_retries, class: Class)
+        allow(job_class).to receive(:instance_of?).and_return(true)
         expect(subject.matches? job_class).to be true
       end
 
       it 'returns false if job does not have the expected retries' do
         job_class = double(max_retries: expected_retries+1, class: Class)
+        allow(job_class).to receive(:instance_of?).and_return(true)
         expect(subject.matches? job_class).to be false
       end
     end

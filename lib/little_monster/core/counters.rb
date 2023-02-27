@@ -20,6 +20,7 @@ module LittleMonster::Core::Counters
   def counter(counter_name)
     resp = LittleMonster::Core::API.get("/jobs/#{job_id}/counters/#{counter_name}", {}, critical: true)
     raise MissedCounterError if resp.code == 404
+
     resp.body
   end
 

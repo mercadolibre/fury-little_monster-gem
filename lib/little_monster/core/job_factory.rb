@@ -8,7 +8,7 @@ module LittleMonster::Core
       @name = message[:name]
 
       # it converts tags from array of hashes to a single hash
-      @tags = Hash[message.fetch(:tags, []).map { |h| [h.keys.first, h.values.first] }].freeze
+      @tags = message.fetch(:tags, []).to_h { |h| [h.keys.first, h.values.first] }.freeze
 
       logger.default_tags = @tags.merge(id: @id, name: @name)
 
@@ -55,6 +55,7 @@ module LittleMonster::Core
       return true if res.success? || res.code == 400
 
       raise JobNotFoundError, "[type:error] job [id:#{@id}] does not exists" if res.code == 404
+
       raise APIUnreachableError, "[type:error] failed to notify task list [status:#{res.code}]"
     end
 
@@ -75,23 +76,24 @@ module LittleMonster::Core
 
     def fetch_attributes
       return {} if LittleMonster.disable_requests?
+
       resp = API.get "/jobs/#{@id}", {}, retries: LittleMonster.job_requests_retries,
                                          retry_wait: LittleMonster.job_requests_retry_wait,
                                          critical: true
 
       raise JobNotFoundError, "[type:error] job [id:#{@id}] does not exists" if resp.code == 404
 
-      if !resp.success?
+      unless resp.success?
         logger.error("Failed to get api attributes unsuccessful response: #{resp.inspect} success: #{resp.success?}")
         raise APIUnreachableError, "failed to fetch attributes [status:#{resp.code}]"
       end
 
       if resp.body.nil? || resp.body[:status].nil?
         logger.error("Failed to get api attributes body: #{resp.body.inspect}")
-        raise AttributesNotFoundError, "empty api attributes"
+        raise AttributesNotFoundError, 'empty api attributes'
       end
 
-      return resp.body
+      resp.body
     end
 
     def calculate_status_and_error
@@ -132,10 +134,10 @@ module LittleMonster::Core
     end
 
     def job_attributes
-      data = if !@api_attributes[:data].nil?
-               @api_attributes[:data]
-             else
+      data = if @api_attributes[:data].nil?
                @input_data
+             else
+               @api_attributes[:data]
              end
 
       attributes = {

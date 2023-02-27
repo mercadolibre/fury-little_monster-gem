@@ -8,7 +8,7 @@ module LittleMonster::RSpec::Matchers
       @job_class = if job.is_a? LittleMonster::Job
                      job.class
                    else
-                     job.class == Class ? job : job.to_s.camelcase.constantize
+                     job.instance_of?(Class) ? job : job.to_s.camelcase.constantize
                    end
       @actual_retries = @job_class.callback_max_retries
       @actual_retries == @expected_retries

@@ -8,6 +8,7 @@ module LittleMonster::Core
 
     def ==(other)
       return false unless is_valid?(other) && other.length == length
+
       @outputs.each { |k, v| return false unless other[k.to_sym] == v }
       true
     end
@@ -18,6 +19,7 @@ module LittleMonster::Core
 
     def []=(output_key, value)
       raise KeyError, "The key #{output_key} already exists" if @outputs.include? output_key.to_sym
+
       @outputs[output_key.to_sym] = value
 
       owner = @job.current_action.to_sym
@@ -25,12 +27,13 @@ module LittleMonster::Core
       @key_owners[owner] << output_key.to_sym
     end
 
-    def to_json
+    def to_json(*_args)
       MultiJson.dump(to_h)
     end
 
     def to_h
       return {} if @outputs.empty?
+
       { outputs: @outputs, owners: @key_owners }
     end
 

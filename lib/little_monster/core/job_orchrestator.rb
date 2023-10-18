@@ -182,6 +182,7 @@ module LittleMonster::Core
       end
 
       @job.error = @job.serialize_error error
+      @job.raw_error = error
 
       if error.is_a?(FatalTaskError) || error.is_a?(NameError)
         logger.debug 'error is fatal, aborting run'

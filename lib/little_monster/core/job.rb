@@ -92,7 +92,7 @@ module LittleMonster::Core
       end
     end
 
-    attr_accessor :id, :tags, :status, :retries, :current_action, :data, :error
+    attr_accessor :id, :tags, :status, :retries, :current_action, :data, :error, :raw_error
 
     attr_reader :orchrestator
 

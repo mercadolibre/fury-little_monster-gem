@@ -626,6 +626,13 @@ describe LittleMonster::Core::Job::Orchrestator do
         subject.handle_error error
         expect(subject).to have_received(:do_retry).with error
       end
+
+      it 'sets error and raw_error' do
+        error = LittleMonster::TaskError.new
+        subject.handle_error error
+        expect(subject.job.error).to eq(message: error.message, type: error.class.to_s, retry: subject.job.retries)
+        expect(subject.job.raw_error).to eq(error)
+      end
     end
   end
 

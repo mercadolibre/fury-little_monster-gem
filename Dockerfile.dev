@@ -1,0 +1,10 @@
+FROM ruby:2.6.6
+WORKDIR /app
+COPY Gemfile Gemfile
+COPY Gemfile.lock Gemfile.lock
+COPY little_monster.gemspec little_monster.gemspec
+RUN mkdir .git
+RUN mkdir -p lib/little_monster
+COPY lib/little_monster/version.rb lib/little_monster/version.rb
+RUN gem install bundler:2.3.16
+RUN bundle install

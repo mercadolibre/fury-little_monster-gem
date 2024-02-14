@@ -38,7 +38,7 @@ describe LittleMonster do
 
           it 'is set to nil' do
             LittleMonster.init
-            expect(LittleMonster.logger.instance_variable_get(:@logdev)).to eq(nil)
+            expect(LittleMonster.logger.instance_variable_get(:@logdev).filename).to eq('/dev/null')
           end
         end
 

@@ -51,7 +51,9 @@ module LittleMonster
       job_requests_retries: 4,
       job_requests_retry_wait: 1,
       heartbeat_execution_interval: 10,
-      default_job_retries: -1
+      default_job_retries: -1,
+      tiger_api_url: 'http://tiger',
+      shark_login_file_path: '/var/run/secrets/kubernetes.io/serviceaccount/token'
     }
   end
 

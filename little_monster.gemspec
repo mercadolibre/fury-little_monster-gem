@@ -26,21 +26,23 @@ Gem::Specification.new do |spec|
   spec.executables   = ['lm']
   spec.require_paths = ['lib']
 
-  spec.add_runtime_dependency 'activesupport'
-  spec.add_runtime_dependency 'multi_json'
-  spec.add_runtime_dependency 'thor'
-  spec.add_runtime_dependency 'tilt'
-  spec.add_runtime_dependency 'toiler'
-  spec.add_runtime_dependency 'typhoeus'
+  spec.add_runtime_dependency 'activesupport', '6.1.7.6'# '7.0.4.2'
+  spec.add_runtime_dependency 'multi_json', '1.15.0'
+  spec.add_runtime_dependency 'thor', '1.2.1'
+  spec.add_runtime_dependency 'tilt', '2.1.0'
+  spec.add_runtime_dependency 'toiler', '0.7.1'
+  spec.add_runtime_dependency 'typhoeus', '1.4.0'
 
   spec.add_development_dependency 'bundler'
-  spec.add_development_dependency 'byebug'
-  spec.add_development_dependency 'oj'
-  spec.add_development_dependency 'pry'
-  spec.add_development_dependency 'rake'
-  spec.add_development_dependency 'require_all'
-  spec.add_development_dependency 'rspec'
-  spec.add_development_dependency 'rubocop'
-  spec.add_development_dependency 'simplecov'
+  spec.add_development_dependency 'byebug', '11.1.3'
+  spec.add_development_dependency 'oj', '3.14.2'
+  spec.add_development_dependency 'pry', '0.14.2'
+  spec.add_development_dependency 'rake', '13.0.6'
+  spec.add_development_dependency 'require_all', '3.0.0'
+  spec.add_development_dependency 'rspec', '3.12.0'
+  spec.add_development_dependency 'rubocop', '1.46.0'
+  spec.add_development_dependency 'simplecov', '0.22.0'
+  spec.add_development_dependency 'webmock', '3.20.0'
+
   spec.metadata['rubygems_mfa_required'] = 'true'
 end

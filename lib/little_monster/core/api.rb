@@ -41,6 +41,7 @@ module LittleMonster::Core
         params[:headers] ||= {}
         params[:headers]['Content-Type'] = 'application/json' unless params[:headers]['Content-Type']
         params[:headers]['X-Request-ID'] = request_id
+        params[:headers]['X-Tiger-Token'] = LittleMonster::Tiger::API.bearer_token
 
         params[:timeout] ||= LittleMonster.request_timeout
 

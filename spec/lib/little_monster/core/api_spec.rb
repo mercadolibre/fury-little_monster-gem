@@ -8,9 +8,12 @@ describe LittleMonster::Core::API do
   let(:options) { { critical: false } }
   let(:response) { double(code: 200, effective_url: '', success?: true, return_code: :ok) }
   let(:request_id) { '123' }
+  let(:body_str) { File.open('./spec/mock/responses/tiger_token.json', 'r').read }
 
   before :each do
     allow(SecureRandom).to receive(:uuid).and_return(request_id)
+    allow(File).to receive(:read).with(LittleMonster.shark_login_file_path).and_return('')
+    LoginSharkMock.new(self).login_request_success(body_str)
   end
 
   describe '::get' do
@@ -120,6 +123,9 @@ describe LittleMonster::Core::API do
       end
 
       context 'request built' do
+        let(:body_str) { File.open('./spec/mock/responses/tiger_token.json', 'r').read }
+        let(:body) { JSON.parse(body_str) }
+
         it 'has body dumped to json' do
           body = { a: :b }
           params[:body] = body
@@ -137,7 +143,13 @@ describe LittleMonster::Core::API do
         it 'has content type set to json if it was not specified' do
           subject.request method, path, params, **options
           expect(Typhoeus).to have_received(method)
-            .with(url, hash_including(headers: { 'Content-Type' => 'application/json', 'X-Request-ID' => request_id }))
+            .with(url, hash_including(
+              headers: {
+                'Content-Type' => 'application/json',
+                'X-Request-ID' => request_id,
+                'X-Tiger-Token' => "Bearer #{body['token']}"
+              }
+            ))
         end
 
         it 'has content type set to json if specified' do

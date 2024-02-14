@@ -5,6 +5,7 @@ ENV['RUBY_ENV'] = 'test'
 require 'rspec'
 require 'byebug'
 require 'require_all'
+require 'webmock/rspec'
 require 'little_monster'
 require 'little_monster/rspec'
 

@@ -7,11 +7,22 @@ module LittleMonster
       module_function
 
       def bearer_token
-        token = new_shark_token
+        token = cached_shark_token
         "Bearer #{token}" if token
       end
 
+      def cached_shark_token
+        shark_token = Cache.instance.get(:shark_token)
+        return shark_token if shark_token
+
+        shark_token = new_shark_token
+        return nil if shark_token.nil?
+        Cache.instance.set(:shark_token, shark_token, 60 * 60)
+        shark_token
+      end
+
       def new_shark_token
+        return nil unless LittleMonster.enable_tiger_token
         shark_token = File.read(LittleMonster.shark_login_file_path)
         response = make_call(:post, 'login/shark', body: { token: shark_token }.to_json)
         return nil if response.failure?

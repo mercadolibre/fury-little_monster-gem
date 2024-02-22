@@ -53,7 +53,8 @@ module LittleMonster
       heartbeat_execution_interval: 10,
       default_job_retries: -1,
       tiger_api_url: 'http://tiger',
-      shark_login_file_path: '/var/run/secrets/kubernetes.io/serviceaccount/token'
+      shark_login_file_path: '/var/run/secrets/kubernetes.io/serviceaccount/token',
+      enable_tiger_token: true
     }
   end
 

@@ -13,6 +13,7 @@ require 'little_monster/core/errors/ownership_lost_error'
 require 'little_monster/core/errors/task_not_found_error'
 
 require 'little_monster/tiger/auth'
+require 'little_monster/tiger/cache'
 require 'little_monster/core/tagged_logger'
 require 'little_monster/core/loggable' # must be required first to satisfy job and task dependencies
 require 'little_monster/core/api'

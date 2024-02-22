@@ -32,6 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'tilt', '2.1.0'
   spec.add_runtime_dependency 'toiler', '0.7.1'
   spec.add_runtime_dependency 'typhoeus', '1.4.0'
+  spec.add_runtime_dependency 'moneta', '1.6.0'
 
   spec.add_development_dependency 'bundler'
   spec.add_development_dependency 'byebug', '11.1.3'
